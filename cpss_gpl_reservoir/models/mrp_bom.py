@@ -6,6 +6,13 @@ from odoo import models, api, fields
 class MrpBom(models.Model):
     _inherit = 'mrp.bom'
 
+    is_gpl_kit = fields.Boolean(
+        string="Est un kit GPL",
+        related='product_tmpl_id.is_gpl_kit',
+        store=True,
+        readonly=True
+    )
+
     # === CHAMPS CALCULÉS GPL ===
     contains_gpl_reservoir = fields.Boolean(
         string="Contient un réservoir GPL",
@@ -82,7 +89,7 @@ class MrpBom(models.Model):
 class MrpBomLine(models.Model):
     _inherit = 'mrp.bom.line'
 
-    # === CHAMPS CALCULÉS GPL ===
+    # === CHAMPS RELATED GPL ===
     is_gpl_reservoir = fields.Boolean(
         string="Est un réservoir GPL",
         related='product_id.product_tmpl_id.is_gpl_reservoir',
@@ -93,6 +100,14 @@ class MrpBomLine(models.Model):
     is_gpl_component = fields.Boolean(
         string="Est un composant GPL",
         related='product_id.product_tmpl_id.is_gpl_component',
+        store=True,
+        readonly=True
+    )
+
+    gpl_fabricant_id = fields.Many2one(
+        'gpl.reservoir.fabricant',
+        string="Fabricant GPL",
+        related='product_id.product_tmpl_id.gpl_fabricant_id',
         store=True,
         readonly=True
     )

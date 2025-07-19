@@ -2,73 +2,6 @@
 <odoo>
     <data>
 
-        <!-- === MENU PRINCIPAL RÉSERVOIRS === -->
-        <menuitem id="menu_gpl_reservoir_main"
-                  name="Réservoirs &amp; Kits"
-                  parent="cpss_gpl_base.menu_gpl_main"
-                  sequence="10"
-                  groups="cpss_gpl_base.group_gpl_user"/>
-
-        <!-- === SOUS-MENUS RÉSERVOIRS === -->
-
-        <!-- Dashboard Réservoirs -->
-        <menuitem id="menu_gpl_reservoir_dashboard"
-                  name="Dashboard Réservoirs"
-                  parent="menu_gpl_reservoir_main"
-                  action="action_gpl_reservoir_dashboard"
-                  sequence="5"
-                  groups="cpss_gpl_base.group_gpl_user"/>
-
-        <!-- Réservoirs GPL -->
-        <menuitem id="menu_gpl_reservoir_lots"
-                  name="Réservoirs GPL"
-                  parent="menu_gpl_reservoir_main"
-                  action="action_stock_lot_reservoir"
-                  sequence="10"
-                  groups="cpss_gpl_base.group_gpl_user"/>
-
-        <!-- Produits GPL -->
-        <menuitem id="menu_gpl_products"
-                  name="Produits GPL"
-                  parent="menu_gpl_reservoir_main"
-                  action="action_product_template_gpl"
-                  sequence="20"
-                  groups="cpss_gpl_base.group_gpl_user"/>
-
-        <!-- Kits GPL -->
-        <menuitem id="menu_gpl_kits"
-                  name="Kits GPL"
-                  parent="menu_gpl_reservoir_main"
-                  action="action_product_template_gpl_kit"
-                  sequence="30"
-                  groups="cpss_gpl_base.group_gpl_user"/>
-
-        <!-- Nomenclatures GPL -->
-        <menuitem id="menu_gpl_boms"
-                  name="Nomenclatures GPL"
-                  parent="menu_gpl_reservoir_main"
-                  action="action_mrp_bom_gpl"
-                  sequence="40"
-                  groups="cpss_gpl_base.group_gpl_technician"/>
-
-        <!-- === SOUS-MENU CONFIGURATION === -->
-
-        <!-- Fabricants -->
-        <menuitem id="menu_gpl_fabricants"
-                  name="Fabricants"
-                  parent="cpss_gpl_base.menu_gpl_config"
-                  action="action_gpl_reservoir_fabricant"
-                  sequence="30"
-                  groups="cpss_gpl_base.group_gpl_manager"/>
-
-        <!-- Catégories Produits -->
-        <menuitem id="menu_gpl_product_categories"
-                  name="Catégories Produits"
-                  parent="cpss_gpl_base.menu_gpl_config"
-                  action="product.product_category_action_form"
-                  sequence="40"
-                  groups="cpss_gpl_base.group_gpl_manager"/>
-
         <!-- === ACTIONS === -->
 
         <!-- Dashboard Réservoirs -->
@@ -112,7 +45,7 @@
             <field name="name">Nomenclatures GPL</field>
             <field name="res_model">mrp.bom</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">['|', ('product_tmpl_id.is_gpl_kit', '=', True), ('bom_line_ids.product_id.is_gpl_component', '=', True)]</field>
+            <field name="domain">['|', ('is_gpl_kit', '=', True), ('contains_gpl_components', '=', True)]</field>
             <field name="context">{'search_default_active': 1}</field>
         </record>
 
@@ -123,6 +56,73 @@
             <field name="view_mode">tree,form</field>
             <field name="context">{'search_default_active': 1}</field>
         </record>
+
+        <!-- === MENU PRINCIPAL === -->
+        <menuitem id="menu_gpl_reservoir_main"
+                  name="Réservoirs GPL"
+                  parent="cpss_gpl_base.menu_gpl_main"
+                  sequence="20"
+                  groups="cpss_gpl_base.group_gpl_user"/>
+
+        <!-- === SOUS-MENUS OPÉRATIONNELS === -->
+
+        <!-- Dashboard -->
+        <menuitem id="menu_gpl_reservoir_dashboard"
+                  name="Dashboard"
+                  parent="menu_gpl_reservoir_main"
+                  action="action_gpl_reservoir_dashboard"
+                  sequence="10"
+                  groups="cpss_gpl_base.group_gpl_user"/>
+
+        <!-- Réservoirs -->
+        <menuitem id="menu_gpl_reservoirs"
+                  name="Réservoirs"
+                  parent="menu_gpl_reservoir_main"
+                  action="action_stock_lot_reservoir"
+                  sequence="20"
+                  groups="cpss_gpl_base.group_gpl_user"/>
+
+        <!-- Produits GPL -->
+        <menuitem id="menu_gpl_products"
+                  name="Produits GPL"
+                  parent="menu_gpl_reservoir_main"
+                  action="action_product_template_gpl"
+                  sequence="30"
+                  groups="cpss_gpl_base.group_gpl_technician"/>
+
+        <!-- Kits GPL -->
+        <menuitem id="menu_gpl_kits"
+                  name="Kits GPL"
+                  parent="menu_gpl_reservoir_main"
+                  action="action_product_template_gpl_kit"
+                  sequence="35"
+                  groups="cpss_gpl_base.group_gpl_technician"/>
+
+        <!-- Nomenclatures GPL -->
+        <menuitem id="menu_gpl_bom"
+                  name="Nomenclatures"
+                  parent="menu_gpl_reservoir_main"
+                  action="action_mrp_bom_gpl"
+                  sequence="40"
+                  groups="cpss_gpl_base.group_gpl_technician"/>
+
+        <!-- === SOUS-MENU CONFIGURATION === -->
+
+        <!-- Fabricants -->
+        <menuitem id="menu_gpl_fabricants"
+                  name="Fabricants"
+                  parent="cpss_gpl_base.menu_gpl_config"
+                  action="action_gpl_reservoir_fabricant"
+                  sequence="30"
+                  groups="cpss_gpl_base.group_gpl_manager"/>
+
+        <!-- Catégories Produits -->
+        <menuitem id="menu_gpl_product_categories"
+                  name="Catégories Produits"
+                  parent="cpss_gpl_base.menu_gpl_config"
+                  action="product.product_category_action_form"
+                  sequence="40"
+                  groups="cpss_gpl_base.group_gpl_manager"/>
 
     </data>
 </odoo>
