@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_gpl_setup_wizard_admin,access_gpl_setup_wizard_admin,model_gpl_setup_wizard,group_gpl_admin,1,1,1,1
+access_gpl_setup_wizard_manager,access_gpl_setup_wizard_manager,model_gpl_setup_wizard,group_gpl_manager,1,1,1,0

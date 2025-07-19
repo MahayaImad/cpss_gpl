@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- === SÉQUENCES GPL CPSS === -->
+
+        <!-- Séquence pour les véhicules GPL -->
+        <record id="seq_gpl_vehicle" model="ir.sequence">
+            <field name="name">Véhicules GPL</field>
+            <field name="code">gpl.vehicle</field>
+            <field name="prefix">VH-</field>
+            <field name="suffix"></field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Séquence pour les installations GPL -->
+        <record id="seq_gpl_installation" model="ir.sequence">
+            <field name="name">Installations GPL</field>
+            <field name="code">gpl.service.installation</field>
+            <field name="prefix">INST-</field>
+            <field name="suffix"></field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Séquence pour les réparations GPL -->
+        <record id="seq_gpl_repair" model="ir.sequence">
+            <field name="name">Réparations GPL</field>
+            <field name="code">gpl.repair.order</field>
+            <field name="prefix">REP-</field>
+            <field name="suffix"></field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Séquence pour les contrôles GPL -->
+        <record id="seq_gpl_inspection" model="ir.sequence">
+            <field name="name">Contrôles GPL</field>
+            <field name="code">gpl.inspection</field>
+            <field name="prefix">CTRL-</field>
+            <field name="suffix"></field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Séquence pour les tests de réservoirs -->
+        <record id="seq_gpl_reservoir_testing" model="ir.sequence">
+            <field name="name">Tests Réservoirs GPL</field>
+            <field name="code">gpl.reservoir.testing</field>
+            <field name="prefix">TEST-</field>
+            <field name="suffix"></field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Séquence pour les certificats -->
+        <record id="seq_gpl_certificate" model="ir.sequence">
+            <field name="name">Certificats GPL</field>
+            <field name="code">gpl.certificate</field>
+            <field name="prefix">CERT-</field>
+            <field name="suffix"></field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Séquence pour les lots de réservoirs -->
+        <record id="seq_gpl_reservoir_lot" model="ir.sequence">
+            <field name="name">Lots Réservoirs GPL</field>
+            <field name="code">gpl.reservoir.lot</field>
+            <field name="prefix">RES-</field>
+            <field name="suffix"></field>
+            <field name="padding">6</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+    </data>
+</odoo>

@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- === VUE FORMULAIRE PRODUIT GPL === -->
+        <record id="view_product_template_form_gpl" model="ir.ui.view">
+            <field name="name">product.template.form.gpl</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_form_view"/>
+            <field name="arch" type="xml">
+
+                <!-- Ajouter bouton statistiques lots -->
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_view_gpl_lots"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-flask"
+                            modifiers="{'invisible': [('is_gpl_reservoir', '=', False)]}">
+                        <field name="gpl_lot_count" widget="statinfo" string="Lots GPL"/>
+                    </button>
+                    <button name="action_create_bom"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-list"
+                            modifiers="{'invisible': ['|', ('is_gpl_component', '=', False), ('bom_count', '>', 0)]}">
+                        <div class="o_field_widget o_stat_info">
+                            <span class="o_stat_text">Créer BOM</span>
+                        </div>
+                    </button>
+                </xpath>
+
+                <!-- Ajouter onglet GPL -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="GPL" name="gpl_page" modifiers="{'invisible': [('is_gpl_reservoir', '=', False), ('is_gpl_component', '=', False)]}">
+
+                        <!-- Section Type GPL -->
+                        <group string="Type GPL">
+                            <group>
+                                <field name="is_gpl_reservoir"/>
+                                <field name="is_gpl_component"/>
+                                <field name="is_gpl_kit" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="gpl_fabricant_id" modifiers="{'required': [('is_gpl_reservoir', '=', True)]}"/>
+                            </group>
+                        </group>
+
+                        <!-- Section Spécifications réservoir -->
+                        <group string="Spécifications Réservoir" modifiers="{'invisible': [('is_gpl_reservoir', '=', False)]}">
+                            <group>
+                                <field name="gpl_capacity"/>
+                                <field name="gpl_pressure"/>
+                            </group>
+                            <group>
+                                <field name="gpl_material"/>
+                                <field name="gpl_shape"/>
+                            </group>
+                        </group>
+
+                        <!-- Section Certifications -->
+                        <group string="Certifications" modifiers="{'invisible': [('is_gpl_reservoir', '=', False)]}">
+                            <group>
+                                <field name="gpl_certification_r67"/>
+                                <field name="gpl_certification_r110"/>
+                            </group>
+                            <group>
+                                <field name="gpl_certification_other"/>
+                            </group>
+                        </group>
+
+                        <!-- Section Compatibilité -->
+                        <group string="Compatibilité Véhicules" modifiers="{'invisible': [('is_gpl_component', '=', False)]}">
+                            <field name="gpl_vehicle_brands" widget="many2many_tags"/>
+                        </group>
+
+                    </page>
+                </xpath>
+
+                <!-- Modifier les champs selon GPL -->
+                <xpath expr="//field[@name='tracking']" position="attributes">
+                    <attribute name="modifiers">{'readonly': [('is_gpl_reservoir', '=', True)]}</attribute>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- === VUE KANBAN PRODUITS GPL === -->
+        <record id="view_product_template_kanban_gpl" model="ir.ui.view">
+            <field name="name">product.template.kanban.gpl</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_kanban_view"/>
+            <field name="arch" type="xml">
+
+                <!-- Ajouter les champs GPL -->
+                <xpath expr="//kanban" position="attributes">
+                    <attribute name="sample">1</attribute>
+                </xpath>
+
+                <xpath expr="//field[@name='activity_state']" position="after">
+                    <field name="is_gpl_reservoir"/>
+                    <field name="is_gpl_component"/>
+                    <field name="is_gpl_kit"/>
+                    <field name="gpl_fabricant_id"/>
+                    <field name="gpl_capacity"/>
+                </xpath>
+
+                <!-- Ajouter badges GPL -->
+                <xpath expr="//div[@class='oe_kanban_details']" position="inside">
+                    <div class="o_kanban_record_bottom mb-2">
+                        <span t-if="record.is_gpl_reservoir.raw_value" class="badge badge-primary">
+                            <i class="fa fa-flask"/> Réservoir
+                            <span t-if="record.gpl_capacity.raw_value">(<t t-esc="record.gpl_capacity.value"/>L)</span>
+                        </span>
+                        <span t-if="record.is_gpl_component.raw_value and !record.is_gpl_reservoir.raw_value" class="badge badge-info">
+                            <i class="fa fa-cog"/> Composant
+                        </span>
+                        <span t-if="record.is_gpl_kit.raw_value" class="badge badge-success">
+                            <i class="fa fa-cube"/> Kit
+                        </span>
+                        <span t-if="record.gpl_fabricant_id.raw_value" class="badge badge-secondary">
+                            <t t-esc="record.gpl_fabricant_id.value"/>
+                        </span>
+                    </div>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- === VUE ARBRE PRODUITS GPL === -->
+        <record id="view_product_template_tree_gpl" model="ir.ui.view">
+            <field name="name">product.template.tree.gpl</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_tree_view"/>
+            <field name="arch" type="xml">
+
+                <!-- Ajouter colonnes GPL -->
+                <xpath expr="//field[@name='categ_id']" position="after">
+                    <field name="is_gpl_reservoir" optional="hide"/>
+                    <field name="is_gpl_component" optional="hide"/>
+                    <field name="is_gpl_kit" optional="hide"/>
+                    <field name="gpl_fabricant_id" optional="show"/>
+                    <field name="gpl_capacity" optional="show"/>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- === RECHERCHE PRODUITS GPL === -->
+        <record id="view_product_template_search_gpl" model="ir.ui.view">
+            <field name="name">product.template.search.gpl</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_search_view"/>
+            <field name="arch" type="xml">
+
+                <!-- Ajouter champs de recherche GPL -->
+                <xpath expr="//field[@name='name']" position="after">
+                    <field name="gpl_fabricant_id" string="Fabricant GPL"/>
+                    <field name="gpl_capacity" string="Capacité"/>
+                    <field name="gpl_certification_r67" string="Certification R67"/>
+                    <field name="gpl_certification_r110" string="Certification R110"/>
+                </xpath>
+
+                <!-- Ajouter filtres GPL -->
+                <xpath expr="//filter[@name='consumable']" position="after">
+                    <separator/>
+                    <filter name="is_gpl_reservoir" string="Réservoirs GPL" domain="[('is_gpl_reservoir', '=', True)]"/>
+                    <filter name="is_gpl_component" string="Composants GPL" domain="[('is_gpl_component', '=', True)]"/>
+                    <filter name="is_gpl_kit" string="Kits GPL" domain="[('is_gpl_kit', '=', True)]"/>
+                    <separator/>
+                    <filter name="cert_r67" string="Certifiés R67" domain="[('gpl_certification_r67', '=', True)]"/>
+                    <filter name="cert_r110" string="Certifiés R110" domain="[('gpl_certification_r110', '=', True)]"/>
+                </xpath>
+
+                <!-- Ajouter groupes GPL -->
+                <xpath expr="//group[@expand='1']" position="after">
+                <group expand="0" string="Regroupement GPL">
+                    <filter name="group_fabricant" string="Fabricant GPL" context="{'group_by': 'gpl_fabricant_id'}"/>
+                    <filter name="group_gpl_type" string="Type GPL" context="{'group_by': 'is_gpl_reservoir'}"/>
+                </group>
+            </xpath>
+
+            </field>
+        </record>
+
+    </data>
+</odoo>

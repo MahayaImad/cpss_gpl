@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- === CATÉGORIES DE SÉCURITÉ GPL === -->
+        <record id="module_category_gpl" model="ir.module.category">
+            <field name="name">GPL CPSS</field>
+            <field name="description">Gestion GPL - Cedar Peak Systems &amp; Solutions</field>
+            <field name="sequence">15</field>
+        </record>
+
+        <!-- === GROUPES D'UTILISATEURS === -->
+
+        <!-- Utilisateur GPL basique -->
+        <record id="group_gpl_user" model="res.groups">
+            <field name="name">GPL : Utilisateur</field>
+            <field name="category_id" ref="module_category_gpl"/>
+            <field name="comment">Peut consulter les données GPL de base</field>
+        </record>
+
+        <!-- Technicien GPL -->
+        <record id="group_gpl_technician" model="res.groups">
+            <field name="name">GPL : Technicien</field>
+            <field name="category_id" ref="module_category_gpl"/>
+            <field name="implied_ids" eval="[(4, ref('group_gpl_user'))]"/>
+            <field name="comment">Peut effectuer les interventions GPL</field>
+        </record>
+
+        <!-- Responsable GPL -->
+        <record id="group_gpl_manager" model="res.groups">
+            <field name="name">GPL : Responsable</field>
+            <field name="category_id" ref="module_category_gpl"/>
+            <field name="implied_ids" eval="[(4, ref('group_gpl_technician'))]"/>
+            <field name="comment">Peut gérer toutes les opérations GPL</field>
+        </record>
+
+        <!-- Administrateur GPL -->
+        <record id="group_gpl_admin" model="res.groups">
+            <field name="name">GPL : Administrateur</field>
+            <field name="category_id" ref="module_category_gpl"/>
+            <field name="implied_ids" eval="[(4, ref('group_gpl_manager'))]"/>
+            <field name="comment">Accès complet à la configuration GPL</field>
+        </record>
+
+        <!-- === RÈGLES D'ACCÈS MULTI-SOCIÉTÉS === -->
+
+        <!-- Les données GPL sont limitées à la société de l'utilisateur -->
+        <record id="gpl_base_company_rule" model="ir.rule">
+            <field name="name">GPL : Accès multi-sociétés</field>
+            <field name="model_id" ref="base.model_res_company"/>
+            <field name="domain_force">[('id', 'in', company_ids)]</field>
+            <field name="groups" eval="[(4, ref('group_gpl_user'))]"/>
+        </record>
+
+    </data>
+</odoo>

@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- === VUE ARBRE FABRICANTS === -->
+        <record id="view_gpl_reservoir_fabricant_tree" model="ir.ui.view">
+            <field name="name">gpl.reservoir.fabricant.tree</field>
+            <field name="model">gpl.reservoir.fabricant</field>
+            <field name="arch" type="xml">
+                <tree string="Fabricants GPL" sample="1">
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="country_id"/>
+                    <field name="reservoir_count"/>
+                    <field name="product_count"/>
+                    <field name="certification_number"/>
+                    <field name="certification_expiry"/>
+                    <field name="active" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- === VUE FORMULAIRE FABRICANTS === -->
+        <record id="view_gpl_reservoir_fabricant_form" model="ir.ui.view">
+            <field name="name">gpl.reservoir.fabricant.form</field>
+            <field name="model">gpl.reservoir.fabricant</field>
+            <field name="arch" type="xml">
+                <form string="Fabricant GPL">
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_reservoirs"
+                                    type="object"
+                                    class="oe_stat_button"
+                                    icon="fa-flask"
+                                    modifiers="{'invisible': [('reservoir_count', '=', 0)]}">
+                                <field name="reservoir_count" widget="statinfo" string="Réservoirs"/>
+                            </button>
+                            <button name="action_view_products"
+                                    type="object"
+                                    class="oe_stat_button"
+                                    icon="fa-cube"
+                                    modifiers="{'invisible': [('product_count', '=', 0)]}">
+                                <field name="product_count" widget="statinfo" string="Produits"/>
+                            </button>
+                            <button name="toggle_active"
+                                    type="object"
+                                    class="oe_stat_button"
+                                    modifiers="{'invisible': [('active', '=', True)]}">
+                                <div class="o_field_widget o_stat_info">
+                                    <span class="o_stat_text">Archivé</span>
+                                </div>
+                            </button>
+                        </div>
+
+                        <widget name="web_ribbon" title="Archivé" bg_color="bg-danger" modifiers="{'invisible': [('active', '=', True)]}"/>
+
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" placeholder="Nom du fabricant..."/>
+                            </h1>
+                            <h2>
+                                <field name="code" placeholder="Code..."/>
+                            </h2>
+                        </div>
+
+                        <group>
+                            <group string="Informations générales">
+                                <field name="country_id"/>
+                                <field name="website" widget="url"/>
+                                <field name="email" widget="email"/>
+                                <field name="phone" widget="phone"/>
+                                <field name="active" invisible="1"/>
+                            </group>
+                            <group string="Certification">
+                                <field name="certification_number"/>
+                                <field name="certification_date"/>
+                                <field name="certification_expiry"/>
+                            </group>
+                        </group>
+
+                        <notebook>
+                            <page string="Notes" name="notes">
+                                <field name="notes" placeholder="Notes et informations complémentaires..."/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <!-- === VUE KANBAN FABRICANTS === -->
+        <record id="view_gpl_reservoir_fabricant_kanban" model="ir.ui.view">
+            <field name="name">gpl.reservoir.fabricant.kanban</field>
+            <field name="model">gpl.reservoir.fabricant</field>
+            <field name="arch" type="xml">
+                <kanban string="Fabricants GPL" sample="1">
+                    <field name="id"/>
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="country_id"/>
+                    <field name="reservoir_count"/>
+                    <field name="product_count"/>
+                    <field name="certification_expiry"/>
+                    <field name="active"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div class="oe_kanban_card oe_kanban_global_click">
+                                <div class="oe_kanban_content">
+                                    <div class="o_kanban_record_top">
+                                        <div class="o_kanban_record_headings">
+                                            <strong class="o_kanban_record_title">
+                                                <span>[<t t-esc="record.code.value"/>] <t t-esc="record.name.value"/></span>
+                                            </strong>
+                                            <span class="o_kanban_record_subtitle">
+                                                <t t-if="record.country_id.value"><t t-esc="record.country_id.value"/></t>
+                                            </span>
+                                        </div>
+                                        <div class="o_kanban_record_top_right">
+                                            <span t-if="!record.active.raw_value" class="badge badge-pill badge-danger">Archivé</span>
+                                        </div>
+                                    </div>
+                                    <div class="o_kanban_record_body">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <button name="action_view_reservoirs" type="object" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fa fa-flask"/> <t t-esc="record.reservoir_count.value"/> Réservoirs
+                                                </button>
+                                            </div>
+                                            <div class="col-6">
+                                                <button name="action_view_products" type="object" class="btn btn-sm btn-outline-secondary">
+                                                    <i class="fa fa-cube"/> <t t-esc="record.product_count.value"/> Produits
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="o_kanban_record_bottom" t-if="record.certification_expiry.value">
+                                        <div class="oe_kanban_bottom_left">
+                                            <small>Cert. expire: <t t-esc="record.certification_expiry.value"/></small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <!-- === RECHERCHE FABRICANTS === -->
+        <record id="view_gpl_reservoir_fabricant_search" model="ir.ui.view">
+            <field name="name">gpl.reservoir.fabricant.search</field>
+            <field name="model">gpl.reservoir.fabricant</field>
+            <field name="arch" type="xml">
+                <search string="Rechercher Fabricants">
+                    <field name="name" string="Nom"/>
+                    <field name="code" string="Code"/>
+                    <field name="country_id" string="Pays"/>
+                    <field name="certification_number" string="Certification"/>
+
+                    <filter name="active" string="Actifs" domain="[('active', '=', True)]"/>
+                    <filter name="archived" string="Archivés" domain="[('active', '=', False)]"/>
+
+                    <separator/>
+                    <filter name="has_reservoirs" string="Avec réservoirs" domain="[('reservoir_count', '>', 0)]"/>
+                    <filter name="has_products" string="Avec produits" domain="[('product_count', '>', 0)]"/>
+
+                    <separator/>
+                    <filter name="cert_expiring" string="Certification expire bientôt"
+                            domain="[('certification_expiry', '&lt;=', (context_today() + datetime.timedelta(days=90)).strftime('%Y-%m-%d'))]"/>
+
+                    <group expand="0" string="Grouper par">
+                        <filter name="group_country" string="Pays" context="{'group_by': 'country_id'}"/>
+                        <filter name="group_active" string="Statut" context="{'group_by': 'active'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+    </data>
+</odoo>

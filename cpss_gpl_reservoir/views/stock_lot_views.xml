@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- === VUE FORMULAIRE LOTS GPL === -->
+        <record id="view_stock_lot_form_gpl" model="ir.ui.view">
+            <field name="name">stock.lot.form.gpl</field>
+            <field name="model">stock.lot</field>
+            <field name="inherit_id" ref="stock.view_production_lot_form"/>
+            <field name="arch" type="xml">
+
+                <!-- Ajouter boutons d'action -->
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_schedule_test"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-calendar"
+                            modifiers="{'invisible': [('is_gpl_reservoir', '=', False)]}">
+                        <div class="o_field_widget o_stat_info">
+                            <span class="o_stat_text">Programmer Test</span>
+                        </div>
+                    </button>
+                    <button name="action_mark_installed"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-car"
+                            modifiers="{'invisible': ['|', ('is_gpl_reservoir', '=', False), ('state', '!=', 'stock')]}">
+                        <div class="o_field_widget o_stat_info">
+                            <span class="o_stat_text">Marquer Installé</span>
+                        </div>
+                    </button>
+                    <button name="action_mark_stock"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-warehouse"
+                            modifiers="{'invisible': ['|', ('is_gpl_reservoir', '=', False), ('state', '!=', 'installed')]}">
+                        <div class="o_field_widget o_stat_info">
+                            <span class="o_stat_text">Remettre Stock</span>
+                        </div>
+                    </button>
+                    <button name="action_scrap_reservoir"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-trash"
+                            modifiers="{'invisible': [('is_gpl_reservoir', '=', False)]}">
+                        <div class="o_field_widget o_stat_info">
+                            <span class="o_stat_text">Mettre au rebut</span>
+                        </div>
+                    </button>
+                </xpath>
+
+                <!-- Ajouter ribbon statut -->
+                <xpath expr="//sheet" position="before">
+                    <div class="alert alert-danger" role="alert" modifiers="{'invisible': [('reservoir_status', '!=', 'expired')]}">
+                        <strong>ATTENTION:</strong> Ce réservoir est expiré et nécessite un test immédiat !
+                    </div>
+                    <div class="alert alert-warning" role="alert" modifiers="{'invisible': [('reservoir_status', '!=', 'expiring_soon')]}">
+                        <strong>AVERTISSEMENT:</strong> Ce réservoir expire bientôt (<field name="days_until_test"/> jours).
+                    </div>
+                    <div class="alert alert-info" role="alert" modifiers="{'invisible': [('reservoir_status', '!=', 'too_old')]}">
+                        <strong>INFO:</strong> Ce réservoir est trop ancien et doit être remplacé.
+                    </div>
+                </xpath>
+
+                <!-- Ajouter onglet GPL -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Informations GPL" name="gpl_page" modifiers="{'invisible': [('is_gpl_reservoir', '=', False)]}">
+
+                        <!-- Section État et Statut -->
+                        <group string="État et Statut">
+                            <group>
+                                <field name="state" widget="badge"
+                                       decoration-success="state == 'stock'"
+                                       decoration-info="state == 'installed'"
+                                       decoration-warning="state == 'test_required'"
+                                       decoration-danger="state == 'expired'"/>
+                                <field name="reservoir_status" widget="badge"
+                                       decoration-success="reservoir_status == 'valid'"
+                                       decoration-warning="reservoir_status == 'expiring_soon'"
+                                       decoration-danger="reservoir_status in ('expired', 'too_old')"/>
+                            </group>
+                            <group>
+                                <field name="age_years" widget="float_time"/>
+                                <field name="days_until_test" widget="integer"/>
+                                <field name="is_test_overdue" widget="boolean"/>
+                            </group>
+                        </group>
+
+                        <!-- Section Fabrication -->
+                        <group string="Informations de Fabrication">
+                            <group>
+                                <field name="manufacturing_date" modifiers="{'required': [('is_gpl_reservoir', '=', True)]}"/>
+                                <field name="certification_date"/>
+                                <field name="certification_number"/>
+                            </group>
+                            <group>
+                                <field name="fabricant_id" readonly="1"/>
+                                <field name="capacity" readonly="1"/>
+                                <field name="pressure" readonly="1"/>
+                            </group>
+                        </group>
+
+                        <!-- Section Tests -->
+                        <group string="Tests et Épreuves">
+                            <group>
+                                <field name="last_test_date" modifiers="{'required': [('is_gpl_reservoir', '=', True)]}"/>
+                                <field name="next_test_date" readonly="1"/>
+                                <field name="test_frequency_years"/>
+                            </group>
+                            <group>
+                                <field name="max_age_years"/>
+                            </group>
+                        </group>
+
+                        <!-- Section Installation -->
+                        <group string="Installation" modifiers="{'invisible': [('state', '!=', 'installed')]}">
+                            <group>
+                                <field name="vehicle_id"/>
+                                <field name="installation_date"/>
+                            </group>
+                        </group>
+
+                    </page>
+                </xpath>
+
+                <!-- Masquer champs non GPL -->
+                <xpath expr="//field[@name='name']" position="attributes">
+                    <attribute name="modifiers">{'required': True}</attribute>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- === VUE ARBRE LOTS GPL === -->
+        <record id="view_stock_lot_tree_gpl" model="ir.ui.view">
+            <field name="name">stock.lot.tree.gpl</field>
+            <field name="model">stock.lot</field>
+            <field name="inherit_id" ref="stock.view_production_lot_tree"/>
+            <field name="arch" type="xml">
+
+                <!-- Ajouter colonnes GPL -->
+                <xpath expr="//field[@name='product_id']" position="after">
+                    <field name="is_gpl_reservoir" optional="hide"/>
+                    <field name="fabricant_id" optional="show"/>
+                    <field name="capacity" optional="show"/>
+                    <field name="manufacturing_date" optional="show"/>
+                    <field name="state" optional="show" widget="badge"/>
+                    <field name="reservoir_status" optional="show" widget="badge"
+                           decoration-success="reservoir_status == 'valid'"
+                           decoration-warning="reservoir_status == 'expiring_soon'"
+                           decoration-danger="reservoir_status in ('expired', 'too_old')"/>
+                    <field name="next_test_date" optional="show"/>
+                    <field name="vehicle_id" optional="show"/>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- === VUE KANBAN LOTS GPL === -->
+        <record id="view_stock_lot_kanban_gpl" model="ir.ui.view">
+            <field name="name">stock.lot.kanban.gpl</field>
+            <field name="model">stock.lot</field>
+            <field name="arch" type="xml">
+                <kanban string="Réservoirs GPL" sample="1">
+                    <field name="id"/>
+                    <field name="name"/>
+                    <field name="product_id"/>
+                    <field name="fabricant_id"/>
+                    <field name="capacity"/>
+                    <field name="state"/>
+                    <field name="reservoir_status"/>
+                    <field name="manufacturing_date"/>
+                    <field name="next_test_date"/>
+                    <field name="vehicle_id"/>
+                    <field name="days_until_test"/>
+                    <field name="is_gpl_reservoir"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div class="oe_kanban_card oe_kanban_global_click"
+                                 t-attf-class="#{record.reservoir_status.raw_value == 'expired' ? 'border-danger' : record.reservoir_status.raw_value == 'expiring_soon' ? 'border-warning' : ''}">
+                                <div class="oe_kanban_content">
+                                    <div class="o_kanban_record_top">
+                                        <div class="o_kanban_record_headings">
+                                            <strong class="o_kanban_record_title">
+                                                <span><t t-esc="record.name.value"/></span>
+                                            </strong>
+                                            <span class="o_kanban_record_subtitle">
+                                                <t t-if="record.fabricant_id.value">
+                                                    <t t-esc="record.fabricant_id.value"/>
+                                                </t>
+                                                <t t-if="record.capacity.value">
+                                                    - <t t-esc="record.capacity.value"/>L
+                                                </t>
+                                            </span>
+                                        </div>
+                                        <div class="o_kanban_record_top_right">
+                                            <span t-att-class="'badge badge-pill ' + (record.reservoir_status.raw_value == 'valid' ? 'badge-success' : record.reservoir_status.raw_value == 'expiring_soon' ? 'badge-warning' : 'badge-danger')">
+                                                <t t-if="record.reservoir_status.raw_value == 'valid'">Valide</t>
+                                                <t t-if="record.reservoir_status.raw_value == 'expiring_soon'">Expire bientôt</t>
+                                                <t t-if="record.reservoir_status.raw_value == 'expired'">Expiré</t>
+                                                <t t-if="record.reservoir_status.raw_value == 'too_old'">Trop ancien</t>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="o_kanban_record_body">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <span t-att-class="'badge badge-pill ' + (record.state.raw_value == 'stock' ? 'badge-primary' : record.state.raw_value == 'installed' ? 'badge-info' : 'badge-secondary')">
+                                                    <t t-if="record.state.raw_value == 'stock'">Stock</t>
+                                                    <t t-if="record.state.raw_value == 'installed'">Installé</t>
+                                                    <t t-if="record.state.raw_value == 'test_required'">Test requis</t>
+                                                    <t t-if="record.state.raw_value == 'expired'">Expiré</t>
+                                                    <t t-if="record.state.raw_value == 'scrapped'">Rebut</t>
+                                                </span>
+                                            </div>
+                                            <div class="col-6 text-right">
+                                                <t t-if="record.vehicle_id.value">
+                                                    <small><i class="fa fa-car"/> <t t-esc="record.vehicle_id.value"/></small>
+                                                </t>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-2">
+                                            <div class="col-12">
+                                                <t t-if="record.manufacturing_date.value">
+                                                    <small>Fabriqué: <t t-esc="record.manufacturing_date.value"/></small>
+                                                </t>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="o_kanban_record_bottom">
+                                        <div class="oe_kanban_bottom_left">
+                                            <t t-if="record.next_test_date.value">
+                                                <small>
+                                                    <t t-if="record.days_until_test.raw_value > 0">
+                                                        Prochain test: <t t-esc="record.next_test_date.value"/>
+                                                    </t>
+                                                    <t t-if="record.days_until_test.raw_value &lt;= 0">
+                                                        <span class="text-danger">Test en retard</span>
+                                                    </t>
+                                                </small>
+                                            </t>
+                                        </div>
+                                        <div class="oe_kanban_bottom_right">
+                                            <t t-if="record.days_until_test.raw_value > 0">
+                                                <small class="text-muted">
+                                                    <t t-esc="record.days_until_test.value"/> jours
+                                                </small>
+                                            </t>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <!-- === RECHERCHE LOTS GPL === -->
+        <record id="view_stock_lot_search_gpl" model="ir.ui.view">
+            <field name="name">stock.lot.search.gpl</field>
+            <field name="model">stock.lot</field>
+            <field name="inherit_id" ref="stock.search_product_lot_filter"/>
+            <field name="arch" type="xml">
+
+                <!-- Ajouter champs de recherche GPL -->
+                <xpath expr="//field[@name='name']" position="after">
+                    <field name="fabricant_id" string="Fabricant"/>
+                    <field name="certification_number" string="Certification"/>
+                    <field name="vehicle_id" string="Véhicule"/>
+                    <field name="capacity" string="Capacité"/>
+                </xpath>
+
+                <!-- Ajouter filtres GPL -->
+                <xpath expr="//filter[@name='creation_date']" position="after">
+                    <separator/>
+                    <filter name="is_gpl_reservoir" string="Réservoirs GPL" domain="[('is_gpl_reservoir', '=', True)]"/>
+                    <separator/>
+                    <filter name="state_stock" string="En stock" domain="[('state', '=', 'stock')]"/>
+                    <filter name="state_installed" string="Installés" domain="[('state', '=', 'installed')]"/>
+                    <filter name="state_expired" string="Expirés" domain="[('state', '=', 'expired')]"/>
+                    <separator/>
+                    <filter name="status_valid" string="Valides" domain="[('reservoir_status', '=', 'valid')]"/>
+                    <filter name="status_expiring" string="Expirent bientôt" domain="[('reservoir_status', '=', 'expiring_soon')]"/>
+                    <filter name="status_expired" string="Statut expiré" domain="[('reservoir_status', '=', 'expired')]"/>
+                    <filter name="status_too_old" string="Trop anciens" domain="[('reservoir_status', '=', 'too_old')]"/>
+                    <separator/>
+                    <filter name="test_overdue" string="Test en retard" domain="[('is_test_overdue', '=', True)]"/>
+                    <filter name="with_vehicle" string="Avec véhicule" domain="[('vehicle_id', '!=', False)]"/>
+                </xpath>
+
+                <!-- Ajouter groupes GPL -->
+                <xpath expr="//group[@expand='0']" position="inside">
+                    <filter name="group_fabricant" string="Fabricant" context="{'group_by': 'fabricant_id'}"/>
+                    <filter name="group_state" string="État" context="{'group_by': 'state'}"/>
+                    <filter name="group_reservoir_status" string="Statut réservoir" context="{'group_by': 'reservoir_status'}"/>
+                    <filter name="group_vehicle" string="Véhicule" context="{'group_by': 'vehicle_id'}"/>
+                    <filter name="group_manufacturing_date" string="Date fabrication" context="{'group_by': 'manufacturing_date'}"/>
+                </xpath>
+
+            </field>
+        </record>
+
+    </data>
+</odoo>

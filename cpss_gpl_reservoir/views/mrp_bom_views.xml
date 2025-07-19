@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- === VUE FORMULAIRE BOM GPL === -->
+        <record id="view_mrp_bom_form_gpl" model="ir.ui.view">
+            <field name="name">mrp.bom.form.gpl</field>
+            <field name="model">mrp.bom</field>
+            <field name="inherit_id" ref="mrp.mrp_bom_form_view"/>
+            <field name="arch" type="xml">
+
+                <!-- Ajouter information GPL dans l'en-tête -->
+                <xpath expr="//div[@class='oe_button_box']" position="after">
+                    <div class="alert alert-info" role="alert" modifiers="{'invisible': [('product_tmpl_id.is_gpl_kit', '=', False)]}">
+                        <i class="fa fa-info-circle"/> Cette nomenclature concerne un <strong>Kit GPL</strong>
+                    </div>
+                </xpath>
+
+                <!-- Ajouter colonnes GPL dans les lignes -->
+                <xpath expr="//field[@name='bom_line_ids']/tree/field[@name='product_id']" position="after">
+                    <field name="product_id" invisible="1"/>
+                    <field name="product_id.is_gpl_reservoir" string="Réservoir" optional="show"/>
+                    <field name="product_id.is_gpl_component" string="Composant" optional="show"/>
+                    <field name="product_id.gpl_fabricant_id" string="Fabricant" optional="show"/>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- === VUE ARBRE BOM GPL === -->
+        <record id="view_mrp_bom_tree_gpl" model="ir.ui.view">
+            <field name="name">mrp.bom.tree.gpl</field>
+            <field name="model">mrp.bom</field>
+            <field name="inherit_id" ref="mrp.mrp_bom_tree_view"/>
+            <field name="arch" type="xml">
+
+                <!-- Ajouter colonnes GPL -->
+                <xpath expr="//field[@name='product_tmpl_id']" position="after">
+                    <field name="product_tmpl_id.is_gpl_kit" string="Kit GPL" optional="show"/>
+                    <field name="product_tmpl_id.gpl_fabricant_id" string="Fabricant" optional="show"/>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- === RECHERCHE BOM GPL === -->
+        <record id="view_mrp_bom_search_gpl" model="ir.ui.view">
+            <field name="name">mrp.bom.search.gpl</field>
+            <field name="model">mrp.bom</field>
+            <field name="inherit_id" ref="mrp.view_mrp_bom_filter"/>
+            <field name="arch" type="xml">
+
+                <!-- Ajouter champs de recherche GPL -->
+                <xpath expr="//field[@name='product_tmpl_id']" position="after">
+                    <field name="product_tmpl_id.gpl_fabricant_id" string="Fabricant GPL"/>
+                    <field name="contains_gpl_reservoir" string="Contient réservoir"/>
+                    <field name="bom_line_ids.product_id.is_gpl_component" string="Contient composant"/>
+                </xpath>
+
+                <!-- Ajouter filtres GPL -->
+                <xpath expr="//filter[@name='inactive']" position="after">
+                    <separator/>
+                    <filter name="is_gpl_kit" string="Kits GPL" domain="[('product_tmpl_id.is_gpl_kit', '=', True)]"/>
+                    <filter name="has_gpl_reservoir" string="Avec réservoir" domain="[('bom_line_ids.product_id.is_gpl_reservoir', '=', True)]"/>
+                    <filter name="has_gpl_component" string="Avec composants GPL" domain="[('bom_line_ids.product_id.is_gpl_component', '=', True)]"/>
+                </xpath>
+
+                <!-- Ajouter groupes GPL -->
+                <xpath expr="//group[@expand='0']" position="inside">
+                    <filter name="group_fabricant" string="Fabricant" context="{'group_by': 'product_tmpl_id.gpl_fabricant_id'}"/>
+                    <filter name="group_gpl_type" string="Type GPL" context="{'group_by': 'product_tmpl_id.is_gpl_kit'}"/>
+                </xpath>
+
+            </field>
+        </record>
+
+    </data>
+</odoo>

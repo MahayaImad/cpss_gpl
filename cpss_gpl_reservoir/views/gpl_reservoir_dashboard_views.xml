@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- === VUE FORMULAIRE DASHBOARD === -->
+        <record id="view_gpl_reservoir_dashboard_form" model="ir.ui.view">
+            <field name="name">gpl.reservoir.dashboard.form</field>
+            <field name="model">gpl.reservoir.dashboard</field>
+            <field name="arch" type="xml">
+                <form string="Dashboard Réservoirs GPL">
+
+                    <!-- En-tête avec titre -->
+                    <div class="alert alert-primary">
+                        <div class="row">
+                            <div class="col-8">
+                                <h3><i class="fa fa-flask"/> Dashboard Réservoirs GPL</h3>
+                                <p class="mb-0">Analyse et suivi des réservoirs GPL en temps réel</p>
+                            </div>
+                            <div class="col-4 text-right">
+                                <button name="action_refresh_dashboard"
+                                        string="Actualiser"
+                                        type="object"
+                                        class="btn btn-primary"
+                                        icon="fa-refresh"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filtres -->
+                    <group string="Filtres">
+                        <group>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                        <group>
+                            <field name="fabricant_ids" widget="many2many_tags"/>
+                            <field name="state_filter"/>
+                        </group>
+                    </group>
+
+                    <!-- Statistiques principales -->
+                    <div class="row mt-3">
+                        <div class="col-md-2">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h1 class="text-primary">
+                                        <field name="total_reservoirs" readonly="1"/>
+                                    </h1>
+                                    <p class="card-text">Total Réservoirs</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h1 class="text-info">
+                                        <field name="reservoirs_stock" readonly="1"/>
+                                    </h1>
+                                    <p class="card-text">En Stock</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h1 class="text-success">
+                                        <field name="reservoirs_installed" readonly="1"/>
+                                    </h1>
+                                    <p class="card-text">Installés</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h1 class="text-warning">
+                                        <field name="reservoirs_expiring_soon" readonly="1"/>
+                                    </h1>
+                                    <p class="card-text">Expirent Bientôt</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h1 class="text-danger">
+                                        <field name="reservoirs_expired" readonly="1"/>
+                                    </h1>
+                                    <p class="card-text">Expirés</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h1 class="text-secondary">
+                                        <field name="average_age" readonly="1" widget="float"/>
+                                    </h1>
+                                    <p class="card-text">Âge Moyen (ans)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Graphiques -->
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Répartition par Statut</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="chart_status" class="o_chart_container">
+                                        <field name="chart_data_status" invisible="1"/>
+                                        <!-- Graphique sera rendu par JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Répartition par Fabricant</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="chart_fabricant" class="o_chart_container">
+                                        <field name="chart_data_fabricant" invisible="1"/>
+                                        <!-- Graphique sera rendu par JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Graphique âge -->
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Répartition par Âge</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="chart_age" class="o_chart_container">
+                                        <field name="chart_data_age" invisible="1"/>
+                                        <!-- Graphique sera rendu par JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions rapides -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Actions Rapides</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <button name="action_view_reservoirs"
+                                                    string="Voir Tous les Réservoirs"
+                                                    type="object"
+                                                    class="btn btn-primary btn-block"
+                                                    icon="fa-flask"/>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <button name="action_view_expired"
+                                                    string="Réservoirs Expirés"
+                                                    type="object"
+                                                    class="btn btn-danger btn-block"
+                                                    icon="fa-exclamation-triangle"/>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <button name="action_view_expiring_soon"
+                                                    string="Expirent Bientôt"
+                                                    type="object"
+                                                    class="btn btn-warning btn-block"
+                                                    icon="fa-clock-o"/>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <button name="action_generate_report"
+                                                    string="Générer Rapport"
+                                                    type="object"
+                                                    class="btn btn-info btn-block"
+                                                    icon="fa-file-pdf-o"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Champs cachés pour les données -->
+                    <div class="d-none">
+                        <field name="reservoirs_test_required"/>
+                    </div>
+
+                </form>
+            </field>
+        </record>
+
+        <!-- === VUE DASHBOARD KANBAN === -->
+        <record id="view_gpl_reservoir_dashboard_kanban" model="ir.ui.view">
+            <field name="name">gpl.reservoir.dashboard.kanban</field>
+            <field name="model">gpl.reservoir.dashboard</field>
+            <field name="arch" type="xml">
+                <kanban string="Dashboard Réservoirs" class="o_kanban_dashboard" create="false">
+                    <field name="total_reservoirs"/>
+                    <field name="reservoirs_stock"/>
+                    <field name="reservoirs_installed"/>
+                    <field name="reservoirs_expired"/>
+                    <field name="reservoirs_expiring_soon"/>
+                    <field name="average_age"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div class="oe_kanban_card oe_kanban_global_click">
+                                <div class="o_kanban_card_header">
+                                    <div class="o_kanban_card_header_title">
+                                        <div class="o_primary">Dashboard Réservoirs GPL</div>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_card_content">
+                                    <div class="row">
+                                        <div class="col-4">
+                                            <a name="action_view_reservoirs" type="object" class="d-block text-center">
+                                                <span class="fa fa-flask fa-3x text-primary"/>
+                                                <div><t t-esc="record.total_reservoirs.value"/></div>
+                                                <div>Total</div>
+                                            </a>
+                                        </div>
+                                        <div class="col-4">
+                                            <a name="action_view_expired" type="object" class="d-block text-center">
+                                                <span class="fa fa-exclamation-triangle fa-3x text-danger"/>
+                                                <div><t t-esc="record.reservoirs_expired.value"/></div>
+                                                <div>Expirés</div>
+                                            </a>
+                                        </div>
+                                        <div class="col-4">
+                                            <a name="action_view_expiring_soon" type="object" class="d-block text-center">
+                                                <span class="fa fa-clock-o fa-3x text-warning"/>
+                                                <div><t t-esc="record.reservoirs_expiring_soon.value"/></div>
+                                                <div>Expirent Bientôt</div>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+    </data>
+</odoo>

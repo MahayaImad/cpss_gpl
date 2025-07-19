@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- === CATÉGORIES PRODUITS GPL === -->
+
+        <!-- Catégorie principale GPL -->
+        <record id="product_category_gpl" model="product.category">
+            <field name="name">GPL</field>
+            <field name="parent_id" ref="product.product_category_all"/>
+            <field name="property_cost_method">average</field>
+            <field name="property_valuation">real_time</field>
+        </record>
+
+        <!-- Réservoirs GPL -->
+        <record id="product_category_gpl_reservoir" model="product.category">
+            <field name="name">Réservoirs GPL</field>
+            <field name="parent_id" ref="product_category_gpl"/>
+            <field name="property_cost_method">average</field>
+            <field name="property_valuation">real_time</field>
+        </record>
+
+        <!-- Composants GPL -->
+        <record id="product_category_gpl_component" model="product.category">
+            <field name="name">Composants GPL</field>
+            <field name="parent_id" ref="product_category_gpl"/>
+            <field name="property_cost_method">average</field>
+            <field name="property_valuation">real_time</field>
+        </record>
+
+        <!-- Sous-catégories composants -->
+        <record id="product_category_gpl_injector" model="product.category">
+            <field name="name">Injecteurs</field>
+            <field name="parent_id" ref="product_category_gpl_component"/>
+        </record>
+
+        <record id="product_category_gpl_regulator" model="product.category">
+            <field name="name">Régulateurs</field>
+            <field name="parent_id" ref="product_category_gpl_component"/>
+        </record>
+
+        <record id="product_category_gpl_valve" model="product.category">
+            <field name="name">Vannes</field>
+            <field name="parent_id" ref="product_category_gpl_component"/>
+        </record>
+
+        <record id="product_category_gpl_electronic" model="product.category">
+            <field name="name">Électronique</field>
+            <field name="parent_id" ref="product_category_gpl_component"/>
+        </record>
+
+        <record id="product_category_gpl_tube" model="product.category">
+            <field name="name">Tuyaux et raccords</field>
+            <field name="parent_id" ref="product_category_gpl_component"/>
+        </record>
+
+        <!-- Kits GPL -->
+        <record id="product_category_gpl_kit" model="product.category">
+            <field name="name">Kits GPL</field>
+            <field name="parent_id" ref="product_category_gpl"/>
+            <field name="property_cost_method">average</field>
+            <field name="property_valuation">real_time</field>
+        </record>
+
+        <!-- Services GPL -->
+        <record id="product_category_gpl_service" model="product.category">
+            <field name="name">Services GPL</field>
+            <field name="parent_id" ref="product_category_gpl"/>
+            <field name="property_cost_method">standard</field>
+            <field name="property_valuation">manual_periodic</field>
+        </record>
+
+    </data>
+</odoo>
