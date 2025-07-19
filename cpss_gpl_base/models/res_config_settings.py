@@ -117,13 +117,3 @@ class ResConfigSettings(models.TransientModel):
         params.set_param('cpss_gpl.notification_email', self.gpl_notification_email or '')
         params.set_param('cpss_gpl.certificate_template', self.gpl_certificate_template)
 
-    def action_run_setup_wizard(self):
-        """Lance l'assistant de configuration GPL"""
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Assistant de Configuration GPL'),
-            'res_model': 'gpl.setup.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {'default_from_settings': True}
-        }

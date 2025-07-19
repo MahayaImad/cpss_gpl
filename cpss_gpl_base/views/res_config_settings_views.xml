@@ -10,18 +10,14 @@
             <field name="inherit_id" ref="base.res_config_settings_view_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//form" position="inside">
-                    <app data-string="GPL CPSS" id="gpl" string="GPL CPSS" name="gpl" groups="cpss_gpl_base.group_gpl_manager">
-                    <!-- === SECTION GPL CPSS === -->
-                    <block title="Paramètres pour la gestion GPL - Cedar Peak Systems &amp; Solutions" name="cpss_gpl">
+                    <app data-string="GPL CPSS" string="GPL CPSS" name="cpss_gpl_base" groups="cpss_gpl_base.group_gpl_manager">
 
                         <!-- === INFORMATIONS ENTREPRISE === -->
-                        <h2>Informations Entreprise</h2>
+                        <block title="Paramètres pour la gestion GPL - Informations Entreprise" name="cpss_gpl">
 
                         <setting>
                             <field name="gpl_company_name"/>
                             <div class="content-group">
-                                <label for="gpl_company_name"/>
-                                <field name="gpl_company_name" class="o_light_label"/>
                                 <div class="text-muted">
                                     Nom affiché sur les certificats et rapports
                                 </div>
@@ -31,21 +27,19 @@
                         <setting>
                             <field name="gpl_company_license"/>
                             <div class="content-group">
-                                <label for="gpl_company_license"/>
-                                <field name="gpl_company_license" class="o_light_label"/>
                                 <div class="text-muted">
                                     Numéro d'agrément officiel pour les installations GPL
                                 </div>
                             </div>
                         </setting>
+                        </block>
 
                         <!-- === PARAMÈTRES WORKFLOW === -->
-                        <h2>Workflow et Processus</h2>
+                        <block title="Workflow et Processus" name="workflow">
 
                         <setting>
                             <field name="gpl_use_advanced_workflow"/>
                             <div class="content-group">
-                                <label for="gpl_use_advanced_workflow"/>
                                 <div class="text-muted">
                                     Activer le workflow détaillé avec plus d'étapes de validation
                                 </div>
@@ -55,7 +49,6 @@
                         <setting>
                             <field name="gpl_require_appointment"/>
                             <div class="content-group">
-                                <label for="gpl_require_appointment"/>
                                 <div class="text-muted">
                                     Rendre les rendez-vous obligatoires pour les interventions
                                 </div>
@@ -65,22 +58,19 @@
                         <setting>
                             <field name="gpl_default_warranty_months"/>
                             <div class="content-group">
-                                <label for="gpl_default_warranty_months"/>
-                                <field name="gpl_default_warranty_months" class="o_light_label"/>
                                 <div class="text-muted">
                                     Durée de garantie par défaut (en mois)
                                 </div>
                             </div>
                         </setting>
+                        </block>
 
                         <!-- === PARAMÈTRES RÉSERVOIRS === -->
-                        <h2>Gestion des Réservoirs</h2>
+                        <block title="Gestion des Réservoirs" name="reservoirs" >
 
                         <setting>
                             <field name="gpl_reservoir_test_frequency"/>
                             <div class="content-group">
-                                <label for="gpl_reservoir_test_frequency"/>
-                                <field name="gpl_reservoir_test_frequency" class="o_light_label"/>
                                 <div class="text-muted">
                                     Fréquence des tests de réservoir (en années)
                                 </div>
@@ -90,22 +80,18 @@
                         <setting>
                             <field name="gpl_reservoir_max_age"/>
                             <div class="content-group">
-                                <label for="gpl_reservoir_max_age"/>
-                                <field name="gpl_reservoir_max_age" class="o_light_label"/>
                                 <div class="text-muted">
                                     Âge maximum autorisé pour un réservoir (en années)
                                 </div>
                             </div>
                         </setting>
+                        </block>
 
                         <!-- === NOTIFICATIONS === -->
-                        <h2>Notifications et Alertes</h2>
-
+                        <block title="Notifications et Alertes" name="notifications">
                         <setting>
                             <field name="gpl_notification_test_days"/>
                             <div class="content-group">
-                                <label for="gpl_notification_test_days"/>
-                                <field name="gpl_notification_test_days" class="o_light_label"/>
                                 <div class="text-muted">
                                     Nombre de jours avant expiration pour envoyer l'alerte
                                 </div>
@@ -115,46 +101,26 @@
                         <setting>
                             <field name="gpl_notification_email"/>
                             <div class="content-group">
-                                <label for="gpl_notification_email"/>
-                                <field name="gpl_notification_email" class="o_light_label"/>
                                 <div class="text-muted">
                                     Email pour recevoir les notifications système
                                 </div>
                             </div>
                         </setting>
+                        </block>
 
                         <!-- === RAPPORTS === -->
-                        <h2>Rapports et Certificats</h2>
+                        <block title="Rapports et Certificats" name="certificats">
 
                         <setting>
                             <field name="gpl_certificate_template"/>
                             <div class="content-group">
-                                <label for="gpl_certificate_template"/>
-                                <field name="gpl_certificate_template" class="o_light_label"/>
                                 <div class="text-muted">
                                     Template à utiliser pour les certificats
                                 </div>
                             </div>
                         </setting>
 
-                        <!-- === ASSISTANT DE CONFIGURATION === -->
-                        <h2>Assistant de Configuration</h2>
-
-                        <setting>
-                            <div class="content-group">
-                                <div class="alert alert-info">
-                                    <h5><i class="fa fa-magic"/> Assistant de Configuration</h5>
-                                    <p>Utilisez l'assistant pour configurer rapidement votre système GPL.</p>
-                                    <button name="action_run_setup_wizard"
-                                            string="Lancer l'Assistant"
-                                            type="object"
-                                            class="btn btn-primary"
-                                            icon="fa-magic"/>
-                                </div>
-                            </div>
-                        </setting>
-
-                    </block>
+                        </block>
                     </app>
                 </xpath>
             </field>

@@ -10,7 +10,6 @@
 
         🔧 **Fonctionnalités :**
         - Configuration initiale du système GPL
-        - Assistant de paramétrage
         - Séquences et données de base
         - Sécurité et droits d'accès
         - Paramètres généraux
@@ -50,9 +49,6 @@
         # === CONFIGURATIONS ===
         'views/res_config_settings_views.xml',
 
-        # === ASSISTANT DE CONFIGURATION ===
-        'views/gpl_setup_wizard_views.xml',
-
         # === MENUS DE BASE ===
         'views/gpl_base_menus.xml',
     ],
@@ -62,6 +58,9 @@
     'application': True,
     'auto_install': False,
     'sequence': 10,
+
+    # Icône du module dans les paramètres
+    'web_icon': 'cpss_gpl_base,static/description/icon.png',
 
     # Métadonnées
     'support': 'support@cedarpss.com',

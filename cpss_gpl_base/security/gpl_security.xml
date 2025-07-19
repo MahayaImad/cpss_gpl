@@ -15,6 +15,7 @@
         <record id="group_gpl_user" model="res.groups">
             <field name="name">GPL : Utilisateur</field>
             <field name="category_id" ref="module_category_gpl"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
             <field name="comment">Peut consulter les données GPL de base</field>
         </record>
 
@@ -39,17 +40,8 @@
             <field name="name">GPL : Administrateur</field>
             <field name="category_id" ref="module_category_gpl"/>
             <field name="implied_ids" eval="[(4, ref('group_gpl_manager'))]"/>
+            <field name="users" eval="[(4, ref('base.user_admin'))]"/>
             <field name="comment">Accès complet à la configuration GPL</field>
-        </record>
-
-        <!-- === RÈGLES D'ACCÈS MULTI-SOCIÉTÉS === -->
-
-        <!-- Les données GPL sont limitées à la société de l'utilisateur -->
-        <record id="gpl_base_company_rule" model="ir.rule">
-            <field name="name">GPL : Accès multi-sociétés</field>
-            <field name="model_id" ref="base.model_res_company"/>
-            <field name="domain_force">[('id', 'in', company_ids)]</field>
-            <field name="groups" eval="[(4, ref('group_gpl_user'))]"/>
         </record>
 
     </data>

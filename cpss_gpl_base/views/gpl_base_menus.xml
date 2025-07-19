@@ -36,6 +36,7 @@
                   sequence="100"
                   groups="cpss_gpl_base.group_gpl_admin"/>
 
+
         <!-- Configuration Générale -->
         <menuitem id="menu_gpl_settings"
                   name="Paramètres GPL"
@@ -44,39 +45,31 @@
                   sequence="10"
                   groups="cpss_gpl_base.group_gpl_admin"/>
 
-        <!-- Assistant de Configuration -->
-        <menuitem id="menu_gpl_setup_wizard"
-                  name="Assistant de Configuration"
-                  parent="menu_gpl_config"
-                  action="cpss_gpl_base.action_gpl_setup_wizard"
-                  sequence="20"
-                  groups="cpss_gpl_base.group_gpl_admin"/>
-
         <!-- === SOUS-MENU AIDE === -->
         <menuitem id="menu_gpl_help"
                   name="Aide"
                   parent="menu_gpl_main"
                   sequence="200"/>
 
-        <!-- Documentation (lien externe) -->
-        <menuitem id="menu_gpl_documentation"
-                  name="Documentation"
-                  parent="menu_gpl_help"
-                  sequence="10"
-                  action="action_documentation_redirect"/>
+<!--        &lt;!&ndash; Documentation (lien externe) &ndash;&gt;-->
+<!--        <menuitem id="menu_gpl_documentation"-->
+<!--                  name="Documentation"-->
+<!--                  parent="menu_gpl_help"-->
+<!--                  sequence="10"-->
+<!--                  action="action_documentation_redirect"/>-->
 
-        <!-- Support (lien externe) -->
-        <menuitem id="menu_gpl_support"
-                  name="Support CPSS"
-                  parent="menu_gpl_help"
-                  sequence="20"
-                  action="action_support_redirect"/>
+<!--        &lt;!&ndash; Support (lien externe) &ndash;&gt;-->
+<!--        <menuitem id="menu_gpl_support"-->
+<!--                  name="Support CPSS"-->
+<!--                  parent="menu_gpl_help"-->
+<!--                  sequence="20"-->
+<!--                  action="action_support_redirect"/>-->
 
-        <!-- Redirection CPSS -->
-        <menuitem id="menu_gpl_website"
-                  name="Site Web CPSS"
-                  parent="menu_gpl_help"
-                  sequence="30"
-                  action="action_website_redirect"/>
+<!--        &lt;!&ndash; Redirection CPSS &ndash;&gt;-->
+<!--        <menuitem id="menu_gpl_website"-->
+<!--                  name="Site Web CPSS"-->
+<!--                  parent="menu_gpl_help"-->
+<!--                  sequence="30"-->
+<!--                  action="action_website_redirect"/>-->
 
 </odoo>
