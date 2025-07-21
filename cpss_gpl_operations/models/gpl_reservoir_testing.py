@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
+from datetime import timedelta, date
 
 
 class GplReservoirTesting(models.Model):
@@ -10,7 +11,7 @@ class GplReservoirTesting(models.Model):
     _name = 'gpl.reservoir.testing'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Réépreuve Réservoir GPL'
-    _order = 'date_testing desc'
+    _order = 'test_date desc'
 
     name = fields.Char(
         string='Référence',
@@ -20,75 +21,129 @@ class GplReservoirTesting(models.Model):
         copy=False
     )
 
-    # Client et véhicule
-    vehicle_id = fields.Many2one(
-        'gpl.vehicle',
-        string='Véhicule',
-        required=True,
-        tracking=True
-    )
-    client_id = fields.Many2one(
-        'res.partner',
-        string='Client',
-        related='vehicle_id.client_id',
-        store=True,
-        readonly=True
-    )
-
     # Réservoir
     reservoir_lot_id = fields.Many2one(
         'stock.lot',
         string='Réservoir',
-        related='vehicle_id.reservoir_lot_id',
-        store=True,
-        readonly=True
+        required=True,
+        domain=[('product_id.gpl_type', '=', 'reservoir')],
+        tracking=True
     )
+
+    # Informations du réservoir
     reservoir_serial = fields.Char(
         string='N° de série',
         related='reservoir_lot_id.name',
         readonly=True
     )
 
-    # Dates
-    date_testing = fields.Date(
-        string='Date de réépreuve',
+    fabrication_date = fields.Date(
+        string='Date de fabrication',
+        related='reservoir_lot_id.fabrication_date',
+        readonly=True
+    )
+
+    last_test_date = fields.Date(
+        string='Dernière réépreuve',
+        compute='_compute_last_test_date',
+        store=True
+    )
+
+    # Véhicule associé (optionnel)
+    vehicle_id = fields.Many2one(
+        'gpl_vehicle',
+        string='Véhicule',
+        help="Véhicule sur lequel le réservoir est installé"
+    )
+
+    client_id = fields.Many2one(
+        'res.partner',
+        string='Client',
+        compute='_compute_client_id',
+        store=True
+    )
+
+    # Test information
+    test_date = fields.Date(
+        string='Date du test',
         default=fields.Date.today,
         required=True,
         tracking=True
     )
-    date_next_testing = fields.Date(
-        string='Prochaine réépreuve',
-        help="Date de la prochaine réépreuve obligatoire"
-    )
-    date_last_testing = fields.Date(
-        string='Dernière réépreuve',
-        compute='_compute_last_testing',
-        help="Date de la dernière réépreuve effectuée"
-    )
 
-    # Technicien
+    test_type = fields.Selection([
+        ('periodic', 'Réépreuve périodique'),
+        ('initial', 'Épreuve initiale'),
+        ('exceptional', 'Réépreuve exceptionnelle'),
+        ('repair', 'Après réparation'),
+    ], string='Type de test', default='periodic', required=True)
+
+    # Technicien/Organisme
     technician_id = fields.Many2one(
         'hr.employee',
         string='Technicien',
-        domain=[('department_id.name', 'ilike', 'technique')]
+        required=True
     )
 
-    # Tests effectués
-    pressure_test = fields.Float(
-        string='Pression de test (bar)',
-        help="Pression utilisée pour le test hydraulique"
+    testing_center = fields.Many2one(
+        'res.partner',
+        string='Centre de test',
+        domain=[('supplier_rank', '>', 0)]
     )
-    test_duration = fields.Float(
+
+    # Paramètres du test
+    test_pressure = fields.Float(
+        string='Pression de test (bar)',
+        default=30.0,
+        required=True
+    )
+
+    test_duration = fields.Integer(
         string='Durée du test (min)',
-        help="Durée du test de pression en minutes"
+        default=10,
+        required=True
+    )
+
+    ambient_temperature = fields.Float(
+        string='Température ambiante (°C)'
+    )
+
+    # Mesures
+    initial_pressure = fields.Float(
+        string='Pression initiale (bar)'
+    )
+
+    final_pressure = fields.Float(
+        string='Pression finale (bar)'
+    )
+
+    pressure_drop = fields.Float(
+        string='Chute de pression (%)',
+        compute='_compute_pressure_drop',
+        store=True
     )
 
     # Résultats
-    test_result = fields.Selection([
+    visual_inspection = fields.Selection([
         ('pass', 'Conforme'),
         ('fail', 'Non conforme'),
+    ], string='Inspection visuelle', required=True)
+
+    pressure_test = fields.Selection([
+        ('pass', 'Conforme'),
+        ('fail', 'Non conforme'),
+    ], string='Test de pression', required=True)
+
+    marking_check = fields.Selection([
+        ('pass', 'Conforme'),
+        ('fail', 'Non conforme'),
+    ], string='Vérification marquage', required=True)
+
+    result = fields.Selection([
+        ('pass', 'Validé'),
+        ('fail', 'Refusé'),
         ('pending', 'En attente'),
-    ], string='Résultat', default='pending', tracking=True)
+    ], string='Résultat global', compute='_compute_result', store=True, tracking=True)
 
     # État
     state = fields.Selection([
@@ -99,15 +154,42 @@ class GplReservoirTesting(models.Model):
         ('cancel', 'Annulé'),
     ], string='État', default='draft', tracking=True)
 
-    # Certificat
-    certificate_number = fields.Char(
-        string='N° certificat de réépreuve',
-        help="Numéro du certificat délivré après la réépreuve"
+    # Validité
+    validity_years = fields.Integer(
+        string='Validité (années)',
+        default=5,
+        required=True
+    )
+
+    next_test_date = fields.Date(
+        string='Prochaine réépreuve',
+        compute='_compute_next_test_date',
+        store=True
     )
 
     # Observations
-    observations = fields.Text(string='Observations')
-    defects_found = fields.Text(string='Défauts constatés')
+    observations = fields.Text(
+        string='Observations'
+    )
+
+    defects_found = fields.Text(
+        string='Défauts constatés'
+    )
+
+    corrective_actions = fields.Text(
+        string='Actions correctives'
+    )
+
+    # Certificat
+    certificate_number = fields.Char(
+        string='N° Certificat',
+        readonly=True
+    )
+
+    certificate_date = fields.Date(
+        string='Date du certificat',
+        readonly=True
+    )
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -116,79 +198,113 @@ class GplReservoirTesting(models.Model):
                 vals['name'] = self.env['ir.sequence'].next_by_code('gpl.reservoir.testing') or 'New'
         return super().create(vals_list)
 
-    @api.depends('vehicle_id', 'reservoir_lot_id')
-    def _compute_last_testing(self):
-        for record in self:
-            if record.reservoir_lot_id:
-                # Chercher la dernière réépreuve pour ce réservoir
-                last_testing = self.search([
-                    ('reservoir_lot_id', '=', record.reservoir_lot_id.id),
-                    ('state', '=', 'done'),
-                    ('id', '!=', record.id)
-                ], order='date_testing desc', limit=1)
-
-                record.date_last_testing = last_testing.date_testing if last_testing else False
+    @api.depends('vehicle_id')
+    def _compute_client_id(self):
+        for test in self:
+            if test.vehicle_id:
+                test.client_id = test.vehicle_id.client_id
             else:
-                record.date_last_testing = False
+                test.client_id = False
 
-    def action_start(self):
-        """Démarre la réépreuve"""
+    @api.depends('reservoir_lot_id')
+    def _compute_last_test_date(self):
+        for test in self:
+            if test.reservoir_lot_id:
+                # Chercher le dernier test terminé pour ce réservoir
+                last_test = self.search([
+                    ('reservoir_lot_id', '=', test.reservoir_lot_id.id),
+                    ('state', '=', 'done'),
+                    ('id', '!=', test.id)
+                ], order='test_date desc', limit=1)
+                test.last_test_date = last_test.test_date if last_test else False
+            else:
+                test.last_test_date = False
+
+    @api.depends('initial_pressure', 'final_pressure')
+    def _compute_pressure_drop(self):
+        for test in self:
+            if test.initial_pressure and test.initial_pressure > 0:
+                test.pressure_drop = ((test.initial_pressure - test.final_pressure) / test.initial_pressure) * 100
+            else:
+                test.pressure_drop = 0
+
+    @api.depends('visual_inspection', 'pressure_test', 'marking_check')
+    def _compute_result(self):
+        for test in self:
+            if test.visual_inspection and test.pressure_test and test.marking_check:
+                if all(check == 'pass' for check in [test.visual_inspection, test.pressure_test, test.marking_check]):
+                    test.result = 'pass'
+                else:
+                    test.result = 'fail'
+            else:
+                test.result = 'pending'
+
+    @api.depends('test_date', 'validity_years')
+    def _compute_next_test_date(self):
+        for test in self:
+            if test.test_date and test.validity_years:
+                test.next_test_date = test.test_date + timedelta(days=test.validity_years * 365)
+            else:
+                test.next_test_date = False
+
+    @api.constrains('reservoir_lot_id', 'test_date')
+    def _check_reservoir_age(self):
+        for test in self:
+            if test.reservoir_lot_id and test.reservoir_lot_id.fabrication_date:
+                age_years = (test.test_date - test.reservoir_lot_id.fabrication_date).days / 365
+                if age_years > 15:
+                    raise UserError(_("Ce réservoir a plus de 15 ans et ne peut plus être rééprouvé."))
+
+    def action_schedule(self):
+        """Planifie le test"""
         self.ensure_one()
         if self.state != 'draft':
-            raise UserError(_("La réépreuve doit être en brouillon pour être démarrée."))
+            raise UserError(_("Seul un test en brouillon peut être planifié."))
+        self.state = 'scheduled'
 
-        if not self.technician_id:
-            raise UserError(_("Veuillez assigner un technicien."))
-
-        if not self.reservoir_lot_id:
-            raise UserError(_("Le véhicule doit avoir un réservoir installé."))
-
+    def action_start(self):
+        """Démarre le test"""
+        self.ensure_one()
+        if self.state not in ['draft', 'scheduled']:
+            raise UserError(_("Le test doit être en brouillon ou planifié pour être démarré."))
         self.state = 'in_progress'
 
-    def action_validate(self):
-        """Valide la réépreuve"""
+    def action_done(self):
+        """Termine le test"""
         self.ensure_one()
         if self.state != 'in_progress':
-            raise UserError(_("La réépreuve doit être en cours pour être validée."))
+            raise UserError(_("Le test doit être en cours pour être terminé."))
 
-        if self.test_result == 'pending':
-            raise UserError(_("Veuillez saisir le résultat du test."))
+        if self.result == 'pending':
+            raise UserError(_("Veuillez compléter tous les résultats de test."))
 
-        if not self.pressure_test or not self.test_duration:
-            raise UserError(_("Veuillez saisir la pression et la durée du test."))
-
-        # Si le test est réussi
-        if self.test_result == 'pass':
-            # Générer un certificat
-            if not self.certificate_number:
-                self.certificate_number = self.env['ir.sequence'].next_by_code('gpl.testing.certificate') or 'TEST-001'
-
-            # Calculer la prochaine date (10 ans par défaut)
-            from dateutil.relativedelta import relativedelta
-            self.date_next_testing = fields.Date.today() + relativedelta(years=10)
-
-            # Mettre à jour le réservoir
-            if self.reservoir_lot_id:
-                self.reservoir_lot_id.write({
-                    'gpl_last_testing_date': self.date_testing,
-                    'gpl_next_testing_date': self.date_next_testing,
-                    'gpl_testing_certificate': self.certificate_number
-                })
+        # Générer le certificat si validé
+        if self.result == 'pass' and not self.certificate_number:
+            self.certificate_number = self.env['ir.sequence'].next_by_code(
+                'gpl.reepreuve.certificate') or f'REEP-{self.id}'
+            self.certificate_date = fields.Date.today()
 
         self.state = 'done'
 
+        # Mettre à jour le réservoir
+        if self.reservoir_lot_id:
+            self.reservoir_lot_id.write({
+                'derniere_reepreuve': self.test_date,
+                'prochaine_reepreuve': self.next_test_date,
+                'gpl_reservoir_state': 'valid' if self.result == 'pass' else 'expired'
+            })
+
     def action_cancel(self):
-        """Annule la réépreuve"""
+        """Annule le test"""
         self.ensure_one()
         if self.state == 'done':
-            raise UserError(_("Une réépreuve terminée ne peut pas être annulée."))
-
+            raise UserError(_("Un test terminé ne peut pas être annulé."))
         self.state = 'cancel'
 
     def action_print_certificate(self):
         """Imprime le certificat de réépreuve"""
         self.ensure_one()
-        if self.state != 'done' or self.test_result != 'pass':
-            raise UserError(_("Le certificat ne peut être imprimé que pour une réépreuve réussie."))
+        if self.state != 'done' or self.result != 'pass':
+            raise UserError(_("Le certificat ne peut être imprimé que pour un test validé et terminé."))
 
-        return self.env.ref('cpss_gpl_operations.report_gpl_testing_certificate').report_action(self)
+        return self.env.ref('cpss_gpl_operations.report_gpl_reepreuve_certificate').report_action(self)

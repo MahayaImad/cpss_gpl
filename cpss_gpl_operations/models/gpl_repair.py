@@ -5,12 +5,12 @@ from odoo.exceptions import UserError
 
 class GplRepairOrder(models.Model):
     """
-    Modèle simplifié pour les réparations GPL
+    Gestion simplifiée des réparations GPL
     """
     _name = 'gpl.repair.order'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Ordre de Réparation GPL'
-    _order = 'date_repair desc'
+    _order = 'priority desc, date_order desc'
 
     name = fields.Char(
         string='Référence',
@@ -22,11 +22,13 @@ class GplRepairOrder(models.Model):
 
     # Client et véhicule
     vehicle_id = fields.Many2one(
-        'gpl.vehicle',
+        'gpl_vehicle',  # CORRIGÉ
         string='Véhicule',
         required=True,
-        tracking=True
+        tracking=True,
+        index=True
     )
+
     client_id = fields.Many2one(
         'res.partner',
         string='Client',
@@ -35,75 +37,99 @@ class GplRepairOrder(models.Model):
         readonly=True
     )
 
-    # Type de réparation
-    repair_type = fields.Selection([
-        ('reservoir', 'Réservoir'),
-        ('injector', 'Injecteurs'),
-        ('tube', 'Tuyauterie'),
-        ('pressure', 'Système de pression'),
-        ('electronic', 'Électronique'),
-        ('control', 'Contrôle périodique'),
-        ('other', 'Autre'),
-    ], string='Type de réparation', required=True, default='other')
-
     # Dates
-    date_repair = fields.Datetime(
-        string='Date de réparation',
+    date_order = fields.Datetime(
+        string='Date de création',
         default=fields.Datetime.now,
         required=True,
+        readonly=True
+    )
+
+    date_scheduled = fields.Datetime(
+        string='Date planifiée',
         tracking=True
     )
-    date_end = fields.Datetime(
+
+    date_start = fields.Datetime(
+        string='Date de début',
+        tracking=True
+    )
+
+    date_done = fields.Datetime(
         string='Date de fin',
         tracking=True
     )
 
-    # Technicien principal
-    technician_id = fields.Many2one(
-        'hr.employee',
-        string='Technicien principal',
-        domain=[('department_id.name', 'ilike', 'technique')]
+    # Informations de réparation
+    repair_type = fields.Selection([
+        ('maintenance', 'Maintenance préventive'),
+        ('repair', 'Réparation'),
+        ('inspection', 'Inspection'),
+        ('modification', 'Modification'),
+        ('urgent', 'Intervention urgente'),
+    ], string='Type de réparation', default='repair', required=True)
+
+    priority = fields.Selection([
+        ('0', 'Normale'),
+        ('1', 'Urgente'),
+        ('2', 'Très urgente'),
+    ], string='Priorité', default='0')
+
+    # Diagnostic
+    symptoms = fields.Text(
+        string='Symptômes décrits',
+        help="Description des problèmes rapportés par le client"
     )
 
-    # Diagnostic et solution
-    diagnostic = fields.Text(
-        string='Diagnostic',
-        help="Description du problème identifié"
+    diagnosis = fields.Text(
+        string='Diagnostic technique',
+        help="Diagnostic établi par le technicien"
     )
+
     solution = fields.Text(
         string='Solution appliquée',
         help="Description de la réparation effectuée"
     )
 
-    # Produits utilisés
+    # Techniciens
+    technician_ids = fields.Many2many(
+        'hr.employee',
+        'gpl_repair_technician_rel',
+        'repair_id',
+        'employee_id',
+        string='Techniciens'
+    )
+
+    # Lignes de réparation
     repair_line_ids = fields.One2many(
         'gpl.repair.line',
         'repair_id',
-        string='Pièces utilisées'
+        string='Produits et services'
     )
 
     # État
     state = fields.Selection([
         ('draft', 'Brouillon'),
-        ('scheduled', 'Planifié'),
-        ('in_progress', 'En cours'),
+        ('confirmed', 'Confirmé'),
+        ('ready', 'Prêt'),
+        ('under_repair', 'En réparation'),
         ('done', 'Terminé'),
         ('cancel', 'Annulé'),
     ], string='État', default='draft', tracking=True)
 
     # Montants
-    total_amount = fields.Float(
+    amount_total = fields.Float(
         string='Montant total',
-        compute='_compute_total_amount',
+        compute='_compute_amount_total',
         store=True
     )
 
-    # Urgence
-    priority = fields.Selection([
-        ('0', 'Normal'),
-        ('1', 'Urgent'),
-        ('2', 'Très urgent'),
-    ], string='Priorité', default='0')
+    # Réservoir si concerné
+    reservoir_lot_id = fields.Many2one(
+        'stock.lot',
+        string='Réservoir concerné',
+        domain=[('product_id.gpl_type', '=', 'reservoir')]
+    )
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -113,97 +139,93 @@ class GplRepairOrder(models.Model):
         return super().create(vals_list)
 
     @api.depends('repair_line_ids.subtotal')
-    def _compute_total_amount(self):
-        for record in self:
-            record.total_amount = sum(record.repair_line_ids.mapped('subtotal'))
+    def _compute_amount_total(self):
+        for repair in self:
+            repair.amount_total = sum(repair.repair_line_ids.mapped('subtotal'))
 
-    @api.onchange('repair_type')
-    def _onchange_repair_type(self):
-        """Suggère un diagnostic selon le type"""
-        if self.repair_type and not self.diagnostic:
-            diagnostics = {
-                'reservoir': "Inspection du réservoir GPL et accessoires",
-                'injector': "Vérification des injecteurs et système d'alimentation",
-                'tube': "Contrôle de l'état des tuyaux et raccords",
-                'pressure': "Test d'étanchéité et contrôle de pression",
-                'electronic': "Diagnostic du système électronique GPL",
-                'control': "Contrôle périodique du système GPL",
-                'other': "Diagnostic du système GPL"
-            }
-            self.diagnostic = diagnostics.get(self.repair_type, "")
-
-    def action_schedule(self):
-        """Planifie la réparation"""
+    def action_confirm(self):
+        """Confirme l'ordre de réparation"""
         self.ensure_one()
-        if not self.technician_id:
-            raise UserError(_("Veuillez assigner un technicien."))
+        if self.state != 'draft':
+            raise UserError(_("Seul un ordre en brouillon peut être confirmé."))
+        self.state = 'confirmed'
 
-        self.state = 'scheduled'
+    def action_ready(self):
+        """Marque l'ordre comme prêt"""
+        self.ensure_one()
+        if self.state != 'confirmed':
+            raise UserError(_("L'ordre doit être confirmé pour être marqué comme prêt."))
+        self.state = 'ready'
 
-    def action_start(self):
+    def action_start_repair(self):
         """Démarre la réparation"""
         self.ensure_one()
-        if self.state not in ['draft', 'scheduled']:
-            raise UserError(_("La réparation doit être planifiée pour être démarrée."))
+        if self.state not in ['confirmed', 'ready']:
+            raise UserError(_("L'ordre doit être confirmé ou prêt pour démarrer la réparation."))
 
         self.write({
-            'state': 'in_progress',
-            'date_repair': fields.Datetime.now()
+            'state': 'under_repair',
+            'date_start': fields.Datetime.now()
         })
 
         # Mettre à jour le statut du véhicule
         if self.vehicle_id:
-            in_progress_status = self.env.ref('cpss_gpl_garage.vehicle_status_en_cours', raise_if_not_found=False)
-            if in_progress_status:
-                self.vehicle_id.status_id = in_progress_status
+            repair_status = self.env.ref('cpss_gpl_garage.vehicle_status_en_reparation', raise_if_not_found=False)
+            if repair_status:
+                self.vehicle_id.status_id = repair_status
 
     def action_done(self):
         """Termine la réparation"""
         self.ensure_one()
-        if self.state != 'in_progress':
+        if self.state != 'under_repair':
             raise UserError(_("La réparation doit être en cours pour être terminée."))
-
-        if not self.solution:
-            raise UserError(_("Veuillez décrire la solution appliquée."))
 
         self.write({
             'state': 'done',
-            'date_end': fields.Datetime.now()
+            'date_done': fields.Datetime.now()
         })
 
-        # Mettre à jour le véhicule
+        # Mettre à jour le statut du véhicule
         if self.vehicle_id:
-            completed_status = self.env.ref('cpss_gpl_garage.vehicle_status_termine', raise_if_not_found=False)
-            if completed_status:
-                self.vehicle_id.status_id = completed_status
+            ready_status = self.env.ref('cpss_gpl_garage.vehicle_status_pret', raise_if_not_found=False)
+            if ready_status:
+                self.vehicle_id.status_id = ready_status
 
     def action_cancel(self):
-        """Annule la réparation"""
+        """Annule l'ordre de réparation"""
         self.ensure_one()
         if self.state == 'done':
-            raise UserError(_("Une réparation terminée ne peut pas être annulée."))
-
+            raise UserError(_("Un ordre terminé ne peut pas être annulé."))
         self.state = 'cancel'
 
 
 class GplRepairLine(models.Model):
-    """Ligne de produits pour la réparation"""
+    """Lignes de produits/services pour la réparation"""
     _name = 'gpl.repair.line'
     _description = 'Ligne de réparation GPL'
 
     repair_id = fields.Many2one(
         'gpl.repair.order',
-        string='Réparation',
+        string='Ordre de réparation',
         required=True,
         ondelete='cascade'
     )
 
     product_id = fields.Many2one(
         'product.product',
-        string='Pièce',
-        required=True,
-        domain=[('gpl_category', 'in', ['piece', 'consommable'])]
+        string='Produit/Service',
+        required=True
     )
+
+    name = fields.Text(
+        string='Description',
+        required=True
+    )
+
+    product_type = fields.Selection([
+        ('product', 'Produit'),
+        ('service', 'Service'),
+    ], string='Type', compute='_compute_product_type', store=True)
 
     quantity = fields.Float(
         string='Quantité',
@@ -222,6 +244,14 @@ class GplRepairLine(models.Model):
         store=True
     )
 
+    @api.depends('product_id')
+    def _compute_product_type(self):
+        for line in self:
+            if line.product_id:
+                line.product_type = 'service' if line.product_id.type == 'service' else 'product'
+            else:
+                line.product_type = 'product'
+
     @api.depends('quantity', 'price_unit')
     def _compute_subtotal(self):
         for line in self:
@@ -230,4 +260,5 @@ class GplRepairLine(models.Model):
     @api.onchange('product_id')
     def _onchange_product_id(self):
         if self.product_id:
+            self.name = self.product_id.name
             self.price_unit = self.product_id.list_price

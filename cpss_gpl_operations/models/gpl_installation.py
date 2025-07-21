@@ -21,14 +21,15 @@ class GplServiceInstallation(models.Model):
         copy=False
     )
 
-    # Client et véhicule
+    # Client et véhicule - CORRECTION: utiliser gpl_vehicle au lieu de gpl.vehicle
     vehicle_id = fields.Many2one(
-        'gpl.vehicle',
+        'gpl_vehicle',  # CORRIGÉ
         string='Véhicule',
         required=True,
         tracking=True,
         index=True
     )
+
     client_id = fields.Many2one(
         'res.partner',
         string='Client',
@@ -62,11 +63,26 @@ class GplServiceInstallation(models.Model):
         string='Techniciens'
     )
 
-    # Réservoir
+    # Réservoir - CORRECTION: ajout du champ manquant vehicle_gpl_id
+    vehicle_gpl_id = fields.Many2one(
+        'gpl_vehicle',
+        string='Véhicule GPL',
+        related='vehicle_id',
+        store=True
+    )
+
     reservoir_lot_id = fields.Many2one(
         'stock.lot',
         string='Réservoir installé',
         domain=[('product_id.gpl_type', '=', 'reservoir')]
+    )
+
+    # Lien vers le réservoir via stock.lot
+    reservoir_id = fields.Many2one(
+        'stock.lot',
+        string='Réservoir',
+        related='reservoir_lot_id',
+        store=True
     )
 
     # Produits utilisés (simplifié)
@@ -156,11 +172,18 @@ class GplServiceInstallation(models.Model):
 
         self.state = 'cancel'
 
+    def action_set_to_draft(self):
+        """Remet l'installation en brouillon"""
+        self.ensure_one()
+        if self.state == 'done':
+            raise UserError(_("Une installation terminée ne peut pas être remise en brouillon."))
+        self.state = 'draft'
+
 
 class GplInstallationLine(models.Model):
-    """Ligne de produits pour l'installation"""
+    """Lignes de produits pour l'installation"""
     _name = 'gpl.installation.line'
-    _description = 'Ligne d\'installation GPL'
+    _description = 'Ligne de produits installation GPL'
 
     installation_id = fields.Many2one(
         'gpl.service.installation',
@@ -175,6 +198,11 @@ class GplInstallationLine(models.Model):
         required=True
     )
 
+    name = fields.Text(
+        string='Description',
+        related='product_id.name'
+    )
+
     quantity = fields.Float(
         string='Quantité',
         default=1.0,
@@ -183,7 +211,7 @@ class GplInstallationLine(models.Model):
 
     price_unit = fields.Float(
         string='Prix unitaire',
-        required=True
+        related='product_id.list_price'
     )
 
     subtotal = fields.Float(
@@ -196,8 +224,3 @@ class GplInstallationLine(models.Model):
     def _compute_subtotal(self):
         for line in self:
             line.subtotal = line.quantity * line.price_unit
-
-    @api.onchange('product_id')
-    def _onchange_product_id(self):
-        if self.product_id:
-            self.price_unit = self.product_id.list_price

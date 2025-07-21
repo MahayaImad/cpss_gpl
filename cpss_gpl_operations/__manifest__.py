@@ -31,6 +31,11 @@ Caractéristiques principales :
 
     # Dépendances
     'depends': [
+        'base',
+        'mail',  # Pour le chatter et les suivis
+        'hr',  # Pour les techniciens
+        'stock',  # Pour les réservoirs (stock.lot)
+        'cpss_gpl_base',
         'cpss_gpl_reservoir',  # Module de reservoir CPSS
         'cpss_gpl_garage',  # Module de garage CPSS
     ],
