@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Rapport Installation GPL -->
+    <record id="report_gpl_installation" model="ir.actions.report">
+        <field name="name">Rapport d'Installation GPL</field>
+        <field name="model">gpl.service.installation</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cpss_gpl_operations.report_gpl_installation_document</field>
+        <field name="report_file">cpss_gpl_operations.report_gpl_installation_document</field>
+        <field name="print_report_name">'Installation GPL - %s' % (object.name)</field>
+        <field name="binding_model_id" ref="model_gpl_service_installation"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Template du rapport d'installation -->
+    <template id="report_gpl_installation_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>Rapport d'Installation GPL</h2>
+                        <h3><span t-field="doc.name"/></h3>
+
+                        <div class="row mt-4">
+                            <div class="col-6">
+                                <strong>Client:</strong>
+                                <address t-field="doc.client_id"
+                                        t-options='{"widget": "contact", "fields": ["name", "phone", "email"]}'/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Véhicule:</strong><br/>
+                                <span t-field="doc.vehicle_id.name"/><br/>
+                                <span t-field="doc.vehicle_id.license_plate"/>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-6">
+                                <strong>Date d'installation:</strong> <span t-field="doc.date_service" t-options='{"widget": "date"}'/><br/>
+                                <strong>Techniciens:</strong> <span t-esc="', '.join(doc.technician_ids.mapped('name'))"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Réservoir installé:</strong><br/>
+                                <span t-field="doc.reservoir_lot_id.name"/>
+                            </div>
+                        </div>
+
+                        <h4 class="mt-4">Produits utilisés</h4>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Produit</th>
+                                    <th class="text-right">Quantité</th>
+                                    <th class="text-right">Prix unitaire</th>
+                                    <th class="text-right">Sous-total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="doc.installation_line_ids" t-as="line">
+                                    <tr>
+                                        <td><span t-field="line.product_id.name"/></td>
+                                        <td class="text-right"><span t-field="line.quantity"/></td>
+                                        <td class="text-right"><span t-field="line.price_unit" widget="monetary"/></td>
+                                        <td class="text-right"><span t-field="line.subtotal" widget="monetary"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="3" class="text-right">Total:</th>
+                                    <th class="text-right"><span t-field="doc.total_amount" widget="monetary"/></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                        <div t-if="doc.notes" class="mt-4">
+                            <h4>Notes</h4>
+                            <p t-field="doc.notes"/>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Rapport Certificat de Contrôle -->
+    <record id="report_gpl_inspection_certificate" model="ir.actions.report">
+        <field name="name">Certificat de Contrôle GPL</field>
+        <field name="model">gpl.inspection</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cpss_gpl_operations.report_gpl_inspection_certificate_document</field>
+        <field name="report_file">cpss_gpl_operations.report_gpl_inspection_certificate_document</field>
+        <field name="print_report_name">'Certificat - %s' % (object.certificate_number or object.name)</field>
+        <field name="binding_model_id" ref="model_gpl_inspection"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Template du certificat -->
+    <template id="report_gpl_inspection_certificate_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <div class="text-center">
+                            <h2>CERTIFICAT DE CONTRÔLE TECHNIQUE GPL</h2>
+                            <h3>N° <span t-field="doc.certificate_number"/></h3>
+                        </div>
+
+                        <div class="mt-5">
+                            <p>Nous certifions que le véhicule suivant a passé avec succès le contrôle technique GPL:</p>
+
+                            <table class="table table-bordered mt-4">
+                                <tr>
+                                    <th width="30%">Véhicule</th>
+                                    <td><span t-field="doc.vehicle_id.name"/></td>
+                                </tr>
+                                <tr>
+                                    <th>Immatriculation</th>
+                                    <td><span t-field="doc.vehicle_id.license_plate"/></td>
+                                </tr>
+                                <tr>
+                                    <th>Propriétaire</th>
+                                    <td><span t-field="doc.client_id.name"/></td>
+                                </tr>
+                                <tr>
+                                    <th>Date du contrôle</th>
+                                    <td><span t-field="doc.date_inspection"/></td>
+                                </tr>
+                                <tr>
+                                    <th>Date d'expiration</th>
+                                    <td><span t-field="doc.date_expiry"/></td>
+                                </tr>
+                            </table>
+
+                            <div class="mt-5 text-right">
+                                <p>
+                                    <strong>L'inspecteur:</strong><br/>
+                                    <span t-field="doc.inspector_id.name"/>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

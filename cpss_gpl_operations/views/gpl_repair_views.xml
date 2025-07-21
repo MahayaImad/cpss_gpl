@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue Formulaire pour Réparation -->
+    <record id="view_gpl_repair_order_form" model="ir.ui.view">
+        <field name="name">gpl.repair.order.form</field>
+        <field name="model">gpl.repair.order</field>
+        <field name="arch" type="xml">
+            <form string="Ordre de Réparation GPL">
+                <header>
+                    <button name="action_schedule" string="Planifier" type="object"
+                            class="btn-primary" states="draft"/>
+                    <button name="action_start" string="Démarrer" type="object"
+                            class="btn-primary" states="scheduled"/>
+                    <button name="action_done" string="Terminer" type="object"
+                            class="btn-success" states="in_progress"/>
+                    <button name="action_cancel" string="Annuler" type="object"
+                            states="draft,scheduled,in_progress"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,scheduled,in_progress,done"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Urgent"
+                            attrs="{'invisible': [('priority', '!=', '1')]}"/>
+                    <widget name="web_ribbon" title="Très urgent" bg_color="bg-danger"
+                            attrs="{'invisible': [('priority', '!=', '2')]}"/>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Informations générales">
+                            <field name="vehicle_id" options="{'no_create': True}"/>
+                            <field name="client_id"/>
+                            <field name="repair_type"/>
+                            <field name="priority" widget="priority"/>
+                        </group>
+                        <group string="Planning">
+                            <field name="date_repair"/>
+                            <field name="technician_id" options="{'no_create': True}"/>
+                            <field name="date_end" readonly="1"/>
+                            <field name="total_amount" widget="monetary"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Diagnostic">
+                            <group>
+                                <field name="diagnostic" placeholder="Description du problème..."/>
+                            </group>
+                        </page>
+                        <page string="Pièces utilisées">
+                            <field name="repair_line_ids">
+                                <tree editable="bottom">
+                                    <field name="product_id"
+                                           domain="[('gpl_category', 'in', ['piece', 'consommable'])]"
+                                           options="{'no_create': True}"/>
+                                    <field name="quantity"/>
+                                    <field name="price_unit" widget="monetary"/>
+                                    <field name="subtotal" widget="monetary" readonly="1"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Solution">
+                            <group>
+                                <field name="solution" placeholder="Description de la réparation effectuée..."
+                                       attrs="{'required': [('state', '=', 'done')]}"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue Liste -->
+    <record id="view_gpl_repair_order_tree" model="ir.ui.view">
+        <field name="name">gpl.repair.order.tree</field>
+        <field name="model">gpl.repair.order</field>
+        <field name="arch" type="xml">
+            <tree string="Ordres de Réparation" decoration-danger="priority=='2'"
+                  decoration-warning="priority=='1'" decoration-success="state=='done'"
+                  decoration-muted="state=='cancel'">
+                <field name="name"/>
+                <field name="vehicle_id"/>
+                <field name="client_id"/>
+                <field name="repair_type"/>
+                <field name="date_repair"/>
+                <field name="technician_id"/>
+                <field name="priority" widget="priority"/>
+                <field name="total_amount" widget="monetary" sum="Total"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'done'"
+                       decoration-info="state == 'in_progress'"
+                       decoration-warning="state == 'scheduled'"
+                       decoration-muted="state == 'cancel'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Vue Kanban -->
+    <record id="view_gpl_repair_order_kanban" model="ir.ui.view">
+        <field name="name">gpl.repair.order.kanban</field>
+        <field name="model">gpl.repair.order</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_mobile" quick_create="false">
+                <field name="state"/>
+                <field name="priority"/>
+                <field name="color"/>
+                <progressbar field="state" colors='{"done": "success", "in_progress": "info", "cancel": "danger"}'/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_dropdown_kanban dropdown" groups="base.group_user">
+                                <a role="button" class="dropdown-toggle o-no-caret btn" data-toggle="dropdown">
+                                    <span class="fa fa-ellipsis-v"/>
+                                </a>
+                                <div class="dropdown-menu" role="menu">
+                                    <t t-if="widget.editable"><a role="menuitem" type="edit" class="dropdown-item">Modifier</a></t>
+                                    <t t-if="widget.deletable"><a role="menuitem" type="delete" class="dropdown-item">Supprimer</a></t>
+                                </div>
+                            </div>
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="name"/>
+                                        </strong>
+                                    </div>
+                                    <field name="priority" widget="priority"/>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <div>
+                                        <i class="fa fa-car"/> <field name="vehicle_id"/>
+                                    </div>
+                                    <div>
+                                        <i class="fa fa-wrench"/> <field name="repair_type"/>
+                                    </div>
+                                    <div>
+                                        <i class="fa fa-calendar"/> <field name="date_repair" widget="date"/>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_bottom">
+                                    <div class="oe_kanban_bottom_left">
+                                        <field name="technician_id" widget="many2one_avatar_user"/>
+                                    </div>
+                                    <div class="oe_kanban_bottom_right">
+                                        <b><field name="total_amount" widget="monetary"/></b>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Vue de recherche -->
+    <record id="view_gpl_repair_order_search" model="ir.ui.view">
+        <field name="name">gpl.repair.order.search</field>
+        <field name="model">gpl.repair.order</field>
+        <field name="arch" type="xml">
+            <search string="Recherche de réparations">
+                <field name="name"/>
+                <field name="vehicle_id"/>
+                <field name="client_id"/>
+                <field name="technician_id"/>
+                <field name="repair_type"/>
+                <filter string="Urgent" name="urgent" domain="[('priority', 'in', ['1', '2'])]"/>
+                <separator/>
+                <filter string="En cours" name="in_progress" domain="[('state', '=', 'in_progress')]"/>
+                <filter string="Planifiées" name="scheduled" domain="[('state', '=', 'scheduled')]"/>
+                <filter string="Terminées" name="done" domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter string="Aujourd'hui" name="today"
+                        domain="[('date_repair', '&gt;=', datetime.datetime.now().strftime('%Y-%m-%d 00:00:00')),
+                                ('date_repair', '&lt;=', datetime.datetime.now().strftime('%Y-%m-%d 23:59:59'))]"/>
+                <group expand="0" string="Grouper par">
+                    <filter name="group_by_state" string="État" context="{'group_by': 'state'}"/>
+                    <filter name="group_by_type" string="Type" context="{'group_by': 'repair_type'}"/>
+                    <filter name="group_by_technician" string="Technicien" context="{'group_by': 'technician_id'}"/>
+                    <filter name="group_by_priority" string="Priorité" context="{'group_by': 'priority'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_gpl_repair_order" model="ir.actions.act_window">
+        <field name="name">Réparations GPL</field>
+        <field name="res_model">gpl.repair.order</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="context">{'search_default_in_progress': 1, 'search_default_scheduled': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créer un nouvel ordre de réparation
+            </p>
+            <p>
+                Gérez les réparations et la maintenance des systèmes GPL.
+            </p>
+        </field>
+    </record>
+</odoo>

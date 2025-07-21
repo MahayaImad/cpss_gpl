@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue Formulaire pour Contrôle Technique -->
+    <record id="view_gpl_inspection_form" model="ir.ui.view">
+        <field name="name">gpl.inspection.form</field>
+        <field name="model">gpl.inspection</field>
+        <field name="arch" type="xml">
+            <form string="Contrôle Technique GPL">
+                <header>
+                    <button name="action_start" string="Démarrer" type="object"
+                            class="btn-primary" states="draft"/>
+                    <button name="action_validate" string="Valider" type="object"
+                            class="btn-success" states="in_progress"/>
+                    <button name="action_print_certificate" string="Imprimer Certificat" type="object"
+                            class="btn-primary" states="done"
+                            attrs="{'invisible': [('result', '!=', 'pass')]}"/>
+                    <button name="action_cancel" string="Annuler" type="object"
+                            states="draft,scheduled,in_progress"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,done"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Validé" bg_color="bg-success"
+                            attrs="{'invisible': [('result', '!=', 'pass')]}"/>
+                    <widget name="web_ribbon" title="Refusé" bg_color="bg-danger"
+                            attrs="{'invisible': [('result', '!=', 'fail')]}"/>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Informations générales">
+                            <field name="vehicle_id" options="{'no_create': True}"/>
+                            <field name="client_id"/>
+                            <field name="inspection_type"/>
+                            <field name="date_inspection"/>
+                        </group>
+                        <group string="Validation">
+                            <field name="inspector_id" options="{'no_create': True}"/>
+                            <field name="result" readonly="1"/>
+                            <field name="certificate_number"
+                                   attrs="{'invisible': [('result', '!=', 'pass')]}"/>
+                            <field name="date_expiry"
+                                   attrs="{'invisible': [('result', '!=', 'pass')]}"/>
+                        </group>
+                    </group>
+
+                    <separator string="Points de contrôle"/>
+                    <group col="4">
+                        <field name="check_reservoir" widget="radio"/>
+                        <field name="check_piping" widget="radio"/>
+                        <field name="check_injectors" widget="radio"/>
+                        <field name="check_electronics" widget="radio"/>
+                        <field name="check_pressure" widget="radio"/>
+                    </group>
+
+                    <notebook>
+                        <page string="Commentaires">
+                            <field name="comments" placeholder="Commentaires sur le contrôle..."/>
+                        </page>
+                        <page string="Recommandations">
+                            <field name="recommendations" placeholder="Recommandations pour le client..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue Liste -->
+    <record id="view_gpl_inspection_tree" model="ir.ui.view">
+        <field name="name">gpl.inspection.tree</field>
+        <field name="model">gpl.inspection</field>
+        <field name="arch" type="xml">
+            <tree string="Contrôles Techniques" decoration-success="result=='pass'"
+                  decoration-danger="result=='fail'" decoration-muted="state=='cancel'">
+                <field name="name"/>
+                <field name="vehicle_id"/>
+                <field name="client_id"/>
+                <field name="inspection_type"/>
+                <field name="date_inspection"/>
+                <field name="inspector_id"/>
+                <field name="result" widget="badge"
+                       decoration-success="result == 'pass'"
+                       decoration-danger="result == 'fail'"
+                       decoration-warning="result == 'pending'"/>
+                <field name="certificate_number" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'done'"
+                       decoration-info="state == 'in_progress'"
+                       decoration-muted="state == 'cancel'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Vue Kanban -->
+    <record id="view_gpl_inspection_kanban" model="ir.ui.view">
+        <field name="name">gpl.inspection.kanban</field>
+        <field name="model">gpl.inspection</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_mobile" quick_create="false">
+                <field name="state"/>
+                <field name="result"/>
+                <field name="color"/>
+                <progressbar field="state" colors='{"done": "success", "in_progress": "info", "cancel": "danger"}'/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="name"/>
+                                        </strong>
+                                    </div>
+                                    <span t-if="record.result.raw_value == 'pass'"
+                                          class="badge badge-success">Validé</span>
+                                    <span t-if="record.result.raw_value == 'fail'"
+                                          class="badge badge-danger">Refusé</span>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <div>
+                                        <i class="fa fa-car"/> <field name="vehicle_id"/>
+                                    </div>
+                                    <div>
+                                        <i class="fa fa-user"/> <field name="client_id"/>
+                                    </div>
+                                    <div>
+                                        <i class="fa fa-check-square-o"/> <field name="inspection_type"/>
+                                    </div>
+                                    <div>
+                                        <i class="fa fa-calendar"/> <field name="date_inspection"/>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_bottom">
+                                    <div class="oe_kanban_bottom_left">
+                                        <field name="inspector_id" widget="many2one_avatar_user"/>
+                                    </div>
+                                    <div class="oe_kanban_bottom_right" t-if="record.certificate_number.raw_value">
+                                        <small class="text-muted">
+                                            <i class="fa fa-certificate"/> <field name="certificate_number"/>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Vue de recherche -->
+    <record id="view_gpl_inspection_search" model="ir.ui.view">
+        <field name="name">gpl.inspection.search</field>
+        <field name="model">gpl.inspection</field>
+        <field name="arch" type="xml">
+            <search string="Recherche de contrôles">
+                <field name="name"/>
+                <field name="vehicle_id"/>
+                <field name="client_id"/>
+                <field name="inspector_id"/>
+                <field name="certificate_number"/>
+                <filter string="Validés" name="passed" domain="[('result', '=', 'pass')]"/>
+                <filter string="Refusés" name="failed" domain="[('result', '=', 'fail')]"/>
+                <filter string="En attente" name="pending" domain="[('result', '=', 'pending')]"/>
+                <separator/>
+                <filter string="En cours" name="in_progress" domain="[('state', '=', 'in_progress')]"/>
+                <filter string="Terminés" name="done" domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter string="Ce mois" name="this_month"
+                        domain="[('date_inspection', '&gt;=', (datetime.datetime.now()).strftime('%Y-%m-01'))]"/>
+                <group expand="0" string="Grouper par">
+                    <filter name="group_by_state" string="État" context="{'group_by': 'state'}"/>
+                    <filter name="group_by_result" string="Résultat" context="{'group_by': 'result'}"/>
+                    <filter name="group_by_type" string="Type" context="{'group_by': 'inspection_type'}"/>
+                    <filter name="group_by_inspector" string="Inspecteur" context="{'group_by': 'inspector_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_gpl_inspection" model="ir.actions.act_window">
+        <field name="name">Contrôles Techniques</field>
+        <field name="res_model">gpl.inspection</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="context">{'search_default_in_progress': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créer un nouveau contrôle technique
+            </p>
+            <p>
+                Gérez les contrôles techniques et validations des installations GPL.
+            </p>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menu principal Opérations -->
+    <menuitem id="menu_gpl_operations_root"
+              name="Opérations GPL"
+              sequence="30"
+              web_icon="cpss_gpl_operations,static/description/icon.png"/>
+
+    <!-- Tableau de bord -->
+    <menuitem id="menu_gpl_operations_dashboard"
+              name="Tableau de bord"
+              parent="menu_gpl_operations_root"
+              sequence="1"/>
+
+    <!-- Services -->
+    <menuitem id="menu_gpl_services"
+              name="Services"
+              parent="menu_gpl_operations_root"
+              sequence="10"/>
+
+    <menuitem id="menu_gpl_installations"
+              name="Installations"
+              parent="menu_gpl_services"
+              action="action_gpl_service_installation_simple"
+              sequence="10"/>
+
+    <menuitem id="menu_gpl_repairs"
+              name="Réparations"
+              parent="menu_gpl_services"
+              action="action_gpl_repair_order"
+              sequence="20"/>
+
+    <!-- Contrôles -->
+    <menuitem id="menu_gpl_controls"
+              name="Contrôles"
+              parent="menu_gpl_operations_root"
+              sequence="20"/>
+
+    <menuitem id="menu_gpl_inspections"
+              name="Contrôles Techniques"
+              parent="menu_gpl_controls"
+              action="action_gpl_inspection"
+              sequence="10"/>
+
+    <menuitem id="menu_gpl_testing"
+              name="Réépreuves Réservoirs"
+              parent="menu_gpl_controls"
+              action="action_gpl_reservoir_testing"
+              sequence="20"/>
+
+    <!-- Rapports -->
+    <menuitem id="menu_gpl_operations_reports"
+              name="Rapports"
+              parent="menu_gpl_operations_root"
+              sequence="100"/>
+</odoo>
