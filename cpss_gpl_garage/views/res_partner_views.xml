@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extension vue formulaire partenaire -->
+    <record id="view_res_partner_form_gpl" model="ir.ui.view">
+        <field name="name">res.partner.form.gpl</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <!-- Bouton véhicules GPL -->
+            <div name="button_box" position="inside">
+                <button string="Véhicules GPL"
+                        name="action_view_gpl_vehicles"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-car"
+                        invisible="gpl_vehicle_count == 0">
+                    <field name="gpl_vehicle_count" widget="statinfo"
+                           string="Véhicules GPL"/>
+                </button>
+            </div>
+
+            <!-- Onglet GPL -->
+            <notebook position="inside">
+                <page string="Véhicules GPL" name="gpl_vehicles"
+                      invisible="not is_gpl_client">
+                    <group>
+                        <group string="Statistiques GPL">
+                            <field name="is_gpl_client" readonly="1"/>
+                            <field name="gpl_vehicle_count" readonly="1"/>
+                            <field name="last_gpl_appointment" readonly="1"/>
+                            <field name="next_gpl_appointment" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <field name="gpl_vehicle_ids" readonly="1">
+                        <tree string="Véhicules GPL">
+                            <field name="license_plate"/>
+                            <field name="model_id"/>
+                            <field name="next_service_type"/>
+                            <field name="appointment_date"/>
+                            <field name="status_id"/>
+                        </tree>
+                    </field>
+                </page>
+            </notebook>
+        </field>
+    </record>
+</odoo>

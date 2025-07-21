@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue formulaire assistant reprogrammation -->
+    <record id="view_gpl_reschedule_wizard_form" model="ir.ui.view">
+        <field name="name">gpl.reschedule.wizard.form</field>
+        <field name="model">gpl.reschedule.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Reprogrammer le rendez-vous">
+                <div class="alert alert-info" role="alert">
+                    <strong><i class="fa fa-calendar"/> Reprogrammation de rendez-vous</strong><br/>
+                    Modifiez la date et les détails du rendez-vous pour ce véhicule.
+                </div>
+
+                <group>
+                    <group string="Informations du véhicule">
+                        <field name="vehicle_id" readonly="1"/>
+                        <field name="client_id" readonly="1"/>
+                        <field name="service_type" readonly="1"/>
+                    </group>
+                    <group string="Rendez-vous actuel">
+                        <field name="current_date" readonly="1"/>
+                    </group>
+                </group>
+
+                <group>
+                    <group string="Nouveau rendez-vous">
+                        <field name="new_date" required="1"/>
+                        <field name="new_technician_ids" widget="many2many_tags"/>
+                    </group>
+                    <group string="Notification">
+                        <field name="notify_client"/>
+                        <field name="reason" placeholder="Raison de la reprogrammation..."/>
+                    </group>
+                </group>
+
+                <footer>
+                    <button string="Reprogrammer" name="action_reschedule"
+                            type="object" class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action assistant -->
+    <record id="action_gpl_reschedule_wizard" model="ir.actions.act_window">
+        <field name="name">Reprogrammer le rendez-vous</field>
+        <field name="res_model">gpl.reschedule.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

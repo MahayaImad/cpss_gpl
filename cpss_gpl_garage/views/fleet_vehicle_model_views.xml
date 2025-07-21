@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extension vue formulaire modèle de véhicule -->
+    <record id="view_fleet_vehicle_model_form_gpl" model="ir.ui.view">
+        <field name="name">fleet.vehicle.model.form.gpl</field>
+        <field name="model">fleet.vehicle.model</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_model_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Bouton statistiques GPL -->
+            <div name="button_box" position="inside">
+                <button string="Véhicules GPL"
+                        class="oe_stat_button"
+                        icon="fa-tint"
+                        type="object"
+                        name="action_view_gpl_vehicles"
+                        invisible="gpl_vehicle_count == 0">
+                    <field name="gpl_vehicle_count" widget="statinfo"
+                           string="Véhicules GPL"/>
+                </button>
+            </div>
+
+            <!-- Onglet GPL -->
+            <notebook position="inside">
+                <page string="Configuration GPL" name="gpl_config">
+                    <group>
+                        <group string="Compatibilité GPL">
+                            <field name="is_gpl_compatible"/>
+                            <field name="gpl_installation_time"
+                                   invisible="not is_gpl_compatible"/>
+                        </group>
+                        <group string="Statistiques">
+                            <field name="gpl_vehicle_count" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Notes GPL" invisible="not is_gpl_compatible">
+                        <field name="gpl_notes" nolabel="1" placeholder="Notes spécifiques à l'installation GPL sur ce modèle..."/>
+                    </group>
+                </page>
+            </notebook>
+        </field>
+    </record>
+</odoo>

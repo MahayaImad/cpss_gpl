@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menu principal GPL Garage -->
+    <menuitem id="menu_gpl_garage_root"
+              name="GPL Garage"
+              sequence="50"
+              web_icon="cpss_gpl_garage,static/description/icon.png"/>
+
+    <!-- === PLANNING === -->
+    <menuitem id="menu_gpl_garage_planning"
+              name="📅 Planning"
+              parent="menu_gpl_garage_root"
+              sequence="10"/>
+
+    <menuitem id="menu_gpl_garage_calendar_month"
+              name="Planning Mensuel"
+              parent="menu_gpl_garage_planning"
+              action="action_gpl_vehicle_calendar_month"
+              sequence="10"/>
+
+    <menuitem id="menu_gpl_garage_calendar_week"
+              name="Planning Hebdomadaire"
+              parent="menu_gpl_garage_planning"
+              action="action_gpl_vehicle_calendar_week"
+              sequence="20"/>
+
+    <menuitem id="menu_gpl_garage_calendar_day"
+              name="Planning Quotidien"
+              parent="menu_gpl_garage_planning"
+              action="action_gpl_vehicle_calendar_day"
+              sequence="30"/>
+
+    <!-- === VÉHICULES === -->
+    <menuitem id="menu_gpl_garage_vehicles"
+              name="🚗 Véhicules"
+              parent="menu_gpl_garage_root"
+              sequence="20"/>
+
+    <menuitem id="menu_gpl_garage_vehicles_all"
+              name="Tous les véhicules"
+              parent="menu_gpl_garage_vehicles"
+              action="action_gpl_vehicle_all"
+              sequence="10"/>
+
+    <menuitem id="menu_gpl_garage_vehicles_planning"
+              name="Avec rendez-vous"
+              parent="menu_gpl_garage_vehicles"
+              action="action_gpl_vehicle_planning"
+              sequence="20"/>
+
+    <!-- === CLIENTS === -->
+    <menuitem id="menu_gpl_garage_clients"
+              name="👥 Clients"
+              parent="menu_gpl_garage_root"
+              sequence="30"/>
+
+    <menuitem id="menu_gpl_garage_clients_all"
+              name="Tous les clients"
+              parent="menu_gpl_garage_clients"
+              action="contacts.action_contacts"
+              sequence="10"/>
+
+    <!-- Action spécifique pour clients GPL -->
+    <record id="action_gpl_clients" model="ir.actions.act_window">
+        <field name="name">Clients GPL</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('is_gpl_client', '=', True)]</field>
+        <field name="context">{
+            'search_default_customer': 1,
+            'res_partner_search_mode': 'customer'
+        }</field>
+    </record>
+
+    <menuitem id="menu_gpl_garage_clients_gpl"
+              name="Clients GPL"
+              parent="menu_gpl_garage_clients"
+              action="action_gpl_clients"
+              sequence="20"/>
+
+    <!-- === CONFIGURATION === -->
+    <menuitem id="menu_gpl_garage_config"
+              name="⚙️ Configuration"
+              parent="menu_gpl_garage_root"
+              sequence="90"/>
+
+    <menuitem id="menu_gpl_garage_vehicle_tags"
+              name="Tags Véhicules"
+              parent="menu_gpl_garage_config"
+              action="action_gpl_vehicle_tag"
+              sequence="10"/>
+
+    <!-- Action pour les statuts de véhicules -->
+    <record id="action_gpl_vehicle_status" model="ir.actions.act_window">
+        <field name="name">Statuts Véhicules</field>
+        <field name="res_model">gpl.vehicle.status</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_gpl_garage_vehicle_status"
+              name="Statuts Véhicules"
+              parent="menu_gpl_garage_config"
+              action="action_gpl_vehicle_status"
+              sequence="20"/>
+
+    <!-- Lien vers modèles de véhicules -->
+    <menuitem id="menu_gpl_garage_vehicle_models"
+              name="Modèles de Véhicules"
+              parent="menu_gpl_garage_config"
+              action="fleet.fleet_vehicle_model_action"
+              sequence="30"/>
+</odoo>

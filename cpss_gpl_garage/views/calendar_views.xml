@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue calendrier mensuel CORRIGÉE -->
+    <record id="view_gpl_vehicle_calendar_month" model="ir.ui.view">
+        <field name="name">gpl.vehicle.calendar.month</field>
+        <field name="model">gpl.vehicle</field>
+        <field name="arch" type="xml">
+            <calendar string="Planning Atelier GPL"
+                     date_start="appointment_date"
+                     color="next_service_type"
+                      date_delay="estimated_duration"
+                      event_open_popup="True"
+                     mode="month">
+                <field name="license_plate"/>
+                <field name="client_id"/>
+                <field name="appointment_date"/>
+                <field name="next_service_type"/>
+                <field name="status_id"/>
+                <field name="estimated_duration"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- Vue calendrier hebdomadaire CORRIGÉE -->
+    <record id="view_gpl_vehicle_calendar_week" model="ir.ui.view">
+        <field name="name">gpl.vehicle.calendar.week</field>
+        <field name="model">gpl.vehicle</field>
+        <field name="arch" type="xml">
+            <calendar string="Planning Hebdomadaire"
+                     date_start="appointment_date"
+                     mode="week"
+                     event_open_popup="true">
+
+                <field name="license_plate"/>
+                <field name="client_id"/>
+                <field name="next_service_type"/>
+                <field name="appointment_date"/>
+                <field name="estimated_duration"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- Vue calendrier quotidien CORRIGÉE -->
+    <record id="view_gpl_vehicle_calendar_day" model="ir.ui.view">
+        <field name="name">gpl.vehicle.calendar.day</field>
+        <field name="model">gpl.vehicle</field>
+        <field name="arch" type="xml">
+            <calendar string="Planning Quotidien"
+                     date_start="appointment_date"
+                     mode="day"
+                     event_open_popup="true">
+
+                <field name="license_plate"/>
+                <field name="client_id"/>
+                <field name="next_service_type"/>
+                <field name="appointment_date"/>
+                <field name="estimated_duration"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- Actions calendrier CORRIGÉES -->
+    <record id="action_gpl_vehicle_calendar_month" model="ir.actions.act_window">
+        <field name="name">📅 Planning Mensuel</field>
+        <field name="res_model">gpl.vehicle</field>
+        <field name="view_mode">calendar,form</field>
+        <field name="view_id" ref="view_gpl_vehicle_calendar_month"/>
+        <field name="domain">[('appointment_date', '!=', False)]</field>
+        <field name="context">{}</field>
+    </record>
+
+    <record id="action_gpl_vehicle_calendar_week" model="ir.actions.act_window">
+        <field name="name">📅 Planning Hebdomadaire</field>
+        <field name="res_model">gpl.vehicle</field>
+        <field name="view_mode">calendar,form</field>
+        <field name="view_id" ref="view_gpl_vehicle_calendar_week"/>
+        <field name="domain">[('appointment_date', '!=', False)]</field>
+        <field name="context">{}</field>
+    </record>
+
+    <record id="action_gpl_vehicle_calendar_day" model="ir.actions.act_window">
+        <field name="name">📅 Planning Quotidien</field>
+        <field name="res_model">gpl.vehicle</field>
+        <field name="view_mode">calendar,form</field>
+        <field name="view_id" ref="view_gpl_vehicle_calendar_day"/>
+        <field name="domain">[('appointment_date', '!=', False)]</field>
+        <field name="context">{}</field>
+    </record>
+</odoo>

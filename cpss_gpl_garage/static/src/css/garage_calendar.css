@@ -1,0 +1,101 @@
+/* Styles pour le calendrier du garage GPL */
+
+.o_calendar_view .fc-event {
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-size: 11px;
+    line-height: 1.2;
+}
+
+/* Couleurs par type de service */
+.fc-event.fc-event-installation {
+    background-color: #28a745 !important;
+    border-color: #1e7e34 !important;
+    color: white !important;
+}
+
+.fc-event.fc-event-repair {
+    background-color: #dc3545 !important;
+    border-color: #bd2130 !important;
+    color: white !important;
+}
+
+.fc-event.fc-event-maintenance {
+    background-color: #ffc107 !important;
+    border-color: #d39e00 !important;
+    color: #212529 !important;
+}
+
+.fc-event.fc-event-inspection {
+    background-color: #17a2b8 !important;
+    border-color: #117a8b !important;
+    color: white !important;
+}
+
+.fc-event.fc-event-testing {
+    background-color: #6f42c1 !important;
+    border-color: #59359a !important;
+    color: white !important;
+}
+
+/* Styles pour les badges de statut */
+.badge-installation {
+    background-color: #28a745;
+    color: white;
+}
+
+.badge-repair {
+    background-color: #dc3545;
+    color: white;
+}
+
+.badge-maintenance {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.badge-inspection {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.badge-testing {
+    background-color: #6f42c1;
+    color: white;
+}
+
+/* Améliorations pour les vues kanban */
+.o_kanban_view .oe_kanban_card {
+    margin-bottom: 8px;
+}
+
+.o_kanban_view .o_kanban_card_header {
+    padding: 8px 12px 4px 12px;
+}
+
+.o_kanban_view .o_kanban_card_content {
+    padding: 4px 12px 8px 12px;
+}
+
+/* Indicateurs d'urgence */
+.appointment-today {
+    border-left: 4px solid #28a745 !important;
+}
+
+.appointment-overdue {
+    border-left: 4px solid #dc3545 !important;
+}
+
+.appointment-tomorrow {
+    border-left: 4px solid #ffc107 !important;
+}
+
+/* Styles pour les formulaires popup */
+.modal-body .o_form_view {
+    padding: 0;
+}
+
+.modal-body .o_form_view .o_form_sheet {
+    box-shadow: none;
+    padding: 16px;
+}
