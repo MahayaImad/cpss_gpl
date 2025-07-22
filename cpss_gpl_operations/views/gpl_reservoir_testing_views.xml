@@ -9,6 +9,10 @@
             <field name="arch" type="xml">
                 <form string="Réépreuve Réservoir GPL">
                     <header>
+                        <field name="can_schedule" invisible="1"/>
+                        <field name="can_start" invisible="1"/>
+                        <field name="can_validate" invisible="1"/>
+                        <field name="can_cancel" invisible="1"/>
                         <!-- Boutons d'action -->
                         <button name="action_schedule" type="object" string="Planifier"
                                 class="btn-primary" invisible="can_schedule == False"/>
@@ -16,7 +20,7 @@
                         <button name="action_start" type="object" string="Commencer"
                                 class="btn-primary" invisible="can_start == False"/>
 
-                        <button name="action_validate_pass" type="object" string="Valider (Conforme)"
+                        <button name="action_done" type="object" string="Valider (Conforme)"
                                 class="btn-success" invisible="can_validate == False"/>
 
                         <button name="action_validate_fail" type="object" string="Rejeter (Non conforme)"
@@ -29,7 +33,7 @@
                                 class="btn-secondary" invisible="state not in ['scheduled', 'canceled']"/>
 
                         <!-- Barre d'état -->
-                        <field name="state" widget="statusbar" statusbar_visible="draft,scheduled,in_progress,passed,failed"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,scheduled,in_progress,done,failed"/>
                     </header>
 
                     <sheet>
@@ -39,18 +43,12 @@
                             </h1>
                         </div>
 
-                        <!-- Champs invisibles pour les computes -->
-                        <field name="can_schedule" invisible="1"/>
-                        <field name="can_start" invisible="1"/>
-                        <field name="can_validate" invisible="1"/>
-                        <field name="can_cancel" invisible="1"/>
-
                         <group>
                             <group string="Informations générales">
                                 <field name="vehicle_id" options="{'no_create': True}"
                                        readonly="state != 'draft'"/>
                                 <field name="client_id" readonly="1"/>
-                                <field name="date_testing"
+                                <field name="test_date"
                                        readonly="state in ['passed', 'failed', 'canceled']"/>
                                 <field name="technician_id" options="{'no_create': True}"
                                        readonly="state in ['passed', 'failed', 'canceled']"/>
@@ -58,8 +56,7 @@
 
                             <group string="Réservoir">
                                 <field name="reservoir_lot_id" readonly="1"/>
-                                <field name="old_certification_number" readonly="1"/>
-                                <field name="old_certification_date" readonly="1"/>
+                                <field name="last_test_date" readonly="1"/>
                             </group>
                         </group>
 
@@ -71,19 +68,19 @@
                                                readonly="state in ['passed', 'failed', 'canceled']"/>
                                         <field name="test_duration"
                                                readonly="state in ['passed', 'failed', 'canceled']"/>
-                                        <field name="test_result"
+                                        <field name="result"
                                                readonly="state in ['passed', 'failed', 'canceled']"/>
                                     </group>
 
                                     <group string="Nouvelle certification"
                                            invisible="state not in ['in_progress', 'passed']">
-                                        <field name="new_certification_number"
+                                        <field name="certificate_number"
                                                required="state == 'passed'"
                                                readonly="state == 'passed'"/>
-                                        <field name="new_certification_date"
+                                        <field name="certificate_date"
                                                required="state == 'passed'"
                                                readonly="state == 'passed'"/>
-                                        <field name="new_next_test_date" readonly="1"/>
+                                        <field name="next_test_date" readonly="1"/>
                                     </group>
                                 </group>
 
@@ -92,14 +89,14 @@
                                            readonly="state in ['passed', 'failed', 'canceled']" nolabel="1"/>
                                 </group>
 
-                                <group string="Défauts constatés" invisible="test_result != 'fail'">
-                                    <field name="defects_found" placeholder="Décrivez les défauts constatés..."
+                                <group string="Défauts constatés" invisible="result != 'fail'">
+                                    <field name="result" placeholder="Décrivez les défauts constatés..."
                                            readonly="state in ['passed', 'failed', 'canceled']" nolabel="1"/>
                                 </group>
                             </page>
 
                             <page string="Notes générales">
-                                <field name="notes" placeholder="Notes et observations générales..."
+                                <field name="observations" placeholder="Notes et observations générales..."
                                        readonly="state in ['passed', 'failed', 'canceled']"/>
                             </page>
                         </notebook>
@@ -107,8 +104,9 @@
 
                     <!-- Chatter -->
                     <div class="oe_chatter">
-                        <field name="message_follower_ids" widget="mail_followers"/>
-                        <field name="message_ids" widget="mail_thread"/>
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
                     </div>
                 </form>
             </field>
@@ -123,16 +121,15 @@
                       decoration-info="state == 'draft'"
                       decoration-primary="state == 'scheduled'"
                       decoration-warning="state == 'in_progress'"
-                      decoration-success="state == 'passed'"
-                      decoration-danger="state == 'failed'"
-                      decoration-muted="state == 'canceled'">
+                      decoration-success="state == 'done'"
+                      decoration-muted="state == 'cancel'">
                     <field name="name"/>
                     <field name="vehicle_id"/>
                     <field name="client_id"/>
                     <field name="reservoir_lot_id"/>
-                    <field name="date_testing"/>
+                    <field name="test_date"/>
                     <field name="technician_id"/>
-                    <field name="test_result" widget="badge"/>
+                    <field name="result" widget="badge"/>
                     <field name="state" widget="badge"/>
                 </tree>
             </field>
@@ -149,7 +146,7 @@
                     <field name="client_id"/>
                     <field name="reservoir_lot_id"/>
                     <field name="technician_id"/>
-                    <field name="new_certification_number"/>
+                    <field name="certificate_number"/>
 
                     <filter string="Brouillons" name="filter_draft"
                             domain="[('state', '=', 'draft')]"/>
@@ -158,19 +155,19 @@
                     <filter string="En cours" name="filter_in_progress"
                             domain="[('state', '=', 'in_progress')]"/>
                     <filter string="Validées" name="filter_passed"
-                            domain="[('state', '=', 'passed')]"/>
+                            domain="[('state', '=', 'done')]"/>
                     <filter string="Refusées" name="filter_failed"
                             domain="[('state', '=', 'failed')]"/>
 
                     <separator/>
                     <filter string="Ce mois" name="filter_this_month"
-                            domain="[('date_testing', '>=', (context_today().replace(day=1)).strftime('%Y-%m-%d')),
-                                   ('date_testing', '&lt;', ((context_today().replace(day=1)) + relativedelta(months=1)).strftime('%Y-%m-%d'))]"/>
+                            domain="[('test_date', '>=', (context_today().replace(day=1)).strftime('%Y-%m-%d')),
+                                   ('test_date', '&lt;', ((context_today().replace(day=1)) + relativedelta(months=1)).strftime('%Y-%m-%d'))]"/>
 
                     <group expand="0" string="Grouper par">
                         <filter string="État" name="group_state" context="{'group_by': 'state'}"/>
                         <filter string="Technicien" name="group_technician" context="{'group_by': 'technician_id'}"/>
-                        <filter string="Mois" name="group_month" context="{'group_by': 'date_testing:month'}"/>
+                        <filter string="Mois" name="group_month" context="{'group_by': 'test_date:month'}"/>
                         <filter string="Véhicule" name="group_vehicle" context="{'group_by': 'vehicle_id'}"/>
                     </group>
                 </search>
@@ -186,9 +183,9 @@
                     <field name="state"/>
                     <field name="vehicle_id"/>
                     <field name="client_id"/>
-                    <field name="date_testing"/>
+                    <field name="test_date"/>
                     <field name="technician_id"/>
-                    <field name="test_result"/>
+                    <field name="result"/>
 
                     <templates>
                         <t t-name="kanban-box">
@@ -207,7 +204,7 @@
 
                                     <div class="o_kanban_record_body">
                                         <div>Client: <field name="client_id"/></div>
-                                        <div>Date: <field name="date_testing"/></div>
+                                        <div>Date: <field name="test_date"/></div>
                                         <div t-if="record.technician_id.raw_value">
                                             Technicien: <field name="technician_id"/>
                                         </div>
@@ -215,7 +212,7 @@
 
                                     <div class="o_kanban_record_bottom mt8">
                                         <div class="oe_kanban_bottom_left">
-                                            <field name="test_result" widget="badge"/>
+                                            <field name="result" widget="badge"/>
                                         </div>
                                     </div>
                                 </div>

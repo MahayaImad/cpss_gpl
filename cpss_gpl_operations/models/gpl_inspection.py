@@ -23,7 +23,7 @@ class GplInspection(models.Model):
 
     # Véhicule et client
     vehicle_id = fields.Many2one(
-        'gpl_vehicle',  # CORRIGÉ
+        'gpl.vehicle',  # CORRIGÉ
         string='Véhicule',
         required=True,
         tracking=True,
@@ -68,7 +68,7 @@ class GplInspection(models.Model):
     ], string='Type de contrôle', default='periodic', required=True)
 
     # Technicien
-    technician_id = fields.Many2one(
+    inspector_id = fields.Many2one(
         'hr.employee',
         string='Contrôleur',
         required=True
@@ -238,9 +238,8 @@ class GplInspection(models.Model):
         # Mettre à jour le véhicule
         if self.vehicle_id:
             self.vehicle_id.write({
-                'last_inspection_date': self.date_inspection,
-                'next_inspection_date': self.date_next_inspection,
-                'inspection_result': self.result
+                'date_inspection': self.date_inspection,
+                'date_next_inspection': self.date_next_inspection
             })
 
     def action_cancel(self):

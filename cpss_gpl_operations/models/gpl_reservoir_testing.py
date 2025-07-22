@@ -26,7 +26,7 @@ class GplReservoirTesting(models.Model):
         'stock.lot',
         string='Réservoir',
         required=True,
-        domain=[('product_id.gpl_type', '=', 'reservoir')],
+        domain=[('product_id.is_gpl_reservoir', '=', True)],
         tracking=True
     )
 
@@ -39,7 +39,7 @@ class GplReservoirTesting(models.Model):
 
     fabrication_date = fields.Date(
         string='Date de fabrication',
-        related='reservoir_lot_id.fabrication_date',
+        related='reservoir_lot_id.manufacturing_date',
         readonly=True
     )
 
@@ -51,7 +51,7 @@ class GplReservoirTesting(models.Model):
 
     # Véhicule associé (optionnel)
     vehicle_id = fields.Many2one(
-        'gpl_vehicle',
+        'gpl.vehicle',
         string='Véhicule',
         help="Véhicule sur lequel le réservoir est installé"
     )
@@ -83,12 +83,6 @@ class GplReservoirTesting(models.Model):
         'hr.employee',
         string='Technicien',
         required=True
-    )
-
-    testing_center = fields.Many2one(
-        'res.partner',
-        string='Centre de test',
-        domain=[('supplier_rank', '>', 0)]
     )
 
     # Paramètres du test
@@ -151,6 +145,7 @@ class GplReservoirTesting(models.Model):
         ('scheduled', 'Planifié'),
         ('in_progress', 'En cours'),
         ('done', 'Terminé'),
+        ('failed', 'Refusées'),
         ('cancel', 'Annulé'),
     ], string='État', default='draft', tracking=True)
 
@@ -190,6 +185,19 @@ class GplReservoirTesting(models.Model):
         string='Date du certificat',
         readonly=True
     )
+
+    can_cancel = fields.Boolean(compute='_compute_permissions', store=True)
+    can_validate = fields.Boolean(compute='_compute_permissions', store=True)
+    can_start = fields.Boolean(compute='_compute_permissions', store=True)
+    can_schedule = fields.Boolean(compute='_compute_permissions', store=True)
+
+    @api.depends('state')
+    def _compute_permissions(self):
+        for rec in self:
+            rec.can_cancel = rec.state in ['draft', 'scheduled', 'in_progress']
+            rec.can_validate = rec.state == 'in_progress'
+            rec.can_start = rec.state == 'scheduled'
+            rec.can_schedule = rec.state == 'draft'
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -262,6 +270,15 @@ class GplReservoirTesting(models.Model):
             raise UserError(_("Seul un test en brouillon peut être planifié."))
         self.state = 'scheduled'
 
+    def action_validate_fail(self):
+        self.ensure_one()
+        if self.state != 'in_progress':
+            raise UserError(_("Le test doit être en cours pour être terminé."))
+
+        if self.result == 'pending':
+            raise UserError(_("Veuillez compléter tous les résultats de test."))
+        self.state = 'failed'
+
     def action_start(self):
         """Démarre le test"""
         self.ensure_one()
@@ -289,9 +306,9 @@ class GplReservoirTesting(models.Model):
         # Mettre à jour le réservoir
         if self.reservoir_lot_id:
             self.reservoir_lot_id.write({
-                'derniere_reepreuve': self.test_date,
-                'prochaine_reepreuve': self.next_test_date,
-                'gpl_reservoir_state': 'valid' if self.result == 'pass' else 'expired'
+                'last_test_date': self.test_date,
+                'next_test_date': self.next_test_date,
+                'reservoir_status': 'valid' if self.result == 'pass' else 'expired'
             })
 
     def action_cancel(self):
@@ -301,10 +318,16 @@ class GplReservoirTesting(models.Model):
             raise UserError(_("Un test terminé ne peut pas être annulé."))
         self.state = 'cancel'
 
+    def action_reset_to_draft(self):
+        self.ensure_one()
+        if self.state == 'done':
+            raise UserError(_("Un test terminé ne peut pas être brouillon."))
+        self.state = 'draft'
+
     def action_print_certificate(self):
         """Imprime le certificat de réépreuve"""
         self.ensure_one()
         if self.state != 'done' or self.result != 'pass':
             raise UserError(_("Le certificat ne peut être imprimé que pour un test validé et terminé."))
 
-        return self.env.ref('cpss_gpl_operations.report_gpl_reepreuve_certificate').report_action(self)
+        return self.env.ref('cpss_gpl_operations.report_gpl_installation_document').report_action(self)

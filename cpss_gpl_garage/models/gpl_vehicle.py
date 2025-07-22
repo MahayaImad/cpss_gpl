@@ -63,6 +63,22 @@ class GplVehicle(models.Model):
     notes = fields.Html('Notes')
     internal_notes = fields.Text('Notes internes')
 
+    # === INFORMATIONS RESERVOIR ===
+    reservoir_lot_id = fields.Many2one('stock.lot', string="Réservoir installé",
+                                       domain="[('product_id.is_gpl_reservoir', '=', True)]",
+                                       tracking=True)
+
+    # Informations du contrôle
+    date_inspection = fields.Date(
+        string='Date du contrôle',
+        tracking=True
+    )
+
+    date_next_inspection = fields.Date(
+        string='Prochaine inspection',
+        tracking=True
+    )
+
     # === CHAMPS CALCULÉS ===
     technician_names = fields.Char('Techniciens', compute='_compute_technician_names')
     is_appointment_today = fields.Boolean('RDV aujourd\'hui', compute='_compute_appointment_flags')

@@ -7,21 +7,21 @@
         <field name="arch" type="xml">
             <form string="Ordre de Réparation GPL">
                 <header>
-                    <button name="action_schedule" string="Planifier" type="object"
-                            class="btn-primary" states="draft"/>
-                    <button name="action_start" string="Démarrer" type="object"
-                            class="btn-primary" states="scheduled"/>
+                    <button name="action_ready" string="Planifier" type="object"
+                            class="btn-primary" modifiers="{'invisible': [('result', '!=', 'draft')]}"/>
+                    <button name="action_start_repair" string="Démarrer" type="object"
+                            class="btn-primary" modifiers="{'invisible': [('result', '!=', 'confirmed')]}"/>
                     <button name="action_done" string="Terminer" type="object"
-                            class="btn-success" states="in_progress"/>
+                            class="btn-success" modifiers="{'invisible': [('result', '!=', 'under_repair')]}"/>
                     <button name="action_cancel" string="Annuler" type="object"
-                            states="draft,scheduled,in_progress"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,scheduled,in_progress,done"/>
+                            modifiers="{'invisible': [('state', 'not in', ['draft', 'confirmed', 'under_repair'])]}"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,under_repair,done"/>
                 </header>
                 <sheet>
                     <widget name="web_ribbon" title="Urgent"
-                            attrs="{'invisible': [('priority', '!=', '1')]}"/>
+                            modifiers="{'invisible': [('priority', '!=', '1')]}"/>
                     <widget name="web_ribbon" title="Très urgent" bg_color="bg-danger"
-                            attrs="{'invisible': [('priority', '!=', '2')]}"/>
+                            modifiers="{'invisible': [('priority', '!=', '2')]}"/>
 
                     <div class="oe_title">
                         <h1>
@@ -37,24 +37,23 @@
                             <field name="priority" widget="priority"/>
                         </group>
                         <group string="Planning">
-                            <field name="date_repair"/>
-                            <field name="technician_id" options="{'no_create': True}"/>
-                            <field name="date_end" readonly="1"/>
-                            <field name="total_amount" widget="monetary"/>
+                            <field name="date_start"/>
+                            <field name="technician_ids" options="{'no_create': True}"/>
+                            <field name="date_done" readonly="1"/>
+                            <field name="amount_total" widget="monetary"/>
                         </group>
                     </group>
 
                     <notebook>
                         <page string="Diagnostic">
                             <group>
-                                <field name="diagnostic" placeholder="Description du problème..."/>
+                                <field name="diagnosis" placeholder="Description du problème..."/>
                             </group>
                         </page>
                         <page string="Pièces utilisées">
                             <field name="repair_line_ids">
                                 <tree editable="bottom">
                                     <field name="product_id"
-                                           domain="[('gpl_category', 'in', ['piece', 'consommable'])]"
                                            options="{'no_create': True}"/>
                                     <field name="quantity"/>
                                     <field name="price_unit" widget="monetary"/>
@@ -65,7 +64,7 @@
                         <page string="Solution">
                             <group>
                                 <field name="solution" placeholder="Description de la réparation effectuée..."
-                                       attrs="{'required': [('state', '=', 'done')]}"/>
+                                       modifiers="{'required': [('state', '=', 'done')]}"/>
                             </group>
                         </page>
                     </notebook>
@@ -91,14 +90,14 @@
                 <field name="vehicle_id"/>
                 <field name="client_id"/>
                 <field name="repair_type"/>
-                <field name="date_repair"/>
-                <field name="technician_id"/>
+                <field name="date_done"/>
+                <field name="technician_ids"/>
                 <field name="priority" widget="priority"/>
-                <field name="total_amount" widget="monetary" sum="Total"/>
+                <field name="amount_total" widget="monetary" sum="Total"/>
                 <field name="state" widget="badge"
                        decoration-success="state == 'done'"
-                       decoration-info="state == 'in_progress'"
-                       decoration-warning="state == 'scheduled'"
+                       decoration-info="state == 'under_repair'"
+                       decoration-warning="state == 'ready'"
                        decoration-muted="state == 'cancel'"/>
             </tree>
         </field>
@@ -112,8 +111,7 @@
             <kanban default_group_by="state" class="o_kanban_mobile" quick_create="false">
                 <field name="state"/>
                 <field name="priority"/>
-                <field name="color"/>
-                <progressbar field="state" colors='{"done": "success", "in_progress": "info", "cancel": "danger"}'/>
+                <progressbar field="state" colors='{"done": "success", "under_repair": "info", "cancel": "danger"}'/>
                 <templates>
                     <t t-name="kanban-box">
                         <div class="oe_kanban_card oe_kanban_global_click">
@@ -143,15 +141,15 @@
                                         <i class="fa fa-wrench"/> <field name="repair_type"/>
                                     </div>
                                     <div>
-                                        <i class="fa fa-calendar"/> <field name="date_repair" widget="date"/>
+                                        <i class="fa fa-calendar"/> <field name="date_done" widget="date"/>
                                     </div>
                                 </div>
                                 <div class="o_kanban_record_bottom">
                                     <div class="oe_kanban_bottom_left">
-                                        <field name="technician_id" widget="many2one_avatar_user"/>
+                                        <field name="technician_ids" widget="many2one_avatar_user"/>
                                     </div>
                                     <div class="oe_kanban_bottom_right">
-                                        <b><field name="total_amount" widget="monetary"/></b>
+                                        <b><field name="amount_total" widget="monetary"/></b>
                                     </div>
                                 </div>
                             </div>
@@ -171,21 +169,20 @@
                 <field name="name"/>
                 <field name="vehicle_id"/>
                 <field name="client_id"/>
-                <field name="technician_id"/>
+                <field name="technician_ids"/>
                 <field name="repair_type"/>
                 <filter string="Urgent" name="urgent" domain="[('priority', 'in', ['1', '2'])]"/>
                 <separator/>
-                <filter string="En cours" name="in_progress" domain="[('state', '=', 'in_progress')]"/>
-                <filter string="Planifiées" name="scheduled" domain="[('state', '=', 'scheduled')]"/>
+                <filter string="En cours" name="under_repair" domain="[('state', '=', 'under_repair')]"/>
+                <filter string="Planifiées" name="ready" domain="[('state', '=', 'ready')]"/>
                 <filter string="Terminées" name="done" domain="[('state', '=', 'done')]"/>
                 <separator/>
                 <filter string="Aujourd'hui" name="today"
-                        domain="[('date_repair', '&gt;=', datetime.datetime.now().strftime('%Y-%m-%d 00:00:00')),
-                                ('date_repair', '&lt;=', datetime.datetime.now().strftime('%Y-%m-%d 23:59:59'))]"/>
+                        domain="[('date_done', '&gt;=', datetime.datetime.now().strftime('%Y-%m-%d 00:00:00')),
+                                ('date_done', '&lt;=', datetime.datetime.now().strftime('%Y-%m-%d 23:59:59'))]"/>
                 <group expand="0" string="Grouper par">
                     <filter name="group_by_state" string="État" context="{'group_by': 'state'}"/>
                     <filter name="group_by_type" string="Type" context="{'group_by': 'repair_type'}"/>
-                    <filter name="group_by_technician" string="Technicien" context="{'group_by': 'technician_id'}"/>
                     <filter name="group_by_priority" string="Priorité" context="{'group_by': 'priority'}"/>
                 </group>
             </search>

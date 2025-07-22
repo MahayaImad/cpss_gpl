@@ -22,7 +22,7 @@ class GplRepairOrder(models.Model):
 
     # Client et véhicule
     vehicle_id = fields.Many2one(
-        'gpl_vehicle',  # CORRIGÉ
+        'gpl.vehicle',  # CORRIGÉ
         string='Véhicule',
         required=True,
         tracking=True,
@@ -128,7 +128,7 @@ class GplRepairOrder(models.Model):
     reservoir_lot_id = fields.Many2one(
         'stock.lot',
         string='Réservoir concerné',
-        domain=[('product_id.gpl_type', '=', 'reservoir')]
+        domain=[('product_id.is_gpl_reservoir', '=', True)]
     )
 
     @api.model_create_multi
@@ -170,7 +170,7 @@ class GplRepairOrder(models.Model):
 
         # Mettre à jour le statut du véhicule
         if self.vehicle_id:
-            repair_status = self.env.ref('cpss_gpl_garage.vehicle_status_en_reparation', raise_if_not_found=False)
+            repair_status = self.env.ref('cpss_gpl_garage.vehicle_status_en_cours', raise_if_not_found=False)
             if repair_status:
                 self.vehicle_id.status_id = repair_status
 
@@ -187,7 +187,7 @@ class GplRepairOrder(models.Model):
 
         # Mettre à jour le statut du véhicule
         if self.vehicle_id:
-            ready_status = self.env.ref('cpss_gpl_garage.vehicle_status_pret', raise_if_not_found=False)
+            ready_status = self.env.ref('cpss_gpl_garage.vehicle_status_termine', raise_if_not_found=False)
             if ready_status:
                 self.vehicle_id.status_id = ready_status
 

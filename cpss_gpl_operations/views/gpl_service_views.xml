@@ -8,11 +8,12 @@
             <form string="Installation GPL">
                 <header>
                     <button name="action_start" string="Démarrer" type="object"
-                            class="btn-primary" states="draft,planned"/>
+                            class="btn-primary"
+                            modifiers="{'invisible': [('state', 'not in', ['draft', 'planned'])]}"/>
                     <button name="action_done" string="Terminer" type="object"
-                            class="btn-success" states="in_progress"/>
+                            class="btn-success" modifiers="{'invisible': [('state', 'not in', ['in_progress'])]}"/>
                     <button name="action_cancel" string="Annuler" type="object"
-                            states="draft,planned,in_progress"/>
+                            modifiers="{'invisible': [('state', 'not in', ['draft', 'planned', 'in_progress])]}"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,planned,in_progress,done"/>
                 </header>
                 <sheet>
@@ -32,7 +33,7 @@
                         <group string="Exécution">
                             <field name="technician_ids" widget="many2many_tags"/>
                             <field name="reservoir_lot_id"
-                                   domain="[('product_id.gpl_type', '=', 'reservoir')]"
+                                   domain="[('product_id.is_gpl_reservoir', '=', True)]"
                                    options="{'no_create': True}"/>
                             <field name="date_end" readonly="1"/>
                             <field name="total_amount" widget="monetary"/>
@@ -94,7 +95,6 @@
         <field name="arch" type="xml">
             <kanban default_group_by="state" class="o_kanban_mobile" quick_create="false">
                 <field name="state"/>
-                <field name="color"/>
                 <progressbar field="state" colors='{"done": "success", "in_progress": "info", "cancel": "danger"}'/>
                 <templates>
                     <t t-name="kanban-box">
@@ -119,7 +119,7 @@
                             </div>
                             <div class="o_kanban_record_bottom">
                                 <div class="oe_kanban_bottom_left">
-                                    <field name="technician_ids" widget="many2many_avatars"/>
+                                    <field name="technician_ids" widget="many2many_avatar_employee"/>
                                 </div>
                                 <div class="oe_kanban_bottom_right">
                                     <b><field name="total_amount" widget="monetary"/></b>
@@ -138,8 +138,7 @@
         <field name="model">gpl.service.installation</field>
         <field name="arch" type="xml">
             <calendar string="Installations GPL" date_start="date_planned"
-                      date_stop="date_planned" color="state" mode="month"
-                      quick_add="False">
+                      date_stop="date_planned" color="state" mode="month">
                 <field name="name"/>
                 <field name="vehicle_id"/>
                 <field name="client_id"/>
@@ -156,7 +155,6 @@
                 <field name="name"/>
                 <field name="vehicle_id"/>
                 <field name="client_id"/>
-                <field name="technician_ids"/>
                 <filter string="En cours" name="in_progress" domain="[('state', '=', 'in_progress')]"/>
                 <filter string="Terminées" name="done" domain="[('state', '=', 'done')]"/>
                 <separator/>
@@ -167,7 +165,6 @@
                         domain="[('date_service', '&gt;=', (datetime.datetime.now()).strftime('%Y-%m-01'))]"/>
                 <group expand="0" string="Grouper par">
                     <filter name="group_by_state" string="État" context="{'group_by': 'state'}"/>
-                    <filter name="group_by_technician" string="Technicien" context="{'group_by': 'technician_ids'}"/>
                     <filter name="group_by_date" string="Date" context="{'group_by': 'date_service:month'}"/>
                 </group>
             </search>

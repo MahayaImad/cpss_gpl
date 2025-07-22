@@ -45,6 +45,7 @@
     # Dépendances
     'depends': [
         'cpss_gpl_base',    # Module de base CPSS
+        'cpss_gpl_reservoir',
         'fleet',            # Module fleet d'Odoo
         'calendar',         # Gestion des rendez-vous
         'hr',              # Gestion des employés/techniciens

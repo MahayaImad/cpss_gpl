@@ -8,21 +8,20 @@
             <form string="Contrôle Technique GPL">
                 <header>
                     <button name="action_start" string="Démarrer" type="object"
-                            class="btn-primary" states="draft"/>
-                    <button name="action_validate" string="Valider" type="object"
-                            class="btn-success" states="in_progress"/>
+                            class="btn-primary" modifiers="{'invisible': [('result', '!=', 'draft')]}"/>
+                    <button name="action_done" string="Valider" type="object"
+                            class="btn-success" modifiers="{'invisible': [('result', '!=', 'in_progress')]}"/>
                     <button name="action_print_certificate" string="Imprimer Certificat" type="object"
-                            class="btn-primary" states="done"
-                            attrs="{'invisible': [('result', '!=', 'pass')]}"/>
+                            class="btn-primary" modifiers="{'invisible': [('result', '!=', 'done')]}"/>
                     <button name="action_cancel" string="Annuler" type="object"
-                            states="draft,scheduled,in_progress"/>
+                           modifiers="{'invisible': [('state', 'not in', ['draft', 'scheduled', 'in_progress'])]}"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,done"/>
                 </header>
                 <sheet>
                     <widget name="web_ribbon" title="Validé" bg_color="bg-success"
-                            attrs="{'invisible': [('result', '!=', 'pass')]}"/>
+                            modifiers="{'invisible': [('result', '!=', 'pass')]}"/>
                     <widget name="web_ribbon" title="Refusé" bg_color="bg-danger"
-                            attrs="{'invisible': [('result', '!=', 'fail')]}"/>
+                            modifiers="{'invisible': [('result', '!=', 'fail')]}"/>
 
                     <div class="oe_title">
                         <h1>
@@ -41,9 +40,9 @@
                             <field name="inspector_id" options="{'no_create': True}"/>
                             <field name="result" readonly="1"/>
                             <field name="certificate_number"
-                                   attrs="{'invisible': [('result', '!=', 'pass')]}"/>
-                            <field name="date_expiry"
-                                   attrs="{'invisible': [('result', '!=', 'pass')]}"/>
+                                   modifiers="{'invisible': [('result', '!=', 'pass')]}"/>
+                            <field name="date_next_inspection"
+                                   modifiers="{'invisible': [('result', '!=', 'pass')]}"/>
                         </group>
                     </group>
 
@@ -57,8 +56,8 @@
                     </group>
 
                     <notebook>
-                        <page string="Commentaires">
-                            <field name="comments" placeholder="Commentaires sur le contrôle..."/>
+                        <page string="Observations">
+                            <field name="observations" placeholder="Commentaires sur le contrôle..."/>
                         </page>
                         <page string="Recommandations">
                             <field name="recommendations" placeholder="Recommandations pour le client..."/>
@@ -108,7 +107,6 @@
             <kanban default_group_by="state" class="o_kanban_mobile" quick_create="false">
                 <field name="state"/>
                 <field name="result"/>
-                <field name="color"/>
                 <progressbar field="state" colors='{"done": "success", "in_progress": "info", "cancel": "danger"}'/>
                 <templates>
                     <t t-name="kanban-box">
@@ -145,7 +143,7 @@
                                     </div>
                                     <div class="oe_kanban_bottom_right" t-if="record.certificate_number.raw_value">
                                         <small class="text-muted">
-                                            <i class="fa fa-certificate"/> <field name="certificate_number"/>
+                                            <i class="fa fa-certificate" title=" "/> <field name="certificate_number"/>
                                         </small>
                                     </div>
                                 </div>

@@ -21,9 +21,8 @@ class GplServiceInstallation(models.Model):
         copy=False
     )
 
-    # Client et véhicule - CORRECTION: utiliser gpl_vehicle au lieu de gpl.vehicle
     vehicle_id = fields.Many2one(
-        'gpl_vehicle',  # CORRIGÉ
+        'gpl.vehicle',  # CORRIGÉ
         string='Véhicule',
         required=True,
         tracking=True,
@@ -63,9 +62,8 @@ class GplServiceInstallation(models.Model):
         string='Techniciens'
     )
 
-    # Réservoir - CORRECTION: ajout du champ manquant vehicle_gpl_id
     vehicle_gpl_id = fields.Many2one(
-        'gpl_vehicle',
+        'gpl.vehicle',
         string='Véhicule GPL',
         related='vehicle_id',
         store=True
@@ -74,7 +72,7 @@ class GplServiceInstallation(models.Model):
     reservoir_lot_id = fields.Many2one(
         'stock.lot',
         string='Réservoir installé',
-        domain=[('product_id.gpl_type', '=', 'reservoir')]
+        domain=[('product_id.is_gpl_reservoir', '=', True)]
     )
 
     # Lien vers le réservoir via stock.lot
@@ -160,8 +158,7 @@ class GplServiceInstallation(models.Model):
             if completed_status:
                 self.vehicle_id.write({
                     'status_id': completed_status.id,
-                    'reservoir_lot_id': self.reservoir_lot_id.id,
-                    'installation_date': fields.Date.today()
+                    'reservoir_lot_id': self.reservoir_lot_id.id
                 })
 
     def action_cancel(self):
@@ -198,7 +195,7 @@ class GplInstallationLine(models.Model):
         required=True
     )
 
-    name = fields.Text(
+    name = fields.Char(
         string='Description',
         related='product_id.name'
     )
