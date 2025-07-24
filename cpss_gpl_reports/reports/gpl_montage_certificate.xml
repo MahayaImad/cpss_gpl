@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Action de rapport pour le certificat de montage -->
+    <record id="action_report_gpl_montage_certificate" model="ir.actions.report">
+        <field name="name">Certificat de Montage GPL</field>
+        <field name="model">gpl.service.installation</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cpss_gpl_reports.report_gpl_montage_certificate</field>
+        <field name="report_file">cpss_gpl_reports.report_gpl_montage_certificate</field>
+        <field name="print_report_name">'Certificat_Montage_GPL_%s' % (object.name)</field>
+        <field name="binding_model_id" ref="cpss_gpl_operations.model_gpl_service_installation"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_gpl_certificate"/>
+    </record>
+
+    <!-- Template du certificat de montage -->
+    <template id="report_gpl_montage_certificate">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="cpss_gpl_reports.gpl_external_layout">
+                    <t t-call="cpss_gpl_reports.gpl_report_assets"/>
+                    <div class="page">
+                        <!-- En-tête du certificat -->
+                        <div class="text-center">
+                            <h1 style="color: #007bff; font-weight: bold;">
+                                CERTIFICAT DE MONTAGE GPL
+                            </h1>
+                            <h3>N° <span t-field="doc.name"/></h3>
+                        </div>
+
+                        <!-- Corps du certificat -->
+                        <div class="gpl-certificate">
+                            <p style="font-size: 16px; margin-bottom: 20px;">
+                                Nous soussignés, <strong t-field="doc.company_id.name"/>,
+                                agréé sous le numéro <strong t-field="doc.company_id.gpl_company_license"/>,
+                                certifions avoir procédé à l'installation d'un système GPL sur le véhicule suivant :
+                            </p>
+
+                            <!-- Informations du véhicule -->
+                            <table class="gpl-table">
+                                <tr>
+                                    <th colspan="2" style="text-align: center;">INFORMATIONS DU VÉHICULE</th>
+                                </tr>
+                                <tr>
+                                    <td width="40%"><strong>Propriétaire</strong></td>
+                                    <td><span t-field="doc.client_id.name"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Marque</strong></td>
+                                    <td><span t-field="doc.vehicle_id.model_id.brand_id.name"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Modèle</strong></td>
+                                    <td><span t-field="doc.vehicle_id.model_id.name"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Immatriculation</strong></td>
+                                    <td><span t-field="doc.vehicle_id.license_plate"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>N° de châssis</strong></td>
+                                    <td><span t-field="doc.vehicle_id.vin_sn"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Type mine</strong></td>
+                                    <td><span t-field="doc.vehicle_id.vehicle_type_code"/></td>
+                                </tr>
+                            </table>
+
+                            <!-- Informations du réservoir -->
+                            <table class="gpl-table" style="margin-top: 20px;">
+                                <tr>
+                                    <th colspan="2" style="text-align: center;">INFORMATIONS DU RÉSERVOIR GPL</th>
+                                </tr>
+                                <tr>
+                                    <td width="40%"><strong>N° de série</strong></td>
+                                    <td><span t-field="doc.reservoir_id.name"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fabricant</strong></td>
+                                    <td><span t-field="doc.reservoir_id.fabricant_id.name"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Capacité</strong></td>
+                                    <td><span t-field="doc.reservoir_id.product_id.name"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Date de fabrication</strong></td>
+                                    <td><span t-field="doc.reservoir_id.manufacturing_date"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Date de certification</strong></td>
+                                    <td><span t-field="doc.reservoir_id.certification_date"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Prochaine réépreuve</strong></td>
+                                    <td><span t-field="doc.reservoir_id.next_test_date"/></td>
+                                </tr>
+                            </table>
+
+                            <!-- Informations de l'installation -->
+                            <table class="gpl-table" style="margin-top: 20px;">
+                                <tr>
+                                    <th colspan="2" style="text-align: center;">DÉTAILS DE L'INSTALLATION</th>
+                                </tr>
+                                <tr>
+                                    <td width="40%"><strong>Date d'installation</strong></td>
+                                    <td><span t-field="doc.date_installation" t-options="{'widget': 'date'}"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Technicien responsable</strong></td>
+                                    <td><span t-field="doc.technician_id.name"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Type d'installation</strong></td>
+                                    <td>
+                                        <span t-if="doc.installation_type == 'simple'">Installation Simple</span>
+                                        <span t-elif="doc.installation_type == 'advanced'">Installation Avancée</span>
+                                        <span t-else="">Installation Standard</span>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Déclaration et signatures -->
+                            <div style="margin-top: 40px;">
+                                <p style="font-size: 14px;">
+                                    L'installation a été réalisée conformément aux normes de sécurité en vigueur
+                                    et aux prescriptions techniques du constructeur.
+                                </p>
+
+                                <div class="row" style="margin-top: 50px;">
+                                    <div class="col-6">
+                                        <div class="gpl-signature-box">
+                                            <p><strong>Le Technicien</strong></p>
+                                            <p><span t-field="doc.technician_id.name"/></p>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 text-right">
+                                        <div class="gpl-signature-box" style="float: right;">
+                                            <p><strong>Le Responsable</strong></p>
+                                            <p>Direction Technique</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Cachet de l'entreprise -->
+                            <div class="gpl-stamp-box" style="margin-top: 30px;">
+                                <p><strong>Cachet de l'entreprise</strong></p>
+                            </div>
+
+                            <!-- Date et lieu -->
+                            <div class="text-center" style="margin-top: 20px;">
+                                <p>
+                                    Fait à <span t-field="doc.company_id.city"/>,
+                                    le <span t-field="doc.date_installation" t-options="{'widget': 'date'}"/>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Note de bas de page -->
+                        <div style="margin-top: 30px; font-size: 12px; color: #666;">
+                            <p class="text-center">
+                                Ce certificat atteste de la conformité de l'installation GPL réalisée.<br/>
+                                Il doit être conservé avec les documents du véhicule.
+                            </p>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

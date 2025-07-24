@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menu principal Rapports GPL -->
+    <menuitem id="menu_gpl_reports_root"
+              name="Rapports GPL"
+              sequence="100"
+              web_icon="cpss_gpl_reports,static/description/icon.png"/>
+
+    <!-- === TABLEAUX DE BORD === -->
+    <menuitem id="menu_gpl_reports_dashboard"
+              name="Tableaux de Bord"
+              parent="menu_gpl_reports_root"
+              sequence="10"/>
+
+    <!-- === CERTIFICATS === -->
+    <menuitem id="menu_gpl_certificates"
+              name="Certificats"
+              parent="menu_gpl_reports_root"
+              sequence="20"/>
+
+    <!-- Actions pour générer les certificats -->
+    <record id="action_generate_montage_certificate" model="ir.actions.act_window">
+        <field name="name">Générer Certificat de Montage</field>
+        <field name="res_model">gpl.service.installation</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('state', '=', 'done')]</field>
+        <field name="context">{'search_default_done': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Sélectionnez les installations pour générer les certificats
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_gpl_montage_certificate"
+              name="Certificats de Montage"
+              parent="menu_gpl_certificates"
+              action="action_generate_montage_certificate"
+              sequence="10"/>
+
+    <!-- === RAPPORTS ADMINISTRATIFS === -->
+    <menuitem id="menu_gpl_admin_reports"
+              name="Rapports Administratifs"
+              parent="menu_gpl_reports_root"
+              sequence="30"/>
+
+    <!-- Bordereau d'envoi -->
+    <record id="action_gpl_bordereau_ready" model="ir.actions.act_window">
+        <field name="name">Dossiers Prêts pour Envoi</field>
+        <field name="res_model">gpl.service.installation</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('state', '=', 'done'), ('bordereau_sent', '=', False)]</field>
+        <field name="context">{'search_default_ready_for_bordereau': 1}</field>
+    </record>
+
+    <menuitem id="menu_gpl_bordereau_envoi"
+              name="Bordereaux d'Envoi"
+              parent="menu_gpl_admin_reports"
+              action="action_gpl_bordereau_ready"
+              sequence="10"/>
+
+    <!-- === RAPPORTS ANALYTIQUES === -->
+    <menuitem id="menu_gpl_analytics_reports"
+              name="Rapports Analytiques"
+              parent="menu_gpl_reports_root"
+              sequence="40"/>
+
+    <!-- État des réservoirs -->
+    <record id="action_gpl_reservoir_report" model="ir.actions.act_window">
+        <field name="name">État des Réservoirs</field>
+        <field name="res_model">stock.lot</field>
+        <field name="view_mode">tree,form,pivot,graph</field>
+        <field name="domain">[('product_id.is_gpl_reservoir', '=', True)]</field>
+        <field name="context">{
+            'search_default_group_by_state': 1,
+            'search_default_filter_critical': 1
+        }</field>
+    </record>
+
+    <menuitem id="menu_gpl_reservoir_status"
+              name="État des Réservoirs"
+              parent="menu_gpl_analytics_reports"
+              action="action_gpl_reservoir_report"
+              sequence="10"/>
+
+    <!-- Statistiques mensuelles -->
+    <record id="action_gpl_monthly_stats" model="ir.actions.act_window">
+        <field name="name">Statistiques Mensuelles</field>
+        <field name="res_model">gpl.service.installation</field>
+        <field name="view_mode">graph,pivot,tree</field>
+        <field name="context">{
+            'search_default_current_month': 1,
+            'group_by': ['date_installation:month', 'state']
+        }</field>
+    </record>
+
+    <menuitem id="menu_gpl_monthly_stats"
+              name="Statistiques Mensuelles"
+              parent="menu_gpl_analytics_reports"
+              action="action_gpl_monthly_stats"
+              sequence="20"/>
+
+    <!-- === HISTORIQUES === -->
+    <menuitem id="menu_gpl_history_reports"
+              name="Historiques"
+              parent="menu_gpl_reports_root"
+              sequence="50"/>
+
+    <!-- Historique client -->
+    <record id="action_gpl_client_history" model="ir.actions.act_window">
+        <field name="name">Historique Clients GPL</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('is_gpl_client', '=', True)]</field>
+        <field name="context">{
+            'search_default_has_installations': 1
+        }</field>
+    </record>
+
+    <menuitem id="menu_gpl_client_history"
+              name="Historique Clients"
+              parent="menu_gpl_history_reports"
+              action="action_gpl_client_history"
+              sequence="10"/>
+
+    <!-- === CONFIGURATION RAPPORTS === -->
+    <menuitem id="menu_gpl_reports_config"
+              name="Configuration"
+              parent="menu_gpl_reports_root"
+              sequence="200"
+              groups="cpss_gpl_base.group_gpl_manager"/>
+
+    <!-- Templates de rapports -->
+    <record id="action_report_templates" model="ir.actions.act_window">
+        <field name="name">Templates de Rapports</field>
+        <field name="res_model">ir.actions.report</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('report_name', 'like', 'cpss_gpl_reports.')]</field>
+    </record>
+
+    <menuitem id="menu_report_templates"
+              name="Templates de Rapports"
+              parent="menu_gpl_reports_config"
+              action="action_report_templates"
+              sequence="10"/>
+</odoo>

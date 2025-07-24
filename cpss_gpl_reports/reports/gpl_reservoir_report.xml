@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Action de rapport pour l'état des réservoirs -->
+    <record id="action_report_gpl_reservoir_status" model="ir.actions.report">
+        <field name="name">État des Réservoirs GPL</field>
+        <field name="model">stock.lot</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cpss_gpl_reports.report_gpl_reservoir_status</field>
+        <field name="report_file">cpss_gpl_reports.report_gpl_reservoir_status</field>
+        <field name="print_report_name">'Etat_Reservoirs_GPL_%s' % (datetime.datetime.now().strftime('%Y%m%d'))</field>
+        <field name="binding_model_id" ref="stock.model_stock_lot"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_gpl_report"/>
+    </record>
+
+    <!-- Template du rapport réservoirs -->
+    <template id="report_gpl_reservoir_status">
+        <t t-call="web.html_container">
+            <t t-call="cpss_gpl_reports.gpl_external_layout">
+                <t t-call="cpss_gpl_reports.gpl_report_assets"/>
+                <div class="page">
+                    <!-- En-tête -->
+                    <div class="text-center">
+                        <h2>ÉTAT DES RÉSERVOIRS GPL</h2>
+                        <p>Généré le <span t-esc="datetime.datetime.now().strftime('%d/%m/%Y')"/></p>
+                    </div>
+
+                    <!-- Statistiques globales -->
+                    <div style="margin: 20px 0;">
+                        <t t-set="total_reservoirs" t-value="len(docs)"/>
+                        <t t-set="expired_reservoirs" t-value="len([r for r in docs if r.expiration_date and r.expiration_date &lt; datetime.date.today()])"/>
+                        <t t-set="expiring_soon" t-value="len([r for r in docs if r.expiration_date and r.expiration_date &gt;= datetime.date.today() and r.expiration_date &lt;= datetime.date.today() + datetime.timedelta(days=30)])"/>
+
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <div style="border: 2px solid #007bff; padding: 20px; border-radius: 10px;">
+                                    <h3 style="color: #007bff;"><span t-esc="total_reservoirs"/></h3>
+                                    <p>Total Réservoirs</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div style="border: 2px solid #dc3545; padding: 20px; border-radius: 10px;">
+                                    <h3 style="color: #dc3545;"><span t-esc="expired_reservoirs"/></h3>
+                                    <p>Expirés</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div style="border: 2px solid #ffc107; padding: 20px; border-radius: 10px;">
+                                    <h3 style="color: #ffc107;"><span t-esc="expiring_soon"/></h3>
+                                    <p>Expirent dans 30 jours</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tableau des réservoirs -->
+                    <h3 style="margin-top: 30px;">Détail des Réservoirs</h3>
+                    <table class="gpl-table">
+                        <thead>
+                            <tr>
+                                <th>N° Série</th>
+                                <th>Produit</th>
+                                <th>Fabricant</th>
+                                <th>Date Fabrication</th>
+                                <th>Prochaine Réépreuve</th>
+                                <th>État</th>
+                                <th>Emplacement</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="docs" t-as="reservoir">
+                                <td><span t-field="reservoir.name"/></td>
+                                <td><span t-field="reservoir.product_id.name"/></td>
+                                <td>
+                                    <span t-if="reservoir.fabricant_id" t-field="reservoir.fabricant_id.name"/>
+                                </td>
+                                <td>
+                                    <span t-if="reservoir.manufacturing_date" t-field="reservoir.manufacturing_date"/>
+                                </td>
+                                <td>
+                                    <t t-if="reservoir.next_test_date">
+                                        <span t-field="reservoir.next_test_date"
+                                              t-att-style="'color: red;' if reservoir.next_test_date &lt; datetime.date.today() else ('color: orange;' if reservoir.next_test_date &lt;= datetime.date.today() + datetime.timedelta(days=30) else '')"/>
+                                    </t>
+                                </td>
+                                <td>
+                                    <t t-if="reservoir.reservoir_state == 'in_stock'">
+                                        <span class="badge badge-success">En Stock</span>
+                                    </t>
+                                    <t t-elif="reservoir.reservoir_state == 'installed'">
+                                        <span class="badge badge-primary">Installé</span>
+                                    </t>
+                                    <t t-elif="reservoir.reservoir_state == 'expired'">
+                                        <span class="badge badge-danger">Expiré</span>
+                                    </t>
+                                    <t t-else="">
+                                        <span class="badge badge-secondary">Autre</span>
+                                    </t>
+                                </td>
+                                <td>
+                                    <t t-if="reservoir.location_id">
+                                        <span t-field="reservoir.location_id.name"/>
+                                    </t>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Réservoirs expirés ou expirant bientôt -->
+                    <t t-set="critical_reservoirs" t-value="[r for r in docs if r.next_test_date and r.next_test_date &lt;= datetime.date.today() + datetime.timedelta(days=30)]"/>
+                    <t t-if="critical_reservoirs">
+                        <h3 style="margin-top: 40px; color: #dc3545;">Réservoirs Nécessitant une Action Urgente</h3>
+                        <table class="gpl-table">
+                            <thead>
+                                <tr style="background-color: #dc3545;">
+                                    <th>N° Série</th>
+                                    <th>Date Expiration</th>
+                                    <th>Jours Restants</th>
+                                    <th>Emplacement Actuel</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="critical_reservoirs" t-as="crit_res">
+                                    <td><strong t-field="crit_res.name"/></td>
+                                    <td><span t-field="crit_res.next_test_date"/></td>
+                                    <td>
+                                        <t t-set="days_diff" t-value="(crit_res.next_test_date - datetime.date.today()).days"/>
+                                        <span t-esc="days_diff if days_diff > 0 else 'EXPIRÉ'"
+                                              t-att-style="'color: red; font-weight: bold;' if days_diff &lt;= 0 else ''"/>
+                                    </td>
+                                    <td>
+                                        <t t-if="crit_res.location_id">
+                                            <span t-field="crit_res.location_id.name"/>
+                                        </t>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </t>
+
+                    <!-- Notes de bas de page -->
+                    <div style="margin-top: 50px; font-size: 12px; color: #666;">
+                        <p><strong>Légende des états:</strong></p>
+                        <ul>
+                            <li><strong>En Stock:</strong> Réservoir disponible en magasin</li>
+                            <li><strong>Installé:</strong> Réservoir monté sur un véhicule</li>
+                            <li><strong>Expiré:</strong> Date de réépreuve dépassée</li>
+                        </ul>
+                        <p style="margin-top: 20px;">
+                            <em>Les réservoirs doivent être rééprouvés tous les 5 ans conformément à la réglementation.</em>
+                        </p>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- Action pour le rapport Excel des réservoirs -->
+    <record id="action_report_gpl_reservoir_xlsx" model="ir.actions.report">
+        <field name="name">État des Réservoirs GPL (Excel)</field>
+        <field name="model">stock.lot</field>
+        <field name="report_type">xlsx</field>
+        <field name="report_name">cpss_gpl_reports.report_gpl_reservoir_xlsx</field>
+        <field name="report_file">Etat_Reservoirs_GPL</field>
+        <field name="binding_model_id" ref="stock.model_stock_lot"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>

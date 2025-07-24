@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Action de rapport pour l'inspection détaillée -->
+    <record id="action_report_gpl_inspection_detail" model="ir.actions.report">
+        <field name="name">Rapport d'Inspection GPL</field>
+        <field name="model">gpl.inspection</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cpss_gpl_reports.report_gpl_inspection_detail</field>
+        <field name="report_file">cpss_gpl_reports.report_gpl_inspection_detail</field>
+        <field name="print_report_name">'Rapport_Inspection_%s' % (object.name)</field>
+        <field name="binding_model_id" ref="cpss_gpl_operations.model_gpl_inspection"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_gpl_report"/>
+    </record>
+
+    <!-- Template du rapport d'inspection -->
+    <template id="report_gpl_inspection_detail">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="cpss_gpl_reports.gpl_external_layout">
+                    <t t-call="cpss_gpl_reports.gpl_report_assets"/>
+                    <div class="page">
+                        <!-- En-tête -->
+                        <div class="text-center">
+                            <h2>RAPPORT D'INSPECTION GPL</h2>
+                            <h3>N° <span t-field="doc.name"/></h3>
+                        </div>
+
+                        <!-- Informations générales -->
+                        <div style="margin-top: 30px;">
+                            <h4 style="background-color: #007bff; color: white; padding: 10px;">
+                                1. INFORMATIONS GÉNÉRALES
+                            </h4>
+                            <table class="table">
+                                <tr>
+                                    <td width="25%"><strong>Date d'inspection :</strong></td>
+                                    <td width="25%"><span t-field="doc.date_inspection"/></td>
+                                    <td width="25%"><strong>Inspecteur :</strong></td>
+                                    <td width="25%"><span t-field="doc.inspector_id.name"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Type d'inspection :</strong></td>
+                                    <td>
+                                        <span t-if="doc.inspection_type == 'triennial'">Contrôle Triennal</span>
+                                        <span t-elif="doc.inspection_type == 'initial'">Contrôle Initial</span>
+                                        <span t-elif="doc.inspection_type == 'periodic'">Contrôle Périodique</span>
+                                        <span t-else="">Contrôle Exceptionnel</span>
+                                    </td>
+                                    <td><strong>Certificat N° :</strong></td>
+                                    <td><span t-field="doc.certificate_number"/></td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- Informations véhicule -->
+                        <div style="margin-top: 20px;">
+                            <h4 style="background-color: #007bff; color: white; padding: 10px;">
+                                2. IDENTIFICATION DU VÉHICULE
+                            </h4>
+                            <table class="table">
+                                <tr>
+                                    <td width="25%"><strong>Propriétaire :</strong></td>
+                                    <td colspan="3"><span t-field="doc.client_id.name"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Marque :</strong></td>
+                                    <td><span t-field="doc.vehicle_id.model_id.brand_id.name"/></td>
+                                    <td><strong>Modèle :</strong></td>
+                                    <td><span t-field="doc.vehicle_id.model_id.name"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Immatriculation :</strong></td>
+                                    <td><span t-field="doc.vehicle_id.license_plate"/></td>
+                                    <td><strong>N° châssis :</strong></td>
+                                    <td><span t-field="doc.vehicle_id.vin_sn"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Kilométrage :</strong></td>
+                                    <td><span t-field="doc.vehicle_id.odometer"/> km</td>
+                                    <td><strong>Installation GPL :</strong></td>
+                                    <td><span t-field="doc.installation_id.name"/></td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- Points de contrôle détaillés -->
+                        <div style="margin-top: 20px;">
+                            <h4 style="background-color: #007bff; color: white; padding: 10px;">
+                                3. POINTS DE CONTRÔLE DÉTAILLÉS
+                            </h4>
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr style="background-color: #f8f9fa;">
+                                        <th>Point de contrôle</th>
+                                        <th width="15%" class="text-center">État</th>
+                                        <th width="40%">Observations</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Système général -->
+                                    <tr>
+                                        <td colspan="3" style="background-color: #e9ecef;">
+                                            <strong>A. SYSTÈME GÉNÉRAL</strong>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>État général du système GPL</td>
+                                        <td class="text-center">
+                                            <span t-if="doc.general_system_ok" style="color: green;">✓ Conforme</span>
+                                            <span t-else="" style="color: red;">✗ Non conforme</span>
+                                        </td>
+                                        <td><span t-field="doc.general_system_notes"/></td>
+                                    </tr>
+
+                                    <!-- Étanchéité -->
+                                    <tr>
+                                        <td colspan="3" style="background-color: #e9ecef;">
+                                            <strong>B. ÉTANCHÉITÉ</strong>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Test d'étanchéité du circuit</td>
+                                        <td class="text-center">
+                                            <span t-if="doc.tightness_ok" style="color: green;">✓ Conforme</span>
+                                            <span t-else="" style="color: red;">✗ Non conforme</span>
+                                        </td>
+                                        <td><span t-field="doc.tightness_notes"/></td>
+                                    </tr>
+
+                                    <!-- Réservoir -->
+                                    <tr>
+                                        <td colspan="3" style="background-color: #e9ecef;">
+                                            <strong>C. RÉSERVOIR</strong>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Fixation du réservoir</td>
+                                        <td class="text-center">
+                                            <span t-if="doc.reservoir_fixation_ok" style="color: green;">✓ Conforme</span>
+                                            <span t-else="" style="color: red;">✗ Non conforme</span>
+                                        </td>
+                                        <td><span t-field="doc.reservoir_notes"/></td>
+                                    </tr>
+
+                                    <!-- Canalisations -->
+                                    <tr>
+                                        <td colspan="3" style="background-color: #e9ecef;">
+                                            <strong>D. CANALISATIONS</strong>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>État des canalisations et flexibles</td>
+                                        <td class="text-center">
+                                            <span t-if="doc.pipes_ok" style="color: green;">✓ Conforme</span>
+                                            <span t-else="" style="color: red;">✗ Non conforme</span>
+                                        </td>
+                                        <td><span t-field="doc.pipes_notes"/></td>
+                                    </tr>
+
+                                    <!-- Composants -->
+                                    <tr>
+                                        <td colspan="3" style="background-color: #e9ecef;">
+                                            <strong>E. COMPOSANTS</strong>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Vaporisateur / Détendeur</td>
+                                        <td class="text-center">
+                                            <span t-if="doc.vaporizer_ok" style="color: green;">✓ Conforme</span>
+                                            <span t-else="" style="color: red;">✗ Non conforme</span>
+                                        </td>
+                                        <td><span t-field="doc.vaporizer_notes"/></td>
+                                    </tr>
+
+                                    <!-- Sécurité -->
+                                    <tr>
+                                        <td colspan="3" style="background-color: #e9ecef;">
+                                            <strong>F. SÉCURITÉ</strong>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Systèmes de sécurité</td>
+                                        <td class="text-center">
+                                            <span t-if="doc.safety_system_ok" style="color: green;">✓ Conforme</span>
+                                            <span t-else="" style="color: red;">✗ Non conforme</span>
+                                        </td>
+                                        <td><span t-field="doc.safety_notes"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Mesures et tests -->
+                        <div style="margin-top: 20px;" t-if="doc.pressure_test or doc.leak_test_value">
+                            <h4 style="background-color: #007bff; color: white; padding: 10px;">
+                                4. MESURES ET TESTS
+                            </h4>
+                            <table class="table">
+                                <tr t-if="doc.pressure_test">
+                                    <td width="40%"><strong>Test de pression :</strong></td>
+                                    <td><span t-field="doc.pressure_test"/> bar</td>
+                                </tr>
+                                <tr t-if="doc.leak_test_value">
+                                    <td><strong>Test de fuite (valeur mesurée) :</strong></td>
+                                    <td><span t-field="doc.leak_test_value"/> ppm</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- Conclusion -->
+                        <div style="margin-top: 20px;">
+                            <h4 style="background-color: #007bff; color: white; padding: 10px;">
+                                5. CONCLUSION
+                            </h4>
+                            <div style="padding: 20px; margin: 10px 0;"
+                                 t-attf-class="#{doc.result == 'passed' and 'alert alert-success' or 'alert alert-danger'}">
+                                <h3 class="text-center">
+                                    <t t-if="doc.result == 'passed'">
+                                        <i class="fa fa-check-circle"/> CONTRÔLE SATISFAISANT
+                                    </t>
+                                    <t t-else="">
+                                        <i class="fa fa-times-circle"/> CONTRÔLE NON SATISFAISANT
+                                    </t>
+                                </h3>
+                                <p class="text-center" style="margin: 10px 0;">
+                                    <t t-if="doc.result == 'passed'">
+                                        Le véhicule est conforme aux normes de sécurité GPL
+                                    </t>
+                                    <t t-else="">
+                                        Des corrections sont nécessaires avant la remise en circulation
+                                    </t>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Recommandations -->
+                        <div style="margin-top: 20px;" t-if="doc.notes">
+                            <h4 style="background-color: #ffc107; color: #333; padding: 10px;">
+                                6. RECOMMANDATIONS
+                            </h4>
+                            <div style="padding: 15px; border: 1px solid #ffc107;">
+                                <p t-field="doc.notes"/>
+                            </div>
+                        </div>
+
+                        <!-- Validité et signatures -->
+                        <div style="margin-top: 30px;">
+                            <table class="table">
+                                <tr>
+                                    <td width="50%">
+                                        <strong>Validité du contrôle jusqu'au :</strong><br/>
+                                        <span style="font-size: 20px; color: #007bff;" t-field="doc.date_expiry"/>
+                                    </td>
+                                    <td width="50%" class="text-center">
+                                        <strong>L'inspecteur GPL</strong><br/>
+                                        <span t-field="doc.inspector_id.name"/><br/>
+                                        <div style="margin-top: 50px; border-top: 1px solid #333; width: 200px; margin: 50px auto 0;">
+                                            Signature
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>
+

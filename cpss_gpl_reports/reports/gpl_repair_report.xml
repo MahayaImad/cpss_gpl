@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Action de rapport pour l'ordre de réparation -->
+    <record id="action_report_gpl_repair_order" model="ir.actions.report">
+        <field name="name">Ordre de Réparation GPL</field>
+        <field name="model">gpl.repair.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cpss_gpl_reports.report_gpl_repair_order</field>
+        <field name="report_file">cpss_gpl_reports.report_gpl_repair_order</field>
+        <field name="print_report_name">'Ordre_Reparation_%s' % (object.name)</field>
+        <field name="binding_model_id" ref="cpss_gpl_operations.model_gpl_repair_order"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_gpl_report"/>
+    </record>
+
+    <!-- Template de l'ordre de réparation -->
+    <template id="report_gpl_repair_order">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="cpss_gpl_reports.gpl_external_layout">
+                    <t t-call="cpss_gpl_reports.gpl_report_assets"/>
+                    <div class="page">
+                        <!-- En-tête -->
+                        <div class="row">
+                            <div class="col-8">
+                                <h2>ORDRE DE RÉPARATION GPL</h2>
+                                <h3>N° <span t-field="doc.name"/></h3>
+                            </div>
+                            <div class="col-4 text-right">
+                                <div t-if="doc.priority == 'urgent'"
+                                     style="background-color: #dc3545; color: white; padding: 10px; border-radius: 5px;">
+                                    <h4><i class="fa fa-exclamation-triangle"/> URGENT</h4>
+                                </div>
+                                <div t-elif="doc.priority == 'high'"
+                                     style="background-color: #ffc107; color: #333; padding: 10px; border-radius: 5px;">
+                                    <h4><i class="fa fa-exclamation"/> PRIORITÉ HAUTE</h4>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Informations client et véhicule -->
+                        <div class="row" style="margin-top: 20px;">
+                            <div class="col-6">
+                                <div style="border: 1px solid #ddd; padding: 15px; height: 100%;">
+                                    <h4>CLIENT</h4>
+                                    <p>
+                                        <strong t-field="doc.client_id.name"/><br/>
+                                        <span t-field="doc.client_id.street"/><br/>
+                                        <span t-field="doc.client_id.city"/>
+                                        <span t-field="doc.client_id.zip"/><br/>
+                                        <t t-if="doc.client_id.phone">
+                                            <i class="fa fa-phone"/> <span t-field="doc.client_id.phone"/><br/>
+                                        </t>
+                                        <t t-if="doc.client_id.mobile">
+                                            <i class="fa fa-mobile"/> <span t-field="doc.client_id.mobile"/><br/>
+                                        </t>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div style="border: 1px solid #ddd; padding: 15px; height: 100%;">
+                                    <h4>VÉHICULE</h4>
+                                    <p>
+                                        <strong t-field="doc.vehicle_id.name"/><br/>
+                                        Immatriculation: <strong t-field="doc.vehicle_id.license_plate"/><br/>
+                                        Châssis: <span t-field="doc.vehicle_id.vin_sn"/><br/>
+                                        Kilométrage: <span t-field="doc.vehicle_id.odometer"/> km<br/>
+                                        Installation GPL: <span t-field="doc.installation_id.name"/>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dates et technicien -->
+                        <div style="margin-top: 20px; background-color: #f8f9fa; padding: 15px;">
+                            <div class="row">
+                                <div class="col-4">
+                                    <strong>Date de réception:</strong><br/>
+                                    <span t-field="doc.date_order" t-options="{'widget': 'date'}"/>
+                                </div>
+                                <div class="col-4">
+                                    <strong>Date prévue:</strong><br/>
+                                    <span t-field="doc.date_scheduled" t-options="{'widget': 'date'}"/>
+                                </div>
+                                <div class="col-4">
+                                    <strong>Technicien assigné:</strong><br/>
+                                    <span t-field="doc.technician_id.name"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Diagnostic -->
+                        <div style="margin-top: 20px;">
+                            <h4 style="background-color: #007bff; color: white; padding: 10px;">
+                                DIAGNOSTIC
+                            </h4>
+                            <div style="border: 1px solid #007bff; padding: 15px; min-height: 100px;">
+                                <p t-field="doc.diagnosis"/>
+                            </div>
+                        </div>
+
+                        <!-- Type de réparation -->
+                        <div style="margin-top: 20px;">
+                            <h4 style="background-color: #007bff; color: white; padding: 10px;">
+                                TYPE DE RÉPARATION
+                            </h4>
+                            <div style="padding: 10px;">
+                                <t t-if="doc.repair_type == 'mechanical'">
+                                    <span class="badge badge-primary" style="font-size: 16px;">
+                                        <i class="fa fa-wrench"/> Réparation Mécanique
+                                    </span>
+                                </t>
+                                <t t-elif="doc.repair_type == 'electrical'">
+                                    <span class="badge badge-warning" style="font-size: 16px;">
+                                        <i class="fa fa-bolt"/> Réparation Électrique
+                                    </span>
+                                </t>
+                                <t t-elif="doc.repair_type == 'leak'">
+                                    <span class="badge badge-danger" style="font-size: 16px;">
+                                        <i class="fa fa-tint"/> Réparation de Fuite
+                                    </span>
+                                </t>
+                                <t t-elif="doc.repair_type == 'replacement'">
+                                    <span class="badge badge-info" style="font-size: 16px;">
+                                        <i class="fa fa-exchange"/> Remplacement de Pièces
+                                    </span>
+                                </t>
+                                <t t-else="">
+                                    <span class="badge badge-secondary" style="font-size: 16px;">
+                                        <i class="fa fa-cog"/> Autre Type de Réparation
+                                    </span>
+                                </t>
+                            </div>
+                        </div>
+
+                        <!-- Détail des travaux -->
+                        <div style="margin-top: 20px;">
+                            <h4 style="background-color: #007bff; color: white; padding: 10px;">
+                                DÉTAIL DES TRAVAUX
+                            </h4>
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr style="background-color: #f8f9fa;">
+                                        <th>Description</th>
+                                        <th width="15%" class="text-center">Quantité</th>
+                                        <th width="20%" class="text-right">Prix Unit.</th>
+                                        <th width="20%" class="text-right">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="doc.repair_line_ids" t-as="line">
+                                        <td>
+                                            <strong t-field="line.product_id.name"/><br/>
+                                            <small t-if="line.description" t-field="line.description"/>
+                                        </td>
+                                        <td class="text-center">
+                                            <span t-field="line.quantity"/>
+                                            <span t-field="line.product_uom_id.name" groups="uom.group_uom"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-field="line.price_unit" widget="monetary"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-field="line.price_subtotal" widget="monetary"/>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="3" class="text-right">Total HT:</th>
+                                        <th class="text-right">
+                                            <span t-field="doc.amount_untaxed" widget="monetary"/>
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th colspan="3" class="text-right">TVA:</th>
+                                        <th class="text-right">
+                                            <span t-field="doc.amount_tax" widget="monetary"/>
+                                        </th>
+                                    </tr>
+                                    <tr style="font-size: 18px;">
+                                        <th colspan="3" class="text-right">Total TTC:</th>
+                                        <th class="text-right">
+                                            <strong t-field="doc.amount_total" widget="monetary"/>
+                                        </th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <!-- Solution appliquée -->
+                        <div style="margin-top: 20px;" t-if="doc.solution">
+                            <h4 style="background-color: #28a745; color: white; padding: 10px;">
+                                SOLUTION APPLIQUÉE
+                            </h4>
+                            <div style="border: 1px solid #28a745; padding: 15px;">
+                                <p t-field="doc.solution"/>
+                            </div>
+                        </div>
+
+                        <!-- État de la réparation -->
+                        <div style="margin-top: 20px;">
+                            <h4 style="background-color: #6c757d; color: white; padding: 10px;">
+                                ÉTAT DE LA RÉPARATION
+                            </h4>
+                            <div style="padding: 15px; text-align: center;">
+                                <t t-if="doc.state == 'draft'">
+                                    <span class="badge badge-secondary" style="font-size: 20px; padding: 10px;">
+                                        BROUILLON
+                                    </span>
+                                </t>
+                                <t t-elif="doc.state == 'confirmed'">
+                                    <span class="badge badge-primary" style="font-size: 20px; padding: 10px;">
+                                        CONFIRMÉ
+                                    </span>
+                                </t>
+                                <t t-elif="doc.state == 'in_progress'">
+                                    <span class="badge badge-warning" style="font-size: 20px; padding: 10px;">
+                                        EN COURS
+                                    </span>
+                                </t>
+                                <t t-elif="doc.state == 'done'">
+                                    <span class="badge badge-success" style="font-size: 20px; padding: 10px;">
+                                        TERMINÉ
+                                    </span>
+                                </t>
+                                <t t-elif="doc.state == 'cancelled'">
+                                    <span class="badge badge-danger" style="font-size: 20px; padding: 10px;">
+                                        ANNULÉ
+                                    </span>
+                                </t>
+                            </div>
+                        </div>
+
+                        <!-- Garantie -->
+                        <div style="margin-top: 20px; background-color: #e3f2fd; padding: 15px;" t-if="doc.warranty_date">
+                            <h5><i class="fa fa-shield"/> GARANTIE</h5>
+                            <p>
+                                Les travaux effectués sont garantis jusqu'au
+                                <strong t-field="doc.warranty_date" t-options="{'widget': 'date'}"/>
+                            </p>
+                        </div>
+
+                        <!-- Signatures -->
+                        <div class="row" style="margin-top: 50px;">
+                            <div class="col-4 text-center">
+                                <div style="border-top: 1px solid #333; padding-top: 5px;">
+                                    <p><strong>Le Client</strong><br/>
+                                    <small>Lu et approuvé</small></p>
+                                </div>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div style="border-top: 1px solid #333; padding-top: 5px;">
+                                    <p><strong>Le Technicien</strong><br/>
+                                    <span t-field="doc.technician_id.name"/></p>
+                                </div>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div style="border-top: 1px solid #333; padding-top: 5px;">
+                                    <p><strong>Le Responsable</strong><br/>
+                                    Direction Technique</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Conditions -->
+                        <div style="margin-top: 30px; font-size: 10px; color: #666;">
+                            <p><strong>Conditions générales:</strong></p>
+                            <ul>
+                                <li>Le véhicule doit être récupéré dans les 48h suivant la fin des travaux</li>
+                                <li>Des frais de gardiennage peuvent s'appliquer au-delà de ce délai</li>
+                                <li>La garantie ne couvre que les pièces et travaux mentionnés dans cet ordre</li>
+                                <li>Toute modification non autorisée annule la garantie</li>
+                            </ul>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

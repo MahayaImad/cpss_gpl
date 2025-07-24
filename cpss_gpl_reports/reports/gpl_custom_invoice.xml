@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Action de rapport pour la facture personnalisée GPL -->
+    <record id="action_custom_invoice_gpl" model="ir.actions.report">
+        <field name="name">Facture GPL</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cpss_gpl_reports.custom_invoice_gpl</field>
+        <field name="report_file">cpss_gpl_reports.custom_invoice_gpl</field>
+        <field name="print_report_name">'Facture_GPL_%s' % (object.name)</field>
+        <field name="binding_model_id" ref="account.model_account_move"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_gpl_report"/>
+    </record>
+
+    <!-- Template de la facture personnalisée -->
+    <template id="custom_invoice_gpl">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="cpss_gpl_reports.gpl_external_layout">
+                    <t t-call="cpss_gpl_reports.gpl_report_assets"/>
+                    <div class="page">
+                        <!-- Type de document -->
+                        <div class="row">
+                            <div class="col-6">
+                                <h2>
+                                    <t t-if="doc.move_type == 'out_invoice'">FACTURE GPL</t>
+                                    <t t-elif="doc.move_type == 'out_refund'">AVOIR GPL</t>
+                                    <t t-elif="doc.move_type == 'in_invoice'">FACTURE FOURNISSEUR</t>
+                                    <t t-elif="doc.move_type == 'in_refund'">AVOIR FOURNISSEUR</t>
+                                </h2>
+                                <h3><span t-field="doc.name"/></h3>
+                            </div>
+                            <div class="col-6 text-right">
+                                <t t-if="doc.state == 'posted'">
+                                    <div style="background-color: #28a745; color: white; padding: 10px; display: inline-block; border-radius: 5px;">
+                                        <i class="fa fa-check"/> VALIDÉE
+                                    </div>
+                                </t>
+                                <t t-elif="doc.state == 'draft'">
+                                    <div style="background-color: #6c757d; color: white; padding: 10px; display: inline-block; border-radius: 5px;">
+                                        <i class="fa fa-file-o"/> BROUILLON
+                                    </div>
+                                </t>
+                            </div>
+                        </div>
+
+                        <!-- Informations client et dates -->
+                        <div class="row" style="margin-top: 30px;">
+                            <div class="col-6">
+                                <div style="border: 2px solid #007bff; padding: 15px; min-height: 150px;">
+                                    <h4 style="color: #007bff;">CLIENT</h4>
+                                    <address>
+                                        <strong t-field="doc.partner_id.name"/><br/>
+                                        <span t-field="doc.partner_id.street"/><br/>
+                                        <t t-if="doc.partner_id.street2">
+                                            <span t-field="doc.partner_id.street2"/><br/>
+                                        </t>
+                                        <span t-field="doc.partner_id.zip"/>
+                                        <span t-field="doc.partner_id.city"/><br/>
+                                        <span t-field="doc.partner_id.country_id.name"/><br/>
+                                        <t t-if="doc.partner_id.vat">
+                                            <strong>NIF:</strong> <span t-field="doc.partner_id.vat"/>
+                                        </t>
+                                    </address>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Date de facture:</strong></td>
+                                        <td class="text-right">
+                                            <span t-field="doc.invoice_date" t-options="{'widget': 'date'}"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Date d'échéance:</strong></td>
+                                        <td class="text-right">
+                                            <span t-field="doc.invoice_date_due" t-options="{'widget': 'date'}"/>
+                                        </td>
+                                    </tr>
+                                    <tr t-if="doc.invoice_origin">
+                                        <td><strong>Référence:</strong></td>
+                                        <td class="text-right">
+                                            <span t-field="doc.invoice_origin"/>
+                                        </td>
+                                    </tr>
+                                    <tr t-if="doc.partner_id.ref">
+                                        <td><strong>Code client:</strong></td>
+                                        <td class="text-right">
+                                            <span t-field="doc.partner_id.ref"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Référence véhicule GPL si applicable -->
+                        <t t-set="gpl_lines" t-value="doc.invoice_line_ids.filtered(lambda l: 'GPL' in (l.product_id.name or '') or 'gpl' in (l.product_id.name or '').lower())"/>
+                        <div t-if="gpl_lines" style="margin: 20px 0; padding: 15px; background-color: #e3f2fd;">
+                            <h5><i class="fa fa-car"/> INTERVENTION GPL</h5>
+                            <p>Cette facture concerne une intervention sur système GPL automobile.</p>
+                        </div>
+
+                        <!-- Lignes de facture -->
+                        <table class="table table-sm table-bordered" style="margin-top: 20px;">
+                            <thead style="background-color: #007bff; color: white;">
+                                <tr>
+                                    <th>Référence</th>
+                                    <th>Description</th>
+                                    <th class="text-center">Quantité</th>
+                                    <th class="text-right">Prix Unit.</th>
+                                    <th class="text-center">TVA</th>
+                                    <th class="text-right">Total HT</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-set="current_subtotal" t-value="0"/>
+                                <tr t-foreach="doc.invoice_line_ids" t-as="line">
+                                    <td>
+                                        <span t-field="line.product_id.default_code"/>
+                                    </td>
+                                    <td>
+                                        <strong t-field="line.product_id.name"/><br/>
+                                        <span t-field="line.name"/>
+                                        <!-- Indication spéciale pour les produits GPL -->
+                                        <t t-if="'GPL' in (line.product_id.name or '') or 'gpl' in (line.product_id.name or '').lower()">
+                                            <br/><span class="badge badge-info">Produit GPL</span>
+                                        </t>
+                                    </td>
+                                    <td class="text-center">
+                                        <span t-field="line.quantity"/>
+                                        <span t-field="line.product_uom_id" groups="uom.group_uom"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-field="line.price_unit" widget="monetary"/>
+                                    </td>
+                                    <td class="text-center">
+                                        <span t-esc="', '.join(map(lambda x: (x.name), line.tax_ids))"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-field="line.price_subtotal" widget="monetary"/>
+                                        <t t-set="current_subtotal" t-value="current_subtotal + line.price_subtotal"/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Totaux -->
+                        <div class="row justify-content-end">
+                            <div class="col-5">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Total HT</strong></td>
+                                        <td class="text-right">
+                                            <span t-field="doc.amount_untaxed" widget="monetary"/>
+                                        </td>
+                                    </tr>
+                                    <tr t-foreach="doc.amount_by_group" t-as="amount_by_group">
+                                        <td>
+                                            <span t-esc="amount_by_group[0]"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-esc="amount_by_group[1]" widget="monetary"/>
+                                        </td>
+                                    </tr>
+                                    <tr style="border-top: 2px solid #007bff;">
+                                        <td><strong style="font-size: 18px;">Total TTC</strong></td>
+                                        <td class="text-right">
+                                            <strong style="font-size: 18px;">
+                                                <span t-field="doc.amount_total" widget="monetary"/>
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Conditions de paiement -->
+                        <div style="margin-top: 30px;">
+                            <h5>CONDITIONS DE PAIEMENT</h5>
+                            <div style="border: 1px solid #ddd; padding: 15px;">
+                                <p>
+                                    <strong>Mode de paiement:</strong>
+                                    <span t-field="doc.invoice_payment_term_id.name"/>
+                                </p>
+                                <p>
+                                    <strong>Date d'échéance:</strong>
+                                    <span t-field="doc.invoice_date_due" t-options="{'widget': 'date'}"/>
+                                </p>
+                                <t t-if="doc.narration">
+                                    <p><strong>Notes:</strong></p>
+                                    <span t-field="doc.narration"/>
+                                </t>
+                            </div>
+                        </div>
+
+                        <!-- Informations bancaires -->
+                        <div style="margin-top: 20px; background-color: #f8f9fa; padding: 15px;">
+                            <h5>INFORMATIONS BANCAIRES</h5>
+                            <t t-if="doc.partner_bank_id">
+                                <p>
+                                    <strong>Banque:</strong> <span t-field="doc.partner_bank_id.bank_id.name"/><br/>
+                                    <strong>IBAN:</strong> <span t-field="doc.partner_bank_id.acc_number"/><br/>
+                                    <t t-if="doc.partner_bank_id.bank_id.bic">
+                                        <strong>BIC:</strong> <span t-field="doc.partner_bank_id.bank_id.bic"/>
+                                    </t>
+                                </p>
+                            </t>
+                        </div>
+
+                        <!-- Mention légale GPL -->
+                        <div style="margin-top: 30px; font-size: 10px; color: #666; text-align: center;">
+                            <p>
+                                <strong>Installation GPL agréée - Agrément N° <span t-field="doc.company_id.gpl_company_license"/></strong><br/>
+                                Toute intervention sur système GPL doit être effectuée par un installateur agréé.<br/>
+                                Conservation obligatoire de cette facture pour le contrôle technique GPL.
+                            </p>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

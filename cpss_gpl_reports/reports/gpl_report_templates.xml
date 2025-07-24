@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Template de base pour l'en-tête GPL -->
+    <template id="gpl_report_header">
+        <div class="header">
+            <div class="row">
+                <div class="col-3">
+                    <img t-if="company.logo" t-att-src="image_data_uri(company.logo)" style="max-height: 80px;" alt="Logo"/>
+                </div>
+                <div class="col-6 text-center">
+                    <h3 t-field="company.name"/>
+                    <div t-if="company.gpl_company_license">
+                        <small>Agrément N° <span t-field="company.gpl_company_license"/></small>
+                    </div>
+                    <div>
+                        <small t-field="company.street"/>
+                        <small t-field="company.city"/>
+                        <small t-field="company.country_id.name"/>
+                    </div>
+                </div>
+                <div class="col-3 text-right">
+                    <div t-if="company.phone">
+                        <i class="fa fa-phone"/> <span t-field="company.phone"/>
+                    </div>
+                    <div t-if="company.email">
+                        <i class="fa fa-envelope"/> <span t-field="company.email"/>
+                    </div>
+                    <div t-if="company.website">
+                        <i class="fa fa-globe"/> <span t-field="company.website"/>
+                    </div>
+                </div>
+            </div>
+            <hr style="border-top: 2px solid #007bff;"/>
+        </div>
+    </template>
+
+    <!-- Template de base pour le pied de page GPL -->
+    <template id="gpl_report_footer">
+        <div class="footer">
+            <hr style="border-top: 1px solid #ccc;"/>
+            <div class="row text-center">
+                <div class="col-12">
+                    <span class="page"/>/<span class="topage"/>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Layout externe personnalisé GPL -->
+    <template id="gpl_external_layout">
+        <t t-if="not o" t-set="o" t-value="doc"/>
+        <t t-if="not company">
+            <t t-if="company_id">
+                <t t-set="company" t-value="company_id"/>
+            </t>
+            <t t-elif="o and 'company_id' in o">
+                <t t-set="company" t-value="o.company_id.sudo()"/>
+            </t>
+            <t t-else="">
+                <t t-set="company" t-value="res_company"/>
+            </t>
+        </t>
+
+        <div class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id">
+            <t t-call="cpss_gpl_reports.gpl_report_header"/>
+            <t t-raw="0"/>
+            <t t-call="cpss_gpl_reports.gpl_report_footer"/>
+        </div>
+    </template>
+
+    <!-- Styles CSS communs pour les rapports GPL -->
+    <template id="gpl_report_assets">
+        <style>
+            .gpl-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 20px 0;
+            }
+            .gpl-table th {
+                background-color: #007bff;
+                color: white;
+                padding: 10px;
+                text-align: left;
+                font-weight: bold;
+            }
+            .gpl-table td {
+                border: 1px solid #ddd;
+                padding: 8px;
+            }
+            .gpl-table tr:nth-child(even) {
+                background-color: #f9f9f9;
+            }
+            .gpl-certificate {
+                border: 3px solid #007bff;
+                padding: 30px;
+                margin: 20px 0;
+                background-color: #f8f9fa;
+            }
+            .gpl-stamp-box {
+                border: 2px solid #333;
+                padding: 20px;
+                margin: 20px 0;
+                min-height: 100px;
+                text-align: center;
+            }
+            .gpl-signature-box {
+                border-top: 1px solid #333;
+                margin-top: 50px;
+                padding-top: 5px;
+                text-align: center;
+                width: 200px;
+            }
+        </style>
+    </template>
+</odoo>
