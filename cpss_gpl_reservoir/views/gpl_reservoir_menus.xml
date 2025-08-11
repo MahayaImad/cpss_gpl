@@ -68,7 +68,7 @@
 
         <!-- Dashboard -->
         <menuitem id="menu_gpl_reservoir_dashboard"
-                  name="Dashboard"
+                  name="Tableau de bord"
                   parent="menu_gpl_reservoir_main"
                   action="action_gpl_reservoir_dashboard"
                   sequence="10"

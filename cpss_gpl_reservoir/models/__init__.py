@@ -3,6 +3,9 @@
 # === FABRICANTS ET RÉFÉRENCES ===
 from . import gpl_reservoir_fabricant
 
+# === DASHBOARD ET ANALYSES ===
+from . import gpl_reservoir_dashboard
+
 # === PRODUITS ET TEMPLATES ===
 from . import product_template
 
@@ -12,5 +15,4 @@ from . import stock_lot
 # === NOMENCLATURES ===
 from . import mrp_bom
 
-# === DASHBOARD ET ANALYSES ===
-from . import gpl_reservoir_dashboard
+

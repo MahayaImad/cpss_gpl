@@ -49,6 +49,7 @@
         'product',  # Gestion des produits
         'stock',  # Gestion des stocks et lots
         'mrp',  # Nomenclatures et kits
+        'fleet'
     ],
 
     # Données à charger

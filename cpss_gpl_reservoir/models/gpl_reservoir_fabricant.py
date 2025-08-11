@@ -54,21 +54,6 @@ class GplReservoirFabriquant(models.Model):
         help="Décocher pour archiver le fabricant"
     )
 
-    certification_number = fields.Char(
-        string="N° Certification",
-        help="Numéro de certification officielle du fabricant"
-    )
-
-    certification_date = fields.Date(
-        string="Date certification",
-        help="Date d'obtention de la certification"
-    )
-
-    certification_expiry = fields.Date(
-        string="Expiration certification",
-        help="Date d'expiration de la certification"
-    )
-
     notes = fields.Text(
         string="Notes",
         help="Informations complémentaires sur le fabricant"

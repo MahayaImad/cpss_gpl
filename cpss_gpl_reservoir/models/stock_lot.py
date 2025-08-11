@@ -130,12 +130,13 @@ class StockLot(models.Model):
         help="Âge maximum autorisé"
     )
 
-    # === CONTRAINTES ===
-    _sql_constraints = [
-        ('certification_number_unique',
-         'UNIQUE(certification_number)',
-         'Le numéro de certification doit être unique !'),
-    ]
+
+    # # === CONTRAINTES ===
+    # _sql_constraints = [
+    #     ('certification_number_unique',
+    #      'UNIQUE(certification_number)',
+    #      'Le numéro de certification doit être unique !'),
+    # ]
 
     @api.depends('last_test_date', 'test_frequency_years')
     def _compute_next_test_date(self):

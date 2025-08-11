@@ -7,7 +7,7 @@
             <field name="name">gpl.reservoir.dashboard.form</field>
             <field name="model">gpl.reservoir.dashboard</field>
             <field name="arch" type="xml">
-                <form string="Dashboard Réservoirs GPL">
+                <form string="Dashboard Réservoirs GPL" delete="false" duplicate="false">
 
                     <!-- En-tête avec titre -->
                     <div class="alert alert-primary">
@@ -206,7 +206,7 @@
             <field name="name">gpl.reservoir.dashboard.kanban</field>
             <field name="model">gpl.reservoir.dashboard</field>
             <field name="arch" type="xml">
-                <kanban string="Dashboard Réservoirs" class="o_kanban_dashboard" create="false">
+                <kanban string="Dashboard Réservoirs" class="o_kanban_dashboard" create="false" delete="false" duplicate="false">
                     <field name="total_reservoirs"/>
                     <field name="reservoirs_stock"/>
                     <field name="reservoirs_installed"/>

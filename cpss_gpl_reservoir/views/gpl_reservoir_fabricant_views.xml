@@ -13,9 +13,7 @@
                     <field name="country_id"/>
                     <field name="reservoir_count"/>
                     <field name="product_count"/>
-                    <field name="certification_number"/>
-                    <field name="certification_expiry"/>
-                    <field name="active" invisible="1"/>
+                    <field name="active"/>
                 </tree>
             </field>
         </record>
@@ -71,11 +69,6 @@
                                 <field name="phone" widget="phone"/>
                                 <field name="active" invisible="1"/>
                             </group>
-                            <group string="Certification">
-                                <field name="certification_number"/>
-                                <field name="certification_date"/>
-                                <field name="certification_expiry"/>
-                            </group>
                         </group>
 
                         <notebook>
@@ -105,7 +98,6 @@
                     <field name="country_id"/>
                     <field name="reservoir_count"/>
                     <field name="product_count"/>
-                    <field name="certification_expiry"/>
                     <field name="active"/>
                     <templates>
                         <t t-name="kanban-box">
@@ -160,7 +152,6 @@
                     <field name="name" string="Nom"/>
                     <field name="code" string="Code"/>
                     <field name="country_id" string="Pays"/>
-                    <field name="certification_number" string="Certification"/>
 
                     <filter name="active" string="Actifs" domain="[('active', '=', True)]"/>
                     <filter name="archived" string="Archivés" domain="[('active', '=', False)]"/>
@@ -169,9 +160,6 @@
                     <filter name="has_reservoirs" string="Avec réservoirs" domain="[('reservoir_count', '>', 0)]"/>
                     <filter name="has_products" string="Avec produits" domain="[('product_count', '>', 0)]"/>
 
-                    <separator/>
-                    <filter name="cert_expiring" string="Certification expire bientôt"
-                            domain="[('certification_expiry', '&lt;=', (context_today() + datetime.timedelta(days=90)).strftime('%Y-%m-%d'))]"/>
 
                     <group expand="0" string="Grouper par">
                         <filter name="group_country" string="Pays" context="{'group_by': 'country_id'}"/>
