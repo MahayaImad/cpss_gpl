@@ -11,7 +11,6 @@
             <field name="country_id" ref="base.it"/>
             <field name="website">https://www.brc.it</field>
             <field name="email">info@brc.it</field>
-            <field name="active">True</field>
             <field name="notes">Leader italien dans l'équipement GPL</field>
         </record>
 
@@ -21,7 +20,6 @@
             <field name="country_id" ref="base.it"/>
             <field name="website">https://www.landi.it</field>
             <field name="email">info@landi.it</field>
-            <field name="active">True</field>
             <field name="notes">Fabricant historique de systèmes GPL</field>
         </record>
 
@@ -31,7 +29,6 @@
             <field name="country_id" ref="base.it"/>
             <field name="website">https://www.lovato.com</field>
             <field name="email">info@lovato.com</field>
-            <field name="active">True</field>
             <field name="notes">Spécialiste des systèmes GPL et GNV</field>
         </record>
 
@@ -41,7 +38,6 @@
             <field name="country_id" ref="base.nl"/>
             <field name="website">https://www.prins.nl</field>
             <field name="email">info@prins.nl</field>
-            <field name="active">True</field>
             <field name="notes">Fabricant néerlandais reconnu</field>
         </record>
 
@@ -51,7 +47,6 @@
             <field name="country_id" ref="base.pl"/>
             <field name="website">https://www.stag.com.pl</field>
             <field name="email">info@stag.com.pl</field>
-            <field name="active">True</field>
             <field name="notes">Fabricant polonais de systèmes GPL</field>
         </record>
 
@@ -62,7 +57,6 @@
             <field name="country_id" ref="base.dz"/>
             <field name="website">https://www.naftal.dz</field>
             <field name="email">webmaster@naftal.dz</field>
-            <field name="active">True</field>
             <field name="notes">Fabricant local des kits GPL/C -prochainement-(notamment à réservoirs toriques)</field>
         </record>
 
@@ -73,7 +67,6 @@
             <field name="country_id" ref="base.tr"/>
             <field name="website">https://www.kme.com.tr</field>
             <field name="email">info@kme.com.tr</field>
-            <field name="active">True</field>
             <field name="notes">Fabricant turc de systèmes GPL</field>
         </record>
 
@@ -83,7 +76,6 @@
             <field name="country_id" ref="base.tr"/>
             <field name="website">https://www.omvl.com</field>
             <field name="email">info@omvl.com</field>
-            <field name="active">True</field>
             <field name="notes">Fabricant turc d'équipements GPL</field>
         </record>
 
@@ -94,7 +86,6 @@
             <field name="country_id" ref="base.kr"/>
             <field name="website">https://www.hyundai-kefico.com</field>
             <field name="email">info@hyundai-kefico.com</field>
-            <field name="active">True</field>
             <field name="notes">Fabricant coréen de systèmes GPL</field>
         </record>
 
@@ -105,7 +96,6 @@
             <field name="country_id" ref="base.cn"/>
             <field name="website">https://www.landirenzo.com.cn</field>
             <field name="email">info@landirenzo.com.cn</field>
-            <field name="active">True</field>
             <field name="notes">Filiale chinoise de Landi Renzo</field>
         </record>
 

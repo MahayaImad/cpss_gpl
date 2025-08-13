@@ -11,11 +11,13 @@
 
                 <!-- Ajouter boutons d'action -->
                 <xpath expr="//div[@name='button_box']" position="inside">
+                    <field name="is_gpl_reservoir" invisible="1" />
+                    <field name="reservoir_status" invisible="1"  />
                     <button name="action_schedule_test"
                             type="object"
                             class="oe_stat_button"
                             icon="fa-calendar"
-                            modifiers="{'invisible': [('is_gpl_reservoir', '=', False)]}">
+                            invisible = "not is_gpl_reservoir">
                         <div class="o_field_widget o_stat_info">
                             <span class="o_stat_text">Programmer Test</span>
                         </div>
@@ -24,7 +26,7 @@
                             type="object"
                             class="oe_stat_button"
                             icon="fa-car"
-                            modifiers="{'invisible': ['|', ('is_gpl_reservoir', '=', False), ('state', '!=', 'stock')]}">
+                            invisible = "not is_gpl_reservoir or state != 'stock'">
                         <div class="o_field_widget o_stat_info">
                             <span class="o_stat_text">Marquer Installé</span>
                         </div>
@@ -33,7 +35,7 @@
                             type="object"
                             class="oe_stat_button"
                             icon="fa-warehouse"
-                            modifiers="{'invisible': ['|', ('is_gpl_reservoir', '=', False), ('state', '!=', 'installed')]}">
+                            invisible = "not is_gpl_reservoir or state != 'installed'">
                         <div class="o_field_widget o_stat_info">
                             <span class="o_stat_text">Remettre Stock</span>
                         </div>
@@ -42,7 +44,7 @@
                             type="object"
                             class="oe_stat_button"
                             icon="fa-trash"
-                            modifiers="{'invisible': [('is_gpl_reservoir', '=', False)]}">
+                            invisible = "not is_gpl_reservoir">
                         <div class="o_field_widget o_stat_info">
                             <span class="o_stat_text">Mettre au rebut</span>
                         </div>
@@ -51,15 +53,16 @@
 
                 <!-- Ajouter ribbon statut -->
                 <xpath expr="//sheet" position="before">
-                    <div class="alert alert-danger" role="alert" modifiers="{'invisible': [('reservoir_status', '!=', 'expired')]}">
+                    <div class="alert alert-danger" role="alert" invisible="reservoir_status != 'expired'">
                         <strong>ATTENTION:</strong> Ce réservoir est expiré et nécessite un test immédiat !
                     </div>
-                    <div class="alert alert-warning" role="alert" modifiers="{'invisible': [('reservoir_status', '!=', 'expiring_soon')]}">
+                    <div class="alert alert-warning" role="alert" invisible="reservoir_status != 'expiring_soon'" >
                         <strong>AVERTISSEMENT:</strong> Ce réservoir expire bientôt (<field name="days_until_test"/> jours).
                     </div>
-                    <div class="alert alert-info" role="alert" modifiers="{'invisible': [('reservoir_status', '!=', 'too_old')]}">
+                    <div class="alert alert-info" role="alert" invisible="reservoir_status != 'too_old'" >
                         <strong>INFO:</strong> Ce réservoir est trop ancien et doit être remplacé.
                     </div>
+
                 </xpath>
 
                 <!-- Ajouter onglet GPL -->
@@ -94,7 +97,9 @@
                                 <field name="certification_number"/>
                             </group>
                             <group>
-                                <field name="fabricant_id" readonly="1"/>
+                                <field name="fabricant_id"
+                                   options="{'no_create': True, 'no_open': True}"
+                                   placeholder="Sélectionner un fabricant..."/>
                                 <field name="capacity" readonly="1"/>
                                 <field name="pressure" readonly="1"/>
                             </group>
@@ -115,7 +120,7 @@
                         <!-- Section Installation -->
                         <group string="Installation" modifiers="{'invisible': [('state', '!=', 'installed')]}">
                             <group>
-                                <field name="vehicle_id"/>
+                                <!--<field name="vehicle_id"/>-->
                                 <field name="installation_date"/>
                             </group>
                         </group>

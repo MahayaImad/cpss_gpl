@@ -144,17 +144,22 @@ class GplReservoirFabriquant(models.Model):
         return result
 
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
-        """Améliore la recherche par nom et code"""
-        args = args or []
-        if name:
-            # Rechercher par nom ou code
-            domain = ['|', ('name', operator, name), ('code', operator, name)]
-            if operator in ('=', 'ilike', '=ilike', 'like', '=like'):
-                domain = ['|'] + domain + [('code', '=', name.upper())]
-            args += domain
+    def name_search(self, name='', args=None, operator='ilike', limit=100):
+        """Recherche améliorée sur nom et code"""
+        if args is None:
+            args = []
 
-        return super()._name_search('', args, operator, limit, name_get_uid)
+        if name:
+            # Ajouter domaine de recherche sur nom et code
+            search_domain = [
+                '|',
+                ('name', operator, name),
+                ('code', operator, name.upper())
+            ]
+            args += search_domain
+
+        # Utiliser la recherche standard avec le domaine modifié
+        return super().name_search(name='', args=args, operator=operator, limit=limit)
 
     def action_view_reservoirs(self):
         """Affiche les réservoirs de ce fabricant"""

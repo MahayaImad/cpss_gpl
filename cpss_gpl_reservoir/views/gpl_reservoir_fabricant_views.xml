@@ -13,7 +13,7 @@
                     <field name="country_id"/>
                     <field name="reservoir_count"/>
                     <field name="product_count"/>
-                    <field name="active"/>
+                    <field name="active" invisible="1"/>
                 </tree>
             </field>
         </record>

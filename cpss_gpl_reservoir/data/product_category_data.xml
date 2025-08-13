@@ -8,18 +8,24 @@
         <record id="product_category_gpl" model="product.category">
             <field name="name">GPL</field>
             <field name="parent_id" ref="product.product_category_all"/>
+            <field name="property_cost_method">average</field>
+            <field name="property_valuation">real_time</field>
         </record>
 
         <!-- Réservoirs GPL -->
         <record id="product_category_gpl_reservoir" model="product.category">
             <field name="name">Réservoirs GPL</field>
             <field name="parent_id" ref="product_category_gpl"/>
+            <field name="property_cost_method">average</field>
+            <field name="property_valuation">real_time</field>
         </record>
 
         <!-- Composants GPL -->
         <record id="product_category_gpl_component" model="product.category">
             <field name="name">Composants GPL</field>
             <field name="parent_id" ref="product_category_gpl"/>
+            <field name="property_cost_method">average</field>
+            <field name="property_valuation">real_time</field>
         </record>
 
         <!-- Sous-catégories composants -->
@@ -52,12 +58,16 @@
         <record id="product_category_gpl_kit" model="product.category">
             <field name="name">Kits GPL</field>
             <field name="parent_id" ref="product_category_gpl"/>
+            <field name="property_cost_method">average</field>
+            <field name="property_valuation">real_time</field>
         </record>
 
         <!-- Services GPL -->
         <record id="product_category_gpl_service" model="product.category">
             <field name="name">Services GPL</field>
             <field name="parent_id" ref="product_category_gpl"/>
+            <field name="property_cost_method">standard</field>
+            <field name="property_valuation">manual_periodic</field>
         </record>
 
     </data>

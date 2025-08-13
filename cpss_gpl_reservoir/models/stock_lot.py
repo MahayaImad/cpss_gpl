@@ -138,14 +138,13 @@ class StockLot(models.Model):
     #      'Le numéro de certification doit être unique !'),
     # ]
 
-    @api.depends('last_test_date', 'test_frequency_years')
-    def _compute_next_test_date(self):
-        """Calcule la date du prochain test"""
+    @api.depends('fabricant_id')
+    def _compute_fabricant_name(self):
         for lot in self:
-            if lot.last_test_date and lot.test_frequency_years:
-                lot.next_test_date = lot.last_test_date + timedelta(days=lot.test_frequency_years * 365)
+            if lot.fabricant_id and hasattr(lot.fabricant_id, 'name'):
+                lot.fabricant_name = lot.fabricant_id.name
             else:
-                lot.next_test_date = False
+                lot.fabricant_name = ""
 
     @api.depends('manufacturing_date')
     def _compute_age_years(self):
