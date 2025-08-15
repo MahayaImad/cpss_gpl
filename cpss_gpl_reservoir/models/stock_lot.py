@@ -141,10 +141,12 @@ class StockLot(models.Model):
     @api.depends('fabricant_id')
     def _compute_fabricant_name(self):
         for lot in self:
-            if lot.fabricant_id and hasattr(lot.fabricant_id, 'name'):
-                lot.fabricant_name = lot.fabricant_id.name
-            else:
-                lot.fabricant_name = ""
+            try:
+                if lot.fabricant_id and hasattr(lot.fabricant_id, 'name'):
+                    lot.fabricant_name = lot.fabricant_id.name
+                else:
+                    lot.fabricant_name = ""
+            except:  lot.fabricant_name = ""
 
     @api.depends('manufacturing_date')
     def _compute_age_years(self):

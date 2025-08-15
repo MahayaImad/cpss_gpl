@@ -66,71 +66,71 @@
                 </xpath>
 
                 <!-- Ajouter onglet GPL -->
-                <xpath expr="//notebook" position="inside">
-                    <page string="Informations GPL" name="gpl_page" modifiers="{'invisible': [('is_gpl_reservoir', '=', False)]}">
+                 <xpath expr="//notebook" position="inside">
+            <page string="Informations GPL" name="gpl_page" invisible="not is_gpl_reservoir">
 
-                        <!-- Section État et Statut -->
-                        <group string="État et Statut">
-                            <group>
-                                <field name="state" widget="badge"
-                                       decoration-success="state == 'stock'"
-                                       decoration-info="state == 'installed'"
-                                       decoration-warning="state == 'test_required'"
-                                       decoration-danger="state == 'expired'"/>
-                                <field name="reservoir_status" widget="badge"
-                                       decoration-success="reservoir_status == 'valid'"
-                                       decoration-warning="reservoir_status == 'expiring_soon'"
-                                       decoration-danger="reservoir_status in ('expired', 'too_old')"/>
-                            </group>
-                            <group>
-                                <field name="age_years" widget="float_time"/>
-                                <field name="days_until_test" widget="integer"/>
-                                <field name="is_test_overdue" widget="boolean"/>
-                            </group>
-                        </group>
+                <!-- Section Fabrication avec fabricant protégé -->
+                <group string="Informations de Fabrication">
+                    <group>
+                        <field name="manufacturing_date" required="is_gpl_reservoir"/>
+                        <field name="certification_date"/>
+                        <field name="certification_number"/>
+                    </group>
+                    <group>
+                        <!-- Fabricant avec protection et options -->
+                        <field name="fabricant_id"
+                               options="{'no_create': True, 'no_create_edit': True, 'no_quick_create': True}"
+                               context="{'active_test': True, 'create': False}"
+                               placeholder="Sélectionner un fabricant..."
+                               help="Si la liste est vide, créez d'abord un fabricant dans Configuration > Fabricants"/>
+                        <field name="capacity" readonly="1"/>
+                        <field name="pressure" readonly="1"/>
+                    </group>
+                </group>
 
-                        <!-- Section Fabrication -->
-                        <group string="Informations de Fabrication">
-                            <group>
-                                <field name="manufacturing_date" modifiers="{'required': [('is_gpl_reservoir', '=', True)]}"/>
-                                <field name="certification_date"/>
-                                <field name="certification_number"/>
-                            </group>
-                            <group>
-                                <field name="fabricant_id"
-                                   options="{'no_create': True, 'no_open': True}"
-                                   placeholder="Sélectionner un fabricant..."/>
-                                <field name="capacity" readonly="1"/>
-                                <field name="pressure" readonly="1"/>
-                            </group>
-                        </group>
+                <!-- Section Installation avec véhicule protégé -->
+                <group string="Installation" invisible="state != 'installed'">
+                    <group>
+                        <!-- Véhicule avec protection -->
+                        <!--<field name="vehicle_id"
+                               options="{'no_create': True, 'no_create_edit': True, 'no_quick_create': True}"
+                               context="{'active_test': True, 'create': False}"
+                               placeholder="Sélectionner un véhicule..."
+                               help="Si la liste est vide, créez d'abord un véhicule dans Parc automobile"/>-->
+                        <field name="installation_date"/>
+                    </group>
+                </group>
 
-                        <!-- Section Tests -->
-                        <group string="Tests et Épreuves">
-                            <group>
-                                <field name="last_test_date" modifiers="{'required': [('is_gpl_reservoir', '=', True)]}"/>
-                                <field name="next_test_date" readonly="1"/>
-                                <field name="test_frequency_years"/>
-                            </group>
-                            <group>
-                                <field name="max_age_years"/>
-                            </group>
-                        </group>
+                <!-- Autres sections... -->
+                <group string="État et Statut">
+                    <group>
+                        <field name="state" widget="badge"/>
+                        <field name="reservoir_status" widget="badge"/>
+                    </group>
+                    <group>
+                        <field name="age_years" widget="float_time"/>
+                        <field name="days_until_test"/>
+                        <field name="is_test_overdue" widget="boolean"/>
+                    </group>
+                </group>
 
-                        <!-- Section Installation -->
-                        <group string="Installation" modifiers="{'invisible': [('state', '!=', 'installed')]}">
-                            <group>
-                                <!--<field name="vehicle_id"/>-->
-                                <field name="installation_date"/>
-                            </group>
-                        </group>
+                <group string="Tests et Épreuves">
+                    <group>
+                        <field name="last_test_date" required="is_gpl_reservoir"/>
+                        <field name="next_test_date" readonly="1"/>
+                        <field name="test_frequency_years"/>
+                    </group>
+                    <group>
+                        <field name="max_age_years"/>
+                    </group>
+                </group>
 
-                    </page>
-                </xpath>
+            </page>
+        </xpath>
 
                 <!-- Masquer champs non GPL -->
                 <xpath expr="//field[@name='name']" position="attributes">
-                    <attribute name="modifiers">{'required': True}</attribute>
+                    <attribute name="required">True</attribute>
                 </xpath>
 
             </field>
@@ -143,10 +143,14 @@
             <field name="inherit_id" ref="stock.view_production_lot_tree"/>
             <field name="arch" type="xml">
 
-                <!-- Ajouter colonnes GPL -->
                 <xpath expr="//field[@name='product_id']" position="after">
                     <field name="is_gpl_reservoir" optional="hide"/>
-                    <field name="fabricant_id" optional="show"/>
+
+                    <!-- Fabricant avec protection -->
+                    <!--<field name="fabricant_id" optional="show"
+                           options="{'no_create': True, 'no_open': True}"
+                           context="{'active_test': True}"/> -->
+
                     <field name="capacity" optional="show"/>
                     <field name="manufacturing_date" optional="show"/>
                     <field name="state" optional="show" widget="badge"/>
@@ -155,7 +159,12 @@
                            decoration-warning="reservoir_status == 'expiring_soon'"
                            decoration-danger="reservoir_status in ('expired', 'too_old')"/>
                     <field name="next_test_date" optional="show"/>
-                    <field name="vehicle_id" optional="show"/>
+
+                    <!-- Véhicule avec protection -->
+                    <!--<field name="vehicle_id" optional="show"
+                       options="{'no_create': True, 'no_open': True}"
+                       context="{'active_test': True}"
+                       column_invisible="state != 'installed'"/>-->
                 </xpath>
 
             </field>
@@ -270,9 +279,12 @@
 
                 <!-- Ajouter champs de recherche GPL -->
                 <xpath expr="//field[@name='name']" position="after">
-                    <field name="fabricant_id" string="Fabricant"/>
+                    <!-- Champs de recherche avec protection -->
+                    <field name="fabricant_id" string="Fabricant"
+                           filter_domain="[('fabricant_id', 'ilike', self)]"/>
                     <field name="certification_number" string="Certification"/>
-                    <field name="vehicle_id" string="Véhicule"/>
+                    <field name="vehicle_id" string="Véhicule"
+                           filter_domain="[('vehicle_id', 'ilike', self)]"/>
                     <field name="capacity" string="Capacité"/>
                 </xpath>
 
@@ -292,14 +304,19 @@
                     <separator/>
                     <filter name="test_overdue" string="Test en retard" domain="[('is_test_overdue', '=', True)]"/>
                     <filter name="with_vehicle" string="Avec véhicule" domain="[('vehicle_id', '!=', False)]"/>
+                    <filter name="with_fabricant" string="Avec fabricant" domain="[('fabricant_id', '!=', False)]"/>
                 </xpath>
 
                 <!-- Ajouter groupes GPL -->
                 <xpath expr="//group[@expand='0']" position="inside">
-                    <filter name="group_fabricant" string="Fabricant" context="{'group_by': 'fabricant_id'}"/>
+                    <filter name="group_fabricant" string="Fabricant"
+                            context="{'group_by': 'fabricant_id'}"
+                            help="Grouper par fabricant"/>
                     <filter name="group_state" string="État" context="{'group_by': 'state'}"/>
                     <filter name="group_reservoir_status" string="Statut réservoir" context="{'group_by': 'reservoir_status'}"/>
-                    <filter name="group_vehicle" string="Véhicule" context="{'group_by': 'vehicle_id'}"/>
+                    <filter name="group_vehicle" string="Véhicule"
+                            context="{'group_by': 'vehicle_id'}"
+                            help="Grouper par véhicule"/>
                     <filter name="group_manufacturing_date" string="Date fabrication" context="{'group_by': 'manufacturing_date'}"/>
                 </xpath>
 

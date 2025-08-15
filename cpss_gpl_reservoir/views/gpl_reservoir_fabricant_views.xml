@@ -30,27 +30,27 @@
                                     type="object"
                                     class="oe_stat_button"
                                     icon="fa-flask"
-                                    modifiers="{'invisible': [('reservoir_count', '=', 0)]}">
+                                    invisible = "reservoir_count == 0">
                                 <field name="reservoir_count" widget="statinfo" string="Réservoirs"/>
                             </button>
                             <button name="action_view_products"
                                     type="object"
                                     class="oe_stat_button"
                                     icon="fa-cube"
-                                    modifiers="{'invisible': [('product_count', '=', 0)]}">
+                                    invisible = "product_count == 0">
                                 <field name="product_count" widget="statinfo" string="Produits"/>
                             </button>
                             <button name="toggle_active"
                                     type="object"
                                     class="oe_stat_button"
-                                    modifiers="{'invisible': [('active', '=', True)]}">
+                                    invisible= "active" >
                                 <div class="o_field_widget o_stat_info">
                                     <span class="o_stat_text">Archivé</span>
                                 </div>
                             </button>
                         </div>
 
-                        <widget name="web_ribbon" title="Archivé" bg_color="bg-danger" modifiers="{'invisible': [('active', '=', True)]}"/>
+                        <widget name="web_ribbon" title="Archivé" bg_color="bg-danger" invisible ="active"/>
 
                         <div class="oe_title">
                             <h1>

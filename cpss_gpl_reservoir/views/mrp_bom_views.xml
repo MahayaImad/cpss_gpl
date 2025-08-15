@@ -11,8 +11,9 @@
 
                 <!-- Ajouter information GPL dans l'en-tête -->
                 <xpath expr="//div[@class='oe_button_box']" position="after">
+                    <field name="is_gpl_kit" invisible="1" />
                     <div class="alert alert-info" role="alert"
-                         modifiers="{'invisible': [('is_gpl_kit', '=', False)]}">
+                         invisible = "not is_gpl_kit">
                         <i class="fa fa-info-circle"/> Cette nomenclature concerne un <strong>Kit GPL</strong>
                     </div>
                 </xpath>

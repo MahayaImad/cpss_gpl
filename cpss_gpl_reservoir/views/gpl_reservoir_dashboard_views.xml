@@ -7,21 +7,99 @@
             <field name="name">gpl.reservoir.dashboard.form</field>
             <field name="model">gpl.reservoir.dashboard</field>
             <field name="arch" type="xml">
-                <form string="Dashboard Réservoirs GPL" delete="false" duplicate="false">
+                <form string=""   create="false"  delete="false" duplicate="false">
+                    <style>
+        /* Masquer complètement la zone de titre */
+        .o_form_view .o_form_view_title,
+        .o_form_view .oe_title,
+        .o_form_view .o_form_header,
+        .o_control_panel .o_cp_title,
+        .o_control_panel .breadcrumb,
 
+        /* Cibler spécifiquement le texte "Nouveau" */
+        .o_form_view .o_form_view_title h1,
+        .o_form_view .oe_title h1,
+        .o_cp_title,
+        .o_cp_content .o_cp_title,
+
+        /* Masquer breadcrumb qui peut contenir "Nouveau" */
+        .o_control_panel .breadcrumb li,
+        .o_control_panel .breadcrumb-item {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Masquer complètement le control panel si nécessaire */
+        .o_control_panel {
+            display: none !important;
+        }
+
+        /* Réajuster l'espacement */
+        .o_content {
+            padding-top: 0 !important;
+        }
+
+        .o_form_view {
+            margin-top: 0 !important;
+        }
+                    </style>
                     <!-- En-tête avec titre -->
                     <div class="alert alert-primary">
                         <div class="row">
-                            <div class="col-8">
+                            <div class="col-10">
                                 <h3><i class="fa fa-flask" title=" "/> Dashboard Réservoirs GPL</h3>
                                 <p class="mb-0">Analyse et suivi des réservoirs GPL en temps réel</p>
                             </div>
-                            <div class="col-4 text-right">
+                            <div class="col-2 text-left">
                                 <button name="action_refresh_dashboard"
                                         string="Actualiser"
                                         type="object"
                                         class="btn btn-primary"
                                         icon="fa-refresh"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions rapides -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <button name="action_view_reservoirs"
+                                                    string="Voir Tous les Réservoirs"
+                                                    type="object"
+                                                    class="btn btn-primary btn-block"
+                                                    icon="fa-flask"/>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <button name="action_view_expired"
+                                                    string="Réservoirs Expirés"
+                                                    type="object"
+                                                    class="btn btn-danger btn-block"
+                                                    icon="fa-exclamation-triangle"/>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <button name="action_view_expiring_soon"
+                                                    string="Expirent Bientôt"
+                                                    type="object"
+                                                    class="btn btn-warning btn-block"
+                                                    icon="fa-clock-o"/>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <button name="action_generate_report"
+                                                    string="Générer Rapport"
+                                                    type="object"
+                                                    class="btn btn-info btn-block"
+                                                    icon="fa-file-pdf-o"/>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -149,48 +227,7 @@
                         </div>
                     </div>
 
-                    <!-- Actions rapides -->
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5>Actions Rapides</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-3">
-                                            <button name="action_view_reservoirs"
-                                                    string="Voir Tous les Réservoirs"
-                                                    type="object"
-                                                    class="btn btn-primary btn-block"
-                                                    icon="fa-flask"/>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <button name="action_view_expired"
-                                                    string="Réservoirs Expirés"
-                                                    type="object"
-                                                    class="btn btn-danger btn-block"
-                                                    icon="fa-exclamation-triangle"/>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <button name="action_view_expiring_soon"
-                                                    string="Expirent Bientôt"
-                                                    type="object"
-                                                    class="btn btn-warning btn-block"
-                                                    icon="fa-clock-o"/>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <button name="action_generate_report"
-                                                    string="Générer Rapport"
-                                                    type="object"
-                                                    class="btn btn-info btn-block"
-                                                    icon="fa-file-pdf-o"/>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
 
                     <!-- Champs cachés pour les données -->
                     <div class="d-none">
@@ -252,6 +289,281 @@
                 </kanban>
             </field>
         </record>
+
+        <!-- === DÉCLARATION DU RAPPORT === -->
+        <record id="report_reservoir_dashboard" model="ir.actions.report">
+            <field name="name">Rapport Dashboard Réservoirs GPL</field>
+            <field name="model">gpl.reservoir.dashboard</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">cpss_gpl_reservoir.report_reservoir_dashboard_template</field>
+            <field name="report_file">cpss_gpl_reservoir.report_reservoir_dashboard</field>
+            <field name="binding_model_id" ref="model_gpl_reservoir_dashboard"/>
+            <field name="binding_type">report</field>
+            <field name="print_report_name">"Rapport_Reservoirs_GPL"</field>
+        </record>
+
+        <!-- === TEMPLATE DU RAPPORT === -->
+        <template id="report_reservoir_dashboard_template">
+            <t t-call="web.html_container">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <div class="oe_structure"/>
+
+                        <!-- Variables pour accéder aux données -->
+                        <t t-set="report_data" t-value="data if data else {}"/>
+                        <t t-set="dashboard_stats" t-value="report_data.get('dashboard_data', {})"/>
+                        <t t-set="reservoirs" t-value="report_data.get('reservoirs', [])"/>
+
+                        <!-- En-tête du rapport -->
+                        <div class="row">
+                            <div class="col-12">
+                                <h2 class="text-center">
+                                    <i class="fa fa-flask"/> Rapport Dashboard Réservoirs GPL
+                                </h2>
+                                <p class="text-center text-muted">
+                                    Généré le <span t-esc="datetime.datetime.now().strftime('%d/%m/%Y à %H:%M')"/>
+                                </p>
+                                <hr/>
+                            </div>
+                        </div>
+
+                        <!-- Debug info (optionnel, à supprimer en production) -->
+                        <div class="row mb-2" style="font-size: 10px; color: #999;">
+                            <div class="col-12">
+                                Debug: <span t-esc="report_data.get('reservoir_count', 0)"/> réservoirs trouvés
+                                | Dashboard ID: <span t-esc="report_data.get('debug_info', {}).get('dashboard_id', 'N/A')"/>
+                            </div>
+                        </div>
+
+                        <!-- Informations de filtrage -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <h4>Critères de filtrage</h4>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <strong>Période :</strong>
+                                        <t t-if="report_data.get('date_from') and report_data.get('date_to')">
+                                            Du <span t-esc="report_data.get('date_from')"/> au <span t-esc="report_data.get('date_to')"/>
+                                        </t>
+                                        <t t-else="">
+                                            Toutes les dates
+                                        </t>
+                                    </div>
+                                    <div class="col-6">
+                                        <strong>État :</strong>
+                                        <span t-esc="report_data.get('state_filter_label', 'Tous')"/>
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-12">
+                                        <strong>Fabricants :</strong>
+                                        <span t-esc="report_data.get('fabricant_names', 'Tous')"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Statistiques générales -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h4>Statistiques générales</h4>
+                                <div class="row">
+                                    <div class="col-3 text-center">
+                                        <div class="card border-primary">
+                                            <div class="card-body">
+                                                <h3 class="text-primary" t-esc="dashboard_stats.get('total', 0)"/>
+                                                <p>Total réservoirs</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-3 text-center">
+                                        <div class="card border-success">
+                                            <div class="card-body">
+                                                <h3 class="text-success" t-esc="dashboard_stats.get('by_state', {}).get('stock', 0)"/>
+                                                <p>En stock</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-3 text-center">
+                                        <div class="card border-info">
+                                            <div class="card-body">
+                                                <h3 class="text-info" t-esc="dashboard_stats.get('by_state', {}).get('installed', 0)"/>
+                                                <p>Installés</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-3 text-center">
+                                        <div class="card border-danger">
+                                            <div class="card-body">
+                                                <h3 class="text-danger" t-esc="dashboard_stats.get('by_status', {}).get('expired', 0)"/>
+                                                <p>Expirés</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Répartition par fabricant -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h4>Répartition par fabricant</h4>
+                                <table class="table table-sm table-striped">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Fabricant</th>
+                                            <th class="text-right">Nombre</th>
+                                            <th class="text-right">Pourcentage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="dashboard_stats.get('by_fabricant', {}).items()" t-as="fabricant_item">
+                                            <tr>
+                                                <td t-esc="fabricant_item[0]"/>
+                                                <td class="text-right" t-esc="fabricant_item[1]"/>
+                                                <td class="text-right">
+                                                    <t t-esc="round(fabricant_item[1] * 100 / dashboard_stats.get('total', 1), 1) if dashboard_stats.get('total', 0) > 0 else 0"/>%
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <t t-if="not dashboard_stats.get('by_fabricant')">
+                                            <tr>
+                                                <td colspan="3" class="text-center text-muted">Aucune donnée disponible</td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Alertes -->
+                        <div class="row mb-4">
+                            <div class="col-6">
+                                <h4>Réservoirs expirant bientôt</h4>
+                                <t t-set="expiring_soon" t-value="dashboard_stats.get('expiring_soon', [])"/>
+                                <t t-if="expiring_soon">
+                                    <table class="table table-sm table-warning">
+                                        <thead>
+                                            <tr>
+                                                <th>Réservoir</th>
+                                                <th>Jours restants</th>
+                                                <th>Véhicule</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="expiring_soon" t-as="reservoir">
+                                                <tr>
+                                                    <td t-esc="reservoir.get('name', '')"/>
+                                                    <td t-esc="reservoir.get('days_until_test', 0)"/>
+                                                    <td t-esc="reservoir.get('vehicle', '')"/>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </t>
+                                <t t-else="">
+                                    <p class="text-success">✓ Aucun réservoir n'expire prochainement</p>
+                                </t>
+                            </div>
+
+                            <div class="col-6">
+                                <h4>Réservoirs expirés</h4>
+                                <t t-set="expired" t-value="dashboard_stats.get('expired', [])"/>
+                                <t t-if="expired">
+                                    <table class="table table-sm table-danger">
+                                        <thead>
+                                            <tr>
+                                                <th>Réservoir</th>
+                                                <th>Retard (jours)</th>
+                                                <th>Véhicule</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="expired" t-as="reservoir">
+                                                <tr>
+                                                    <td t-esc="reservoir.get('name', '')"/>
+                                                    <td t-esc="reservoir.get('days_overdue', 0)"/>
+                                                    <td t-esc="reservoir.get('vehicle', '')"/>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </t>
+                                <t t-else="">
+                                    <p class="text-success">✓ Aucun réservoir expiré</p>
+                                </t>
+                            </div>
+                        </div>
+
+                        <!-- Liste détaillée des réservoirs -->
+                        <div class="row">
+                            <div class="col-12">
+                                <h4>Liste détaillée des réservoirs (<span t-esc="len(reservoirs)"/> trouvés)</h4>
+                                <table class="table table-sm table-striped">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Nom</th>
+                                            <th>Fabricant</th>
+                                            <th>Capacité</th>
+                                            <th>État</th>
+                                            <th>Statut</th>
+                                            <th>Fabrication</th>
+                                            <th>Prochain test</th>
+                                            <th>Véhicule</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="reservoirs" t-as="reservoir">
+                                            <tr>
+                                                <td t-esc="reservoir.get('name', '')"/>
+                                                <td t-esc="reservoir.get('fabricant_code', '')"/>
+                                                <td t-esc="reservoir.get('capacity', '')"/>
+                                                <td>
+                                                    <span t-att-class="'badge ' + ('badge-success' if reservoir.get('state') == 'stock' else 'badge-info' if reservoir.get('state') == 'installed' else 'badge-warning')">
+                                                        <t t-esc="reservoir.get('state_label', '')"/>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span t-att-class="'badge ' + ('badge-success' if reservoir.get('reservoir_status') == 'valid' else 'badge-warning' if reservoir.get('reservoir_status') == 'expiring_soon' else 'badge-danger')">
+                                                        <t t-esc="reservoir.get('status_label', '')"/>
+                                                    </span>
+                                                </td>
+                                                <td t-esc="reservoir.get('manufacturing_date', '')"/>
+                                                <td t-esc="reservoir.get('next_test_date', '')"/>
+                                                <td t-esc="reservoir.get('vehicle_name', '')"/>
+                                            </tr>
+                                        </t>
+                                        <t t-if="not reservoirs">
+                                            <tr>
+                                                <td colspan="8" class="text-center text-muted">
+                                                    Aucun réservoir trouvé avec les critères sélectionnés
+                                                    <br/><small>Vérifiez vos filtres ou créez des réservoirs GPL</small>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Pied de page -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <hr/>
+                                <p class="text-center text-muted">
+                                    <small>
+                                        Rapport généré automatiquement par le système CPSS GPL -
+                                        <span t-esc="len(reservoirs)"/> réservoirs listés
+                                    </small>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </template>
 
     </data>
 </odoo>

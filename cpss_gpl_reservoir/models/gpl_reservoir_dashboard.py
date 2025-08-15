@@ -176,9 +176,12 @@ class GplReservoirDashboard(models.TransientModel):
 
         domain = [('is_gpl_reservoir', '=', True)]
 
-        # Appliquer les filtres
+        # Appliquer les filtres avec protection contre les données corrompues
         if self.fabricant_ids:
-            domain.append(('fabricant_id', 'in', self.fabricant_ids.ids))
+            # Vérifier que les fabricants existent encore
+            valid_fabricants = self.fabricant_ids.filtered(lambda f: f.exists())
+            if valid_fabricants:
+                domain.append(('fabricant_id', 'in', valid_fabricants.ids))
 
         if self.state_filter != 'all':
             if self.state_filter == 'expired':
@@ -187,6 +190,12 @@ class GplReservoirDashboard(models.TransientModel):
                 domain.append(('reservoir_status', 'in', ['expired', 'test_required']))
             else:
                 domain.append(('state', '=', self.state_filter))
+
+        # Ajouter un filtre de date si spécifié
+        if self.date_from:
+            domain.append(('create_date', '>=', self.date_from))
+        if self.date_to:
+            domain.append(('create_date', '<=', self.date_to))
 
         return {
             'type': 'ir.actions.act_window',
@@ -197,7 +206,8 @@ class GplReservoirDashboard(models.TransientModel):
             'context': {
                 'search_default_is_gpl_reservoir': 1,
                 'create': False
-            }
+            },
+            'target': 'current'
         }
 
     def action_view_expired(self):
@@ -248,21 +258,190 @@ class GplReservoirDashboard(models.TransientModel):
             }
         }
 
-    def action_generate_report(self):
+    def action_generate_report(self, docids, data=None):
         """Génère un rapport des réservoirs"""
         self.ensure_one()
+        dashboard = self.env['gpl.reservoir.dashboard'].browse(docids[0])
+        # Préparer les données avant de générer le rapport
+        report_data = self._prepare_report_data()
+
+        print(f"DEBUG: {report_data['reservoir_count']} réservoirs préparés")
 
         return {
-            'type': 'ir.actions.report',
-            'report_name': 'cpss_gpl_reservoir.report_reservoir_dashboard',
-            'report_type': 'qweb-pdf',
-            'data': {
-                'date_from': self.date_from,
-                'date_to': self.date_to,
-                'fabricant_ids': self.fabricant_ids.ids,
-                'state_filter': self.state_filter
+            'doc_ids': docids,
+            'doc_model': 'gpl.reservoir.dashboard',
+            'docs': [dashboard],
+            'data': data,
+            'report_data': report_data,
+            'reservoirs': report_data['reservoirs'],
+            'dashboard_stats': report_data['dashboard_data']
+        }
+
+
+    def _prepare_report_data(self):
+        """Version simplifiée qui fonctionne même sans tous les champs"""
+        self.ensure_one()
+
+        # Obtenir les réservoirs de base
+        try:
+            reservoirs = self.env['stock.lot'].search([('is_gpl_reservoir', '=', True)])
+        except:
+            reservoirs = self.env['stock.lot'].search([])
+
+        # Préparer les données des réservoirs de manière sécurisée
+        reservoir_list = []
+        for reservoir in reservoirs:
+            try:
+                # Récupération sécurisée des données
+                reservoir_data = {
+                    'id': reservoir.id,
+                    'name': getattr(reservoir, 'name', f'Lot {reservoir.id}'),
+                    'fabricant_code': '',
+                    'fabricant_name': '',
+                    'capacity': getattr(reservoir, 'capacity', 0),
+                    'state': getattr(reservoir, 'state', 'unknown'),
+                    'state_label': getattr(reservoir, 'state', 'Inconnu'),
+                    'reservoir_status': getattr(reservoir, 'reservoir_status', 'unknown'),
+                    'status_label': getattr(reservoir, 'reservoir_status', 'Inconnu'),
+                    'manufacturing_date': '',
+                    'next_test_date': '',
+                    'vehicle_name': '',
+                    'age_years': getattr(reservoir, 'age_years', 0),
+                    'days_until_test': getattr(reservoir, 'days_until_test', 0)
+                }
+
+                # Fabricant sécurisé
+                try:
+                    if hasattr(reservoir, '_safe_get_fabricant'):
+                        fabricant = reservoir._safe_get_fabricant()
+                    elif hasattr(reservoir, 'fabricant_id') and reservoir.fabricant_id:
+                        fabricant = reservoir.fabricant_id
+                    else:
+                        fabricant = None
+
+                    if fabricant:
+                        reservoir_data['fabricant_code'] = getattr(fabricant, 'code', '')
+                        reservoir_data['fabricant_name'] = getattr(fabricant, 'name', '')
+                except:
+                    pass
+
+                # Véhicule sécurisé
+                try:
+                    if hasattr(reservoir, '_safe_get_vehicle'):
+                        vehicle = reservoir._safe_get_vehicle()
+                    elif hasattr(reservoir, 'vehicle_id') and reservoir.vehicle_id:
+                        vehicle = reservoir.vehicle_id
+                    else:
+                        vehicle = None
+
+                    if vehicle:
+                        reservoir_data['vehicle_name'] = getattr(vehicle, 'name', '')
+                except:
+                    pass
+
+                # Dates sécurisées
+                try:
+                    if hasattr(reservoir, 'manufacturing_date') and reservoir.manufacturing_date:
+                        reservoir_data['manufacturing_date'] = reservoir.manufacturing_date.strftime('%d/%m/%Y')
+                except:
+                    pass
+
+                try:
+                    if hasattr(reservoir, 'next_test_date') and reservoir.next_test_date:
+                        reservoir_data['next_test_date'] = reservoir.next_test_date.strftime('%d/%m/%Y')
+                except:
+                    pass
+
+                reservoir_list.append(reservoir_data)
+
+            except Exception as e:
+                # En cas d'erreur sur un réservoir, l'ajouter avec des données minimales
+                reservoir_list.append({
+                    'id': getattr(reservoir, 'id', 0),
+                    'name': f'Réservoir {getattr(reservoir, "id", "?")}',
+                    'fabricant_code': '',
+                    'fabricant_name': '',
+                    'capacity': 0,
+                    'state': 'unknown',
+                    'state_label': 'Inconnu',
+                    'reservoir_status': 'unknown',
+                    'status_label': 'Inconnu',
+                    'manufacturing_date': '',
+                    'next_test_date': '',
+                    'vehicle_name': '',
+                    'age_years': 0,
+                    'days_until_test': 0
+                })
+
+        # Statistiques simples
+        total = len(reservoir_list)
+        stock_count = len([r for r in reservoir_list if r['state'] == 'stock'])
+        installed_count = len([r for r in reservoir_list if r['state'] == 'installed'])
+        expired_count = len([r for r in reservoir_list if r['reservoir_status'] == 'expired'])
+
+        # Compter par fabricant
+        fabricant_stats = {}
+        for res in reservoir_list:
+            fab = res['fabricant_code'] or 'Sans fabricant'
+            fabricant_stats[fab] = fabricant_stats.get(fab, 0) + 1
+
+        dashboard_data = {
+            'total': total,
+            'by_status': {
+                'valid': len([r for r in reservoir_list if r['reservoir_status'] == 'valid']),
+                'expired': expired_count,
+                'expiring_soon': len([r for r in reservoir_list if r['reservoir_status'] == 'expiring_soon']),
+                'test_required': len([r for r in reservoir_list if r['reservoir_status'] == 'test_required']),
+                'too_old': len([r for r in reservoir_list if r['reservoir_status'] == 'too_old'])
             },
-            'context': self.env.context
+            'by_state': {
+                'stock': stock_count,
+                'installed': installed_count,
+                'expired': len([r for r in reservoir_list if r['state'] == 'expired']),
+                'test_required': len([r for r in reservoir_list if r['state'] == 'test_required']),
+                'scrapped': len([r for r in reservoir_list if r['state'] == 'scrapped'])
+            },
+            'by_fabricant': fabricant_stats,
+            'expiring_soon': [
+                {
+                    'name': r['name'],
+                    'days_until_test': r['days_until_test'],
+                    'vehicle': r['vehicle_name'] or 'Stock'
+                }
+                for r in reservoir_list if r['reservoir_status'] == 'expiring_soon'
+            ],
+            'expired': [
+                {
+                    'name': r['name'],
+                    'days_overdue': abs(r['days_until_test']),
+                    'vehicle': r['vehicle_name'] or 'Stock'
+                }
+                for r in reservoir_list if r['reservoir_status'] == 'expired'
+            ]
+        }
+
+        return {
+            # Critères de filtrage
+            'date_from': self.date_from.strftime('%d/%m/%Y') if hasattr(self, 'date_from') and self.date_from else '',
+            'date_to': self.date_to.strftime('%d/%m/%Y') if hasattr(self, 'date_to') and self.date_to else '',
+            'fabricant_names': ', '.join(self.fabricant_ids.mapped('name')) if hasattr(self,
+                                                                                       'fabricant_ids') and self.fabricant_ids else 'Tous',
+            'state_filter': getattr(self, 'state_filter', 'all'),
+            'state_filter_label': getattr(self, 'state_filter', 'Tous'),
+
+            # Données statistiques
+            'dashboard_data': dashboard_data,
+
+            # Liste des réservoirs
+            'reservoirs': reservoir_list,
+            'reservoir_count': len(reservoir_list),
+
+            # Données pour debug
+            'debug_info': {
+                'dashboard_id': self.id,
+                'dashboard_name': getattr(self, 'name', ''),
+                'total_found': len(reservoir_list)
+            }
         }
 
     def action_refresh_dashboard(self):
@@ -330,3 +509,33 @@ class GplReservoirDashboard(models.TransientModel):
             })
 
         return alerts
+
+    def _get_filtered_reservoirs(self):
+        """Retourne les réservoirs filtrés selon les critères"""
+        domain = [('is_gpl_reservoir', '=', True)]
+
+        # Filtre par fabricant
+        if self.fabricant_ids:
+            valid_fabricants = self.fabricant_ids.filtered(lambda f: f.exists())
+            if valid_fabricants:
+                domain.append(('fabricant_id', 'in', valid_fabricants.ids))
+
+        # Filtre par état
+        if self.state_filter != 'all':
+            if self.state_filter == 'expired':
+                domain.append(('reservoir_status', '=', 'expired'))
+            elif self.state_filter == 'test_required':
+                domain.append(('reservoir_status', 'in', ['expired', 'test_required']))
+            else:
+                domain.append(('state', '=', self.state_filter))
+
+        # Filtre par date (si besoin)
+        if self.date_from:
+            domain.append(('create_date', '>=', self.date_from))
+        if self.date_to:
+            domain.append(('create_date', '<=', self.date_to))
+
+        try:
+            return self.env['stock.lot'].search(domain)
+        except Exception:
+            return self.env['stock.lot']
