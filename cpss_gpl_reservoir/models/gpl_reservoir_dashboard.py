@@ -342,22 +342,78 @@ class GplReservoirDashboard(models.TransientModel):
         """Version avec filtres du dashboard si nécessaire"""
         self.ensure_one()
 
-        # Construire le domaine selon les filtres du dashboard
-        domain = [('is_gpl_reservoir', '=', True)]
-
-        # Ajouter les filtres si ils existent
-        if hasattr(self, 'state_filter') and self.state_filter and self.state_filter != 'all':
-            domain.append(('state', '=', self.state_filter))
-
-        if hasattr(self, 'fabricant_filter') and self.fabricant_filter:
-            domain.append(('fabricant_id', '=', self.fabricant_filter.id))
+        # Construire le domaine et récupérer les réservoirs
+        domain = self._build_reservoir_domain()
 
         # Récupérer les réservoirs filtrés
         reservoirs = self.env['stock.lot'].search(domain)
 
-        print(f"DEBUG Dashboard (filtré): {len(reservoirs)} réservoirs trouvés")
+        # Préparer les informations de filtrage pour le rapport
+        filter_info = self._prepare_filter_context()
+
+        report_context = {
+            'dashboard_filters': filter_info,
+            'filter_count': len(reservoirs),
+            'generation_date': fields.Datetime.now(),
+            'generated_by': self.env.user.name
+        }
 
         # Appeler le rapport sur les réservoirs filtrés
-        return self.env.ref('cpss_gpl_reservoir.report_reservoir_dashboard').report_action(reservoirs)
+        return self.env.ref('cpss_gpl_reservoir.report_reservoir_dashboard').with_context(
+            report_context
+        ).report_action(reservoirs)
 
 
+    def _prepare_filter_context(self):
+        """Prépare les informations des filtres pour le rapport"""
+        filter_info = {}
+
+        # Fabricants
+        if self.fabricant_ids:
+            filter_info['fabricants'] = self.fabricant_ids.mapped('name')
+
+        # État
+        if self.state_filter and self.state_filter != 'all':
+            state_labels = {
+                'stock': 'En stock',
+                'installed': 'Installés',
+                'expired': 'Expirés',
+                'test_required': 'Test requis'
+            }
+            filter_info['state'] = state_labels.get(self.state_filter, self.state_filter)
+
+        # Dates
+        if self.date_from:
+            filter_info['date_from'] = self.date_from.strftime('%d/%m/%Y')
+        if self.date_to:
+            filter_info['date_to'] = self.date_to.strftime('%d/%m/%Y')
+
+        return filter_info
+
+
+    def _build_reservoir_domain(self):
+        """Construit le domaine de recherche selon les filtres actifs"""
+        domain = [('is_gpl_reservoir', '=', True)]
+
+        # Filtre par fabricants
+        if self.fabricant_ids:
+            valid_fabricants = self.fabricant_ids.filtered(lambda f: f.exists())
+            if valid_fabricants:
+                domain.append(('fabricant_id', 'in', valid_fabricants.ids))
+
+        # Filtre par état
+        if self.state_filter and self.state_filter != 'all':
+            if self.state_filter == 'expired':
+                domain.append(('reservoir_status', '=', 'expired'))
+            elif self.state_filter == 'test_required':
+                domain.append(('reservoir_status', 'in', ['expired', 'test_required']))
+            else:
+                domain.append(('state', '=', self.state_filter))
+
+        # Filtres de dates
+        if self.date_from:
+            domain.append(('create_date', '>=', self.date_from))
+        if self.date_to:
+            domain.append(('create_date', '<=', self.date_to))
+
+        return domain

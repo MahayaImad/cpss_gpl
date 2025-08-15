@@ -92,7 +92,7 @@
                                                     icon="fa-clock-o"/>
                                         </div>
                                         <div class="col-md-3">
-                                            <button name="action_generate_report"
+                                            <button name="action_generate_report_filtered"
                                                     string="Générer Rapport"
                                                     type="object"
                                                     class="btn btn-info btn-block"
@@ -307,6 +307,28 @@
                             <hr/>
                         </div>
 
+                        <t t-if="context.get('dashboard_filters')">
+                            <div style="background-color: #f8f9fa; padding: 10px; margin: 15px 0; border-left: 4px solid #007bff;">
+                                <h5 style="margin: 0 0 10px 0;">Filtres appliqués :</h5>
+                                <div style="font-size: 12px;">
+                                    <t t-if="context['dashboard_filters'].get('fabricants')">
+                                        <strong>Fabricants :</strong> <span t-esc="', '.join(context['dashboard_filters']['fabricants'])"/><br/>
+                                    </t>
+                                    <t t-if="context['dashboard_filters'].get('state')">
+                                        <strong>État :</strong> <span t-esc="context['dashboard_filters']['state']"/><br/>
+                                    </t>
+                                    <t t-if="context['dashboard_filters'].get('date_from')">
+                                        <strong>Période :</strong>
+                                        du <span t-esc="context['dashboard_filters']['date_from']"/>
+                                        <t t-if="context['dashboard_filters'].get('date_to')">
+                                            au <span t-esc="context['dashboard_filters']['date_to']"/>
+                                        </t>
+                                        <br/>
+                                    </t>
+                                </div>
+                            </div>
+                        </t>
+
 
 
                         <!-- Calcul des stats en direct -->
@@ -472,8 +494,7 @@
                         <div class="mt-4 p-3" style="background-color: #f8f9fa; border-left: 4px solid #007bff;">
                             <h5><i class="fa fa-info-circle"/> Réglementation</h5>
                             <p class="mb-0 small">
-                                <strong>Arrêté du 3 mai 2007 :</strong> Les réservoirs GPL doivent être rééprouvés tous les 5 ans maximum.
-                                Les réservoirs expirés ne peuvent pas être installés et doivent être retirés du service immédiatement.
+                                <strong>En Algérie :</strong> la règlementation en vigueur prévoit un contrôle triennal de l'installation GPL et un contrôle tous les cinq (05) ans du réservoir GPL installé.
                             </p>
                         </div>
 
