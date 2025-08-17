@@ -1,0 +1,280 @@
+/*
+ * GPL Reservoir Dashboard - Styles pour les graphiques
+ * Compatible avec Odoo 17
+ */
+
+/* === CONTENEURS DE GRAPHIQUES === */
+.o_chart_container {
+    min-height: 300px;
+    padding: 15px;
+    position: relative;
+}
+
+.o_chart_container canvas {
+    max-width: 100%;
+    height: auto !important;
+}
+
+/* === STYLES SPÉCIFIQUES AUX GRAPHIQUES === */
+#chart_status {
+    min-height: 350px;
+}
+
+#chart_fabricant {
+    min-height: 400px;
+}
+
+#chart_age {
+    min-height: 300px;
+}
+
+/* === CARTES DES GRAPHIQUES === */
+.gpl-reservoir-dashboard .card {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+}
+
+.gpl-reservoir-dashboard .card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
+}
+
+.gpl-reservoir-dashboard .card-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 600;
+}
+
+.gpl-reservoir-dashboard .card-header h5 {
+    margin: 0;
+    color: #495057;
+    font-size: 1.1rem;
+}
+
+/* === MESSAGES D'ÉTAT === */
+.chart-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.chart-loading::before {
+    content: '⟳';
+    display: inline-block;
+    margin-right: 8px;
+    animation: spin 1s linear infinite;
+    font-size: 1.2em;
+}
+
+.chart-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: #dc3545;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    margin: 10px;
+}
+
+.chart-error::before {
+    content: '⚠';
+    margin-right: 8px;
+    font-size: 1.2em;
+}
+
+.chart-no-data {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: #6c757d;
+    background-color: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 4px;
+    margin: 10px;
+}
+
+.chart-no-data::before {
+    content: '📊';
+    margin-right: 8px;
+    font-size: 1.5em;
+    opacity: 0.5;
+}
+
+/* === ANIMATIONS === */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.chart-fade-in {
+    animation: fadeIn 0.6s ease-out;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+    .o_chart_container {
+        min-height: 250px;
+        padding: 10px;
+    }
+
+    #chart_status,
+    #chart_fabricant,
+    #chart_age {
+        min-height: 250px;
+    }
+
+    .gpl-reservoir-dashboard .card {
+        margin-bottom: 20px;
+    }
+
+    .gpl-reservoir-dashboard .card-header h5 {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .o_chart_container {
+        min-height: 200px;
+        padding: 8px;
+    }
+
+    #chart_status,
+    #chart_fabricant,
+    #chart_age {
+        min-height: 200px;
+    }
+}
+
+/* === LÉGENDES PERSONNALISÉES === */
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.chart-legend-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.chart-legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    margin-right: 6px;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+/* === TOOLTIPS PERSONNALISÉS === */
+.chart-tooltip {
+    background: rgba(0,0,0,0.8) !important;
+    color: white !important;
+    border-radius: 6px !important;
+    padding: 8px 12px !important;
+    font-size: 0.85rem !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+}
+
+/* === INDICATEURS DE STATUT === */
+.status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.status-valid { background-color: #28a745; }
+.status-expiring { background-color: #ffc107; }
+.status-expired { background-color: #dc3545; }
+.status-test-required { background-color: #fd7e14; }
+.status-too-old { background-color: #6f42c1; }
+
+/* === AMÉLIORATIONS DU DASHBOARD === */
+.dashboard-stats-row {
+    margin-bottom: 30px;
+}
+
+.dashboard-chart-row {
+    margin-bottom: 20px;
+}
+
+.dashboard-stat-card {
+    text-align: center;
+    padding: 20px;
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+}
+
+.dashboard-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.dashboard-stat-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.dashboard-stat-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* === COULEURS SPÉCIFIQUES GPL === */
+.text-gpl-primary { color: #007bff !important; }
+.text-gpl-success { color: #28a745 !important; }
+.text-gpl-warning { color: #ffc107 !important; }
+.text-gpl-danger { color: #dc3545 !important; }
+.text-gpl-info { color: #17a2b8 !important; }
+
+.bg-gpl-primary { background-color: #007bff !important; }
+.bg-gpl-success { background-color: #28a745 !important; }
+.bg-gpl-warning { background-color: #ffc107 !important; }
+.bg-gpl-danger { background-color: #dc3545 !important; }
+.bg-gpl-info { background-color: #17a2b8 !important; }
+
+/* === DEBUG MODE === */
+.gpl-debug .o_chart_container {
+    border: 2px dashed #17a2b8;
+    background-color: rgba(23, 162, 184, 0.05);
+}
+
+.gpl-debug .o_chart_container::before {
+    content: 'DEBUG: ' attr(id);
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #17a2b8;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    z-index: 1000;
+}

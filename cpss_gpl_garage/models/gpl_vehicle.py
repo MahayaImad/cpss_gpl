@@ -209,6 +209,31 @@ class GplVehicle(models.Model):
             }
         }
 
+    def action_annuler(self):
+        self.ensure_one()
+        annule_status = self.env.ref('cpss_gpl_garage.vehicle_status_annule', raise_if_not_found=False)
+
+        self.write({
+            'status_id': annule_status.id if annule_status else False,
+            'appointment_date': False,
+            'next_service_type': False,
+        })
+
+        self.message_post(
+            body="Service annulé",
+            message_type='comment'
+        )
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Service annulé'),
+                'message': _('Le service pour %s a été annulé.') % self.display_name,
+                'type': 'success',
+            }
+        }
+
     # === CONTRAINTES ===
     @api.constrains('license_plate')
     def _check_license_plate(self):

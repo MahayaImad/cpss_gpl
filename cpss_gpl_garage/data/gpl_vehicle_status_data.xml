@@ -9,63 +9,19 @@
             <field name="description">Véhicule nouvellement enregistré</field>
         </record>
 
-        <record id="vehicle_status_attente_rdv" model="gpl.vehicle.status">
-            <field name="name">⏳ Attente RDV</field>
-            <field name="sequence">20</field>
-            <field name="color">2</field>
-            <field name="description">En attente de prise de rendez-vous</field>
-        </record>
-
-        <record id="vehicle_status_planifie" model="gpl.vehicle.status">
-            <field name="name">📋 Planifié</field>
-            <field name="sequence">30</field>
-            <field name="color">4</field>
-            <field name="description">Rendez-vous planifié</field>
-        </record>
-
-        <record id="vehicle_status_en_attente" model="gpl.vehicle.status">
-            <field name="name">⏰ En attente</field>
-            <field name="sequence">40</field>
-            <field name="color">3</field>
-            <field name="description">Véhicule en attente d'intervention</field>
-        </record>
-
         <record id="vehicle_status_en_cours" model="gpl.vehicle.status">
             <field name="name">⚙️ En cours</field>
-            <field name="sequence">50</field>
+            <field name="sequence">20</field>
             <field name="color">1</field>
             <field name="description">Intervention en cours</field>
         </record>
 
-        <record id="vehicle_status_attente_pieces" model="gpl.vehicle.status">
-            <field name="name">🔧 Attente pièces</field>
-            <field name="sequence">60</field>
-            <field name="color">6</field>
-            <field name="description">En attente de pièces détachées</field>
-        </record>
-
-        <record id="vehicle_status_controle" model="gpl.vehicle.status">
-            <field name="name">✅ Contrôle qualité</field>
-            <field name="sequence">70</field>
-            <field name="color">9</field>
-            <field name="description">En cours de contrôle qualité</field>
-        </record>
-
         <record id="vehicle_status_termine" model="gpl.vehicle.status">
             <field name="name">🎉 Terminé</field>
-            <field name="sequence">80</field>
+            <field name="sequence">30</field>
             <field name="color">5</field>
             <field name="is_done" eval="True"/>
             <field name="description">Intervention terminée avec succès</field>
-        </record>
-
-        <record id="vehicle_status_livre" model="gpl.vehicle.status">
-            <field name="name">🚚 Livré</field>
-            <field name="sequence">90</field>
-            <field name="color">8</field>
-            <field name="is_done" eval="True"/>
-            <field name="fold" eval="True"/>
-            <field name="description">Véhicule livré au client</field>
         </record>
 
         <record id="vehicle_status_annule" model="gpl.vehicle.status">

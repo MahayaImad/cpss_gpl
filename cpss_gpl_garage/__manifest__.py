@@ -93,7 +93,7 @@
 
     # Configuration
     'installable': True,
-    'application': False,  # Module d'extension
+    'application': True,  # Module d'extension
     'auto_install': False,
     'sequence': 30,
 

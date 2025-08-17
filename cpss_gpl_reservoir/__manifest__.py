@@ -83,17 +83,10 @@
         'views/gpl_reservoir_menus.xml',
     ],
 
-    # Assets JavaScript/CSS
-    'assets': {
-        'web.assets_backend': [
-            'cpss_gpl_reservoir/static/src/css/reservoir_dashboard.css',
-            'cpss_gpl_reservoir/static/src/js/reservoir_dashboard.js',
-        ],
-    },
 
     # Configuration
     'installable': True,
-    'application': False,  # Module d'extension
+    'application': True,  # Module d'extension
     'auto_install': False,
     'sequence': 20,
 

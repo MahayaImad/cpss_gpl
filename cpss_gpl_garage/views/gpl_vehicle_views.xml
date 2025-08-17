@@ -37,7 +37,7 @@
                     <button name="action_complete_appointment" string="✅ Terminer"
                             type="object" class="btn-primary"
                             invisible="not appointment_date"/>
-                    <field name="status_id" widget="statusbar" options="{'clickable': '1'}"/>
+                    <field name="status_id" widget="statusbar" />
                 </header>
 
                 <sheet>
