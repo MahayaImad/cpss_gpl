@@ -30,11 +30,6 @@ class StockLot(models.Model):
         help="Numéro de certification du réservoir"
     )
 
-    certification_date = fields.Date(
-        string="Date de certification",
-        help="Date de certification initiale"
-    )
-
     # === TESTS ET ÉPREUVES ===
     last_test_date = fields.Date(
         string="Dernière épreuve",
@@ -59,8 +54,6 @@ class StockLot(models.Model):
     state = fields.Selection([
         ('stock', 'En stock'),
         ('installed', 'Installé'),
-        ('test_required', 'Test requis'),
-        ('expired', 'Expiré'),
         ('scrapped', 'Mis au rebut')
     ], string="État", default='stock', tracking=True)
 
@@ -72,12 +65,6 @@ class StockLot(models.Model):
         ('too_old', 'Trop ancien')
     ], string="Statut réservoir", compute='_compute_reservoir_status', store=True)
 
-    # === LOCALISATION ===
-    vehicle_id = fields.Many2one(
-        'gpl.vehicle',
-        string="Véhicule installé",
-        help="Véhicule sur lequel ce réservoir est installé"
-    )
 
     installation_date = fields.Date(
         string="Date d'installation",
@@ -194,6 +181,17 @@ class StockLot(models.Model):
             else:
                 lot.reservoir_status = 'valid'
 
+    @api.depends('last_test_date', 'test_frequency_years')
+    def _compute_next_test_date(self):
+        """Calcule la date de la prochaine épreuve requise"""
+        for lot in self:
+            if lot.last_test_date and lot.test_frequency_years:
+                # Ajouter la fréquence en années à la dernière date de test
+                next_date = lot.last_test_date + timedelta(days=lot.test_frequency_years * 365)
+                lot.next_test_date = next_date
+            else:
+                lot.next_test_date = False
+
     @api.depends('next_test_date')
     def _compute_test_status(self):
         """Calcule si le test est en retard"""
@@ -277,7 +275,6 @@ class StockLot(models.Model):
 
         self.write({
             'state': 'stock',
-            'vehicle_id': False,
             'installation_date': False
         })
 
@@ -347,7 +344,7 @@ class StockLot(models.Model):
             data['by_fabricant'][fabricant.code] = len(fab_reservoirs)
 
         # Statistiques par état
-        for state in ['stock', 'installed', 'test_required', 'expired', 'scrapped']:
+        for state in ['stock', 'installed', 'scrapped']:
             count = reservoirs.filtered(lambda r: r.state == state)
             data['by_state'][state] = len(count)
 
@@ -357,8 +354,7 @@ class StockLot(models.Model):
             data['expiring_soon'].append({
                 'id': res.id,
                 'name': res.name,
-                'days_until_test': res.days_until_test,
-                'vehicle': res.vehicle_id.name if res.vehicle_id else 'Stock'
+                'days_until_test': res.days_until_test
             })
 
         # Réservoirs expirés
@@ -367,8 +363,7 @@ class StockLot(models.Model):
             data['expired'].append({
                 'id': res.id,
                 'name': res.name,
-                'days_overdue': abs(res.days_until_test),
-                'vehicle': res.vehicle_id.name if res.vehicle_id else 'Stock'
+                'days_overdue': abs(res.days_until_test)
             })
 
         # Alertes générales
@@ -416,8 +411,6 @@ class StockLot(models.Model):
                 for res in expired:
                     message += f"- {res.name} ({res.fabricant_id.code if res.fabricant_id else ''})\n"
                     message += f"  Test expiré depuis {abs(res.days_until_test)} jours\n"
-                    if res.vehicle_id:
-                        message += f"  Installé sur: {res.vehicle_id.name}\n"
                     message += "\n"
 
             if expiring:
@@ -425,8 +418,6 @@ class StockLot(models.Model):
                 for res in expiring:
                     message += f"- {res.name} ({res.fabricant_id.code if res.fabricant_id else ''})\n"
                     message += f"  Test requis dans {res.days_until_test} jours\n"
-                    if res.vehicle_id:
-                        message += f"  Installé sur: {res.vehicle_id.name}\n"
                     message += "\n"
 
             # Envoyer l'email (implémentation simplifiée)

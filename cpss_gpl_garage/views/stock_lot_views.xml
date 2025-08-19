@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- === VUE FORMULAIRE LOTS GPL === -->
+        <record id="view_stock_lot_form_gpl_vehicle" model="ir.ui.view">
+            <field name="name">stock.lot.form.gpl</field>
+            <field name="model">stock.lot</field>
+            <field name="inherit_id" ref="cpss_gpl_reservoir.view_stock_lot_form_gpl"/>
+            <field name="arch" type="xml">
+                <xpath expr="//group[@name='installation_group']/group[1]" position="inside">
+                    <field name="vehicle_id"
+                           string="Installé sur:"
+                           options="{'no_create': True, 'no_create_edit': True, 'no_quick_create': True}"
+                           context="{'active_test': True, 'create': False}"
+                           placeholder="Sélectionner un véhicule..."
+                           help="Si la liste est vide, créez d'abord un véhicule dans Parc automobile"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
+

@@ -66,6 +66,7 @@
         'views/gpl_vehicle_tag_views.xml',
         'views/gpl_vehicle_status_views.xml',
         'views/gpl_vehicle_views.xml',
+        'views/stock_lot_views.xml',
 
         # === ASSISTANTS ===
         'views/gpl_reschedule_wizard_views.xml',

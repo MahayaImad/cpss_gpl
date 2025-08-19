@@ -53,6 +53,10 @@
 
                 <!-- Ajouter ribbon statut -->
                 <xpath expr="//sheet" position="before">
+                    <field name="quant_ids" invisible="1"/>
+
+                    <!-- Champs cachés pour contrôler la visibilité -->
+
                     <div class="alert alert-danger" role="alert" invisible="reservoir_status != 'expired'">
                         <strong>ATTENTION:</strong> Ce réservoir est expiré et nécessite un test immédiat !
                     </div>
@@ -63,17 +67,26 @@
                         <strong>INFO:</strong> Ce réservoir est trop ancien et doit être remplacé.
                     </div>
 
+
+
+
+
+                    <!-- Alerte pour lots avec mouvements récents -->
+                    <div class="alert alert-info" role="alert"
+                         invisible="not quant_ids">
+                        <strong>INFO:</strong> Ce lot a des mouvements de stock actifs.
+                    </div>
+
                 </xpath>
 
                 <!-- Ajouter onglet GPL -->
-                 <xpath expr="//notebook" position="inside">
+                <xpath expr="//notebook" position="inside">
             <page string="Informations GPL" name="gpl_page" invisible="not is_gpl_reservoir">
 
                 <!-- Section Fabrication avec fabricant protégé -->
                 <group string="Informations de Fabrication">
                     <group>
                         <field name="manufacturing_date" required="is_gpl_reservoir"/>
-                        <field name="certification_date"/>
                         <field name="certification_number"/>
                     </group>
                     <group>
@@ -89,28 +102,9 @@
                 </group>
 
                 <!-- Section Installation avec véhicule protégé -->
-                <group string="Installation" invisible="state != 'installed'">
+                <group name="installation_group" string="Installation" invisible="state != 'installed'">
                     <group>
-                        <!-- Véhicule avec protection -->
-                        <!--<field name="vehicle_id"
-                               options="{'no_create': True, 'no_create_edit': True, 'no_quick_create': True}"
-                               context="{'active_test': True, 'create': False}"
-                               placeholder="Sélectionner un véhicule..."
-                               help="Si la liste est vide, créez d'abord un véhicule dans Parc automobile"/>-->
                         <field name="installation_date"/>
-                    </group>
-                </group>
-
-                <!-- Autres sections... -->
-                <group string="État et Statut">
-                    <group>
-                        <field name="state" widget="badge"/>
-                        <field name="reservoir_status" widget="badge"/>
-                    </group>
-                    <group>
-                        <field name="age_years" widget="float_time"/>
-                        <field name="days_until_test"/>
-                        <field name="is_test_overdue" widget="boolean"/>
                     </group>
                 </group>
 
@@ -118,12 +112,36 @@
                     <group>
                         <field name="last_test_date" required="is_gpl_reservoir"/>
                         <field name="next_test_date" readonly="1"/>
-                        <field name="test_frequency_years"/>
                     </group>
                     <group>
+                        <field name="age_years" widget="float_time"/>
+                        <field name="days_until_test" readonly="1" widget="badge"
+                               decoration-danger="days_until_test &lt;= 0"
+                               decoration-warning="days_until_test &gt; 0 and days_until_test &lt;= 180"
+                               decoration-success="days_until_test &gt; 180"/>
+
+                        <field name="is_test_overdue" widget="boolean"/>
+                    </group>
+
+                </group>
+
+                <!-- Autres sections... -->
+                <group string="État et Statut">
+                    <group>
+                        <field name="state" widget="badge" />
+                        <field name="reservoir_status" widget="badge"
+                               decoration-success="state == 'valid'"
+                               decoration-warning="state in ['expiring_soon', 'test_required']"
+                               decoration-danger="state in ['expired', 'too_old']"/>
+                    </group>
+                     <group>
+                        <field name="test_frequency_years"/>
                         <field name="max_age_years"/>
                     </group>
+
                 </group>
+
+
 
             </page>
         </xpath>
@@ -131,6 +149,25 @@
                 <!-- Masquer champs non GPL -->
                 <xpath expr="//field[@name='name']" position="attributes">
                     <attribute name="required">True</attribute>
+                </xpath>
+
+                <!-- ===== AMÉLIORATIONS DE L'INTERFACE ===== -->
+
+                <!-- Rendre le nom plus visible -->
+                <xpath expr="//field[@name='name']" position="attributes">
+                    <attribute name="style">font-size: 18px; font-weight: bold;</attribute>
+                    <attribute name="placeholder">Numéro de lot/série unique</attribute>
+                </xpath>
+
+                <!-- Améliorer la référence produit -->
+                <xpath expr="//field[@name='product_id']" position="attributes">
+                    <attribute name="options">{'no_create': True, 'no_create_edit': True}</attribute>
+                    <attribute name="context">{'active_test': True}</attribute>
+                </xpath>
+
+                <!-- Améliorer la société -->
+                <xpath expr="//field[@name='company_id']" position="attributes">
+                    <attribute name="options">{'no_create': True}</attribute>
                 </xpath>
 
             </field>
@@ -185,7 +222,6 @@
                     <field name="reservoir_status"/>
                     <field name="manufacturing_date"/>
                     <field name="next_test_date"/>
-                    <field name="vehicle_id"/>
                     <field name="days_until_test"/>
                     <field name="is_gpl_reservoir"/>
                     <templates>
@@ -222,15 +258,13 @@
                                                 <span t-att-class="'badge badge-pill ' + (record.state.raw_value == 'stock' ? 'badge-primary' : record.state.raw_value == 'installed' ? 'badge-info' : 'badge-secondary')">
                                                     <t t-if="record.state.raw_value == 'stock'">Stock</t>
                                                     <t t-if="record.state.raw_value == 'installed'">Installé</t>
-                                                    <t t-if="record.state.raw_value == 'test_required'">Test requis</t>
-                                                    <t t-if="record.state.raw_value == 'expired'">Expiré</t>
                                                     <t t-if="record.state.raw_value == 'scrapped'">Rebut</t>
                                                 </span>
                                             </div>
                                             <div class="col-6 text-right">
-                                                <t t-if="record.vehicle_id.value">
+                                                <!--<t t-if="record.vehicle_id.value">
                                                     <small><i class="fa fa-car"/> <t t-esc="record.vehicle_id.value"/></small>
-                                                </t>
+                                                </t>-->
                                             </div>
                                         </div>
                                         <div class="row mt-2">
@@ -283,8 +317,8 @@
                     <field name="fabricant_id" string="Fabricant"
                            filter_domain="[('fabricant_id', 'ilike', self)]"/>
                     <field name="certification_number" string="Certification"/>
-                    <field name="vehicle_id" string="Véhicule"
-                           filter_domain="[('vehicle_id', 'ilike', self)]"/>
+                    <!--<field name="vehicle_id" string="Véhicule"
+                           filter_domain="[('vehicle_id', 'ilike', self)]"/>-->
                     <field name="capacity" string="Capacité"/>
                 </xpath>
 
@@ -303,7 +337,7 @@
                     <filter name="status_too_old" string="Trop anciens" domain="[('reservoir_status', '=', 'too_old')]"/>
                     <separator/>
                     <filter name="test_overdue" string="Test en retard" domain="[('is_test_overdue', '=', True)]"/>
-                    <filter name="with_vehicle" string="Avec véhicule" domain="[('vehicle_id', '!=', False)]"/>
+                    <!--<filter name="with_vehicle" string="Avec véhicule" domain="[('vehicle_id', '!=', False)]"/>-->
                     <filter name="with_fabricant" string="Avec fabricant" domain="[('fabricant_id', '!=', False)]"/>
                 </xpath>
 
@@ -314,9 +348,9 @@
                             help="Grouper par fabricant"/>
                     <filter name="group_state" string="État" context="{'group_by': 'state'}"/>
                     <filter name="group_reservoir_status" string="Statut réservoir" context="{'group_by': 'reservoir_status'}"/>
-                    <filter name="group_vehicle" string="Véhicule"
+                    <!--<filter name="group_vehicle" string="Véhicule"
                             context="{'group_by': 'vehicle_id'}"
-                            help="Grouper par véhicule"/>
+                            help="Grouper par véhicule"/>-->
                     <filter name="group_manufacturing_date" string="Date fabrication" context="{'group_by': 'manufacturing_date'}"/>
                 </xpath>
 
