@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Notifications quotidiennes - 8h du matin -->
+        <record id="cron_daily_notifications" model="ir.cron">
+            <field name="name">Notifications GPL quotidiennes</field>
+            <field name="model_id" ref="model_gpl_notification_system"/>
+            <field name="state">code</field>
+            <field name="code">model.send_daily_notifications()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="active" eval="True"/>
+            <field name="nextcall" eval="(DateTime.now() + timedelta(days=1)).replace(hour=8, minute=0, second=0)"/>
+        </record>
+
+        <!-- Notifications RDV du jour - 7h du matin -->
+        <record id="cron_today_appointments" model="ir.cron">
+            <field name="name">Notifications RDV du jour</field>
+            <field name="model_id" ref="model_gpl_notification_system"/>
+            <field name="state">code</field>
+            <field name="code">model._send_today_appointments()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="active" eval="True"/>
+            <field name="nextcall" eval="(DateTime.now() + timedelta(days=1)).replace(hour=7, minute=0, second=0)"/>
+        </record>
+
+        <!-- Vérification retards - toutes les 2 heures -->
+        <record id="cron_overdue_check" model="ir.cron">
+            <field name="name">Vérification RDV en retard</field>
+            <field name="model_id" ref="model_gpl_notification_system"/>
+            <field name="state">code</field>
+            <field name="code">model._send_overdue_appointments()</field>
+            <field name="interval_number">2</field>
+            <field name="interval_type">hours</field>
+            <field name="numbercall">-1</field>
+            <field name="active" eval="True"/>
+        </record>
+
+    </data>
+</odoo>

@@ -30,17 +30,20 @@
                 <header>
                     <button name="action_start_service" string="🚀 Démarrer Service"
                             type="object" class="btn-success"
-                            invisible="not appointment_date or not next_service_type"/>
-                    <button name="action_reschedule_appointment" string="📅 Reprogrammer"
+                            invisible="not appointment_date or not next_service_type  or status_name != '🆕 Nouveau'"/>
+                    <button name="action_reschedule_appointment" string="Reprogrammer"
                             type="object" class="btn-warning"
-                            invisible="not appointment_date"/>
-                    <button name="action_complete_appointment" string="✅ Terminer"
+                            invisible="not appointment_date or status_name == '🆕 Nouveau'"/>
+                    <button name="action_complete_appointment" string="Terminer"
                             type="object" class="btn-primary"
-                            invisible="not appointment_date"/>
+                            invisible="not appointment_date or status_name != '⚙️ En cours'"/>
                     <field name="status_id" widget="statusbar" />
+                    <field name="status_name" invisible="1" />
                 </header>
 
                 <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    <field name="image_128" widget='image' class="oe_avatar"/>
                     <div class="oe_button_box" name="button_box">
                         <!-- Boutons statistiques si nécessaire -->
                     </div>
@@ -124,86 +127,113 @@
         <field name="name">gpl.vehicle.kanban</field>
         <field name="model">gpl.vehicle</field>
         <field name="arch" type="xml">
-            <kanban default_group_by="status_id" class="o_kanban_small_column"
-                    quick_create="false" sample="1">
-                <field name="id"/>
-                <field name="license_plate"/>
-                <field name="client_id"/>
-                <field name="model_id"/>
-                <field name="next_service_type"/>
-                <field name="appointment_date"/>
-                <field name="status_id"/>
-                <field name="tag_ids"/>
-                <field name="appointment_status"/>
-                <field name="activity_ids"/>
-                <field name="activity_state"/>
+            <kanban default_group_by="status_id"
+                class="o_kanban_small_column"
+                quick_create="false"
+                kanban_archivable="false"
+                group_edit="false"
+                sample="1"
+                create="true"
+                group_create="false">
+            <!-- Ajouter tous les champs nécessaires -->
+            <field name="status_id"/>
+            <field name="id"/>
+            <field name="license_plate"/>
+            <field name="client_id"/>
+            <field name="model_id"/>
+            <field name="next_service_type"/>
+            <field name="appointment_date"/>
+            <field name="tag_ids"/>
+            <field name="appointment_status"/>
+            <field name="activity_ids"/>
+            <field name="activity_state"/>
+            <field name="image_128" widget='image' class="oe_avatar"/>
+
+            <!-- Progressbar pour afficher tous les statuts -->
+            <progressbar field="status_id"
+                        colors='{"vehicle_status_nouveau": "info",
+                                "vehicle_status_en_cours": "warning",
+                                "vehicle_status_termine": "success",
+                                "vehicle_status_annule": "danger"}'
+                        sum_field="id"/>
 
                 <templates>
-                    <t t-name="kanban-box">
-                        <div class="oe_kanban_card oe_kanban_global_click">
-                            <div class="o_kanban_card_header">
-                                <div class="o_kanban_card_header_title">
-                                    <div class="o_primary">
-                                        <strong t-esc="record.license_plate.value"/>
-                                    </div>
-                                    <div class="text-muted">
-                                        <t t-esc="record.model_id.value"/>
-                                    </div>
-                                </div>
-                                <div class="o_kanban_manage_button_section">
-                                    <a class="o_kanban_manage_toggle_button" href="#" tabindex="-1">
-                                        <i class="fa fa-ellipsis-v" role="img" aria-label="Gérer" title="Gérer"/>
-                                    </a>
-                                </div>
-                            </div>
-
-                            <div class="o_kanban_card_content">
-                                <!-- Client -->
-                                <div class="o_kanban_card_content">
-                                    <div>
-                                        <i class="fa fa-user"/> <t t-esc="record.client_id.value"/>
-                                    </div>
-                                </div>
-
-                                <!-- Service -->
-                                <div t-if="record.next_service_type.raw_value" class="mt-1">
-                                    <span class="badge" t-attf-class="{{
-                                        record.next_service_type.raw_value == 'installation' ? 'badge-success' :
-                                        record.next_service_type.raw_value == 'repair' ? 'badge-danger' :
-                                        record.next_service_type.raw_value == 'maintenance' ? 'badge-warning' :
-                                        'badge-info'
-                                    }}" t-esc="record.next_service_type.value"/>
-                                </div>
-
-                                <!-- Rendez-vous -->
-                                <div t-if="record.appointment_date.raw_value" class="mt-1">
-                                    <small class="text-muted">
-                                        <i class="fa fa-calendar"/> <t t-esc="record.appointment_date.value"/>
-                                    </small>
-                                </div>
-
-                                <!-- Tags -->
-                                <div t-if="record.tag_ids.raw_value" class="mt-1">
-                                    <field name="tag_ids" widget="many2many_tags"
-                                           options="{'color_field': 'color'}" readonly="1"/>
-                                </div>
-                            </div>
-
-                            <div class="o_kanban_card_manage_pane dropdown-menu" role="menu">
+                <t t-name="kanban-box">
+                    <div t-attf-class="oe_kanban_global_click oe_kanban_card"
+                         t-attf-style="border-left: 5px solid #6c757d;">
+                         <!-- Top menu positioned absolutely at the right -->
+                        <div class="o_dropdown_kanban dropdown position-absolute top-0 end-0">
+                            <a class="dropdown-toggle o-no-caret btn" role="button" data-bs-toggle="dropdown" data-bs-display="static" href="#" aria-label="Menu déroulant" title="Menu déroulant">
+                                <span class="fa fa-ellipsis-v"/>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end" role="menu">
                                 <a role="menuitem" type="edit" class="dropdown-item">Modifier</a>
                                 <a role="menuitem" type="delete" class="dropdown-item">Supprimer</a>
-                                <div class="dropdown-divider"/>
-                                <div class="dropdown-item-text text-muted">
-                                    Actions
-                                </div>
-                                <a role="menuitem" name="action_reschedule_appointment"
-                                   type="object" class="dropdown-item"
-                                   t-if="record.appointment_date.raw_value">Reprogrammer</a>
+                                <div role="separator" class="dropdown-divider"/>
+                                <ul class="oe_kanban_colorpicker" data-field="color"/>
                             </div>
                         </div>
-                    </t>
-                </templates>
+
+                        <!-- Card Body with Better Layout -->
+                        <div class="oe_kanban_content p-2">
+                             <!-- Vehicle Brand Icon and Info -->
+                            <div class="d-flex align-items-right mb-2">
+                                <div t-if="record.image_128.raw_value" class="me-2">
+                                    <img t-att-src="kanban_image('gpl.vehicle', 'image_128', record.id.raw_value)"
+     alt="Vehicle Image" class="oe_kanban_image" t-att-style="'width: 40px; height: 40px;'"/>
+                                </div>
+                                <div class="align-items-right ms-3">
+                                    <strong><i class="fa fa-car me-2"> </i> <field name="license_plate"/></strong><br/>
+                                    <small t-if="record.client_id.raw_value"><i class="fa fa-user me-2" title=" "/> <span t-esc="record.client_id.value"/></small>
+                                </div>
+                            </div>
+
+                            <!-- Vehicle details in a cleaner layout -->
+                            <div class="d-flex flex-column">
+
+                                <!-- Status Badge -->
+                               <div t-if="record.next_service_type.raw_value" class="mb-1">
+    <!-- Dynamically set badge color based on next_service_type's value -->
+                                    <span t-attf-class="badge rounded-pill  text-white #{
+                                        record.next_service_type.raw_value and record.next_service_type.value == 'Installation GPL' ? 'bg-success' :
+                                        record.next_service_type.raw_value and record.next_service_type.value == 'Réparation' ? 'bg-danger' :
+                                        record.next_service_type.raw_value and record.next_service_type.value == 'Maintenance' ? 'bg-warning' :
+                                        record.next_service_type.raw_value and record.next_service_type.value == 'Inspection' ? 'bg-info' : 'bg-info'
+                                    }" t-esc="record.next_service_type.value"/>
+                                   <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}" class="o_tag_small"/>
+
+                                </div>
+
+                                <!-- Appointment Date -->
+                                <div t-if="record.appointment_date.raw_value" class="mb-1">
+                                    <small><i class="fa fa-calendar me-1" title="Date du RDV"/>  <span t-esc="record.appointment_date.value"/></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </templates>
             </kanban>
+        </field>
+    </record>
+
+    <record id="gpl_fleet_vehicle_view_activity" model="ir.ui.view">
+        <field name="name">gpl.vehicle.activity</field>
+        <field name="model">gpl.vehicle</field>
+        <field name="arch" type="xml">
+            <activity string="Vehicles">
+                <field name="license_plate"/>
+                <field name="id"/>
+                <templates>
+                    <div t-name="activity-box">
+                        <img class="rounded-circle" t-att-src="activity_image('gpl.vehicle', 'image_128', record.id.raw_value)" role="img" t-att-title="record.id.value" t-att-alt="record.id.value"/>
+                        <div class="ms-2">
+                            <field name="license_plate" display="full" class="o_text_block"/>
+                            <field name="model_id" muted="1" class="o_text_block"/>
+                        </div>
+                    </div>
+                </templates>
+            </activity>
         </field>
     </record>
 
@@ -274,6 +304,12 @@
         <field name="name">Véhicules GPL</field>
         <field name="res_model">gpl.vehicle</field>
         <field name="view_mode">kanban,tree,form</field>
+        <field name="context">{
+            'group_by': ['status_id'],
+            'force_all_groups': True,
+            'kanban_states_visibility': 'visible'
+        }</field>
+        <field name="domain">[]</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Aucun véhicule GPL enregistré
@@ -287,7 +323,7 @@
     <record id="action_gpl_vehicle_planning" model="ir.actions.act_window">
         <field name="name">Planning Atelier</field>
         <field name="res_model">gpl.vehicle</field>
-        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_mode">kanban,tree,form,activity</field>
         <field name="domain">[('appointment_date', '!=', False)]</field>
         <field name="context">{'search_default_has_appointment': 1}</field>
     </record>

@@ -60,6 +60,9 @@
         # === DONNÉES DE BASE ===
         'data/gpl_vehicle_status_data.xml',
         'data/calendar_event_type_data.xml',
+        'data/hr_department_data.xml',
+        'data/email_templates.xml',
+        'data/cron_jobs.xml',
 
         # === VUES PRINCIPALES ===
         # Véhicules
@@ -67,9 +70,6 @@
         'views/gpl_vehicle_status_views.xml',
         'views/gpl_vehicle_views.xml',
         'views/stock_lot_views.xml',
-
-        # === ASSISTANTS ===
-        'views/gpl_reschedule_wizard_views.xml',
 
         # Clients (extension res_partner)
         'views/res_partner_views.xml',
@@ -80,8 +80,14 @@
         # Planning et calendrier
         'views/calendar_views.xml',
 
+        # Notifications
+        'views/gpl_notification_views.xml',
+
         # === MENUS ===
         'views/gpl_garage_menus.xml',
+
+        'wizard/vehicle_appointment_wizard_views.xml',
+
     ],
 
     # Assets web
@@ -89,6 +95,7 @@
         'web.assets_backend': [
             'cpss_gpl_garage/static/src/css/garage_calendar.css',
             'cpss_gpl_garage/static/src/js/garage_calendar.js',
+            'cpss_gpl_garage/static/src/js/simple_calendar_override.js'
         ],
     },
 

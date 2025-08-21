@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue formulaire du wizard -->
+    <record id="view_vehicle_appointment_wizard_form" model="ir.ui.view">
+        <field name="name">vehicle.appointment.wizard.form</field>
+        <field name="model">vehicle.appointment.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Nouveau rendez-vous véhicule">
+                <div class="alert alert-info" role="alert">
+                    <h4><i class="fa fa-calendar-plus"/> Création d'un nouveau rendez-vous</h4>
+                    <p>Configurez les détails du rendez-vous pour votre véhicule GPL.</p>
+                </div>
+
+                <group>
+                    <group string="📅 Rendez-vous">
+                        <field name="appointment_date" widget="datetime"/>
+                        <field name="estimated_duration" widget="float_time"/>
+                    </group>
+                    <group string="🚗 Véhicule">
+                        <field name="vehicle_choice" widget="radio"/>
+                        <field name="vehicle_count" invisible="1"/>
+                        <div class="alert alert-warning" role="alert"
+                             invisible="vehicle_count > 0 or vehicle_choice == 'new'">
+                            <i class="fa fa-exclamation-triangle"/>
+                            Aucun véhicule GPL existant. Un nouveau véhicule sera créé.
+                        </div>
+                    </group>
+                </group>
+
+                <group invisible="vehicle_choice == 'new'">
+                    <group string="🔍 Sélection du véhicule">
+                        <field name="vehicle_id"
+                               options="{'no_create': True, 'no_edit': True}"
+                               required="vehicle_choice == 'existing'"/>
+                    </group>
+                </group>
+
+                <group>
+                    <group string="🔧 Service">
+                        <field name="service_type"/>
+                        <field name="technician_ids" widget="many2many_tags"/>
+                    </group>
+                    <group string="📝 Informations">
+                        <field name="notes" nolabel="1"
+                               placeholder="Notes sur l'intervention, pièces nécessaires, etc."/>
+                    </group>
+                </group>
+
+                <footer>
+                    <button string="Créer le rendez-vous"
+                            name="action_create_appointment"
+                            type="object"
+                            class="btn-primary"
+                            data-hotkey="q"/>
+                    <button string="Annuler"
+                            class="btn-secondary"
+                            special="cancel"
+                            data-hotkey="z"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action du wizard -->
+    <record id="action_vehicle_appointment_wizard" model="ir.actions.act_window">
+        <field name="name">Nouveau rendez-vous</field>
+        <field name="res_model">vehicle.appointment.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="view_id" ref="view_vehicle_appointment_wizard_form"/>
+    </record>
+</odoo>

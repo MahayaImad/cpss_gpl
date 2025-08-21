@@ -6,6 +6,8 @@
             <field name="name">🆕 Nouveau</field>
             <field name="sequence">10</field>
             <field name="color">7</field>
+            <field name="fold" eval="False"/>
+            <field name="active" eval="True"/>
             <field name="description">Véhicule nouvellement enregistré</field>
         </record>
 
@@ -13,6 +15,8 @@
             <field name="name">⚙️ En cours</field>
             <field name="sequence">20</field>
             <field name="color">1</field>
+            <field name="fold" eval="False"/>
+            <field name="active" eval="True"/>
             <field name="description">Intervention en cours</field>
         </record>
 
@@ -21,6 +25,8 @@
             <field name="sequence">30</field>
             <field name="color">5</field>
             <field name="is_done" eval="True"/>
+            <field name="fold" eval="False"/>
+            <field name="active" eval="True"/>
             <field name="description">Intervention terminée avec succès</field>
         </record>
 
@@ -28,7 +34,8 @@
             <field name="name">❌ Annulé</field>
             <field name="sequence">100</field>
             <field name="color">0</field>
-            <field name="fold" eval="True"/>
+            <field name="fold" eval="False"/>
+            <field name="active" eval="True"/>
             <field name="description">Intervention annulée</field>
         </record>
     </data>

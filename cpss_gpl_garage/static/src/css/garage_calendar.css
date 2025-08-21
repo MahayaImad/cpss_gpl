@@ -99,3 +99,31 @@
     box-shadow: none;
     padding: 16px;
 }
+
+
+.o_calendar_quick_create {
+    min-width: 400px;
+}
+
+.o_calendar_quick_create .form-group {
+    margin-bottom: 15px;
+}
+
+.o_calendar_quick_create label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.o_calendar_quick_create select,
+.o_calendar_quick_create textarea {
+    width: 100%;
+}
+
+.fc-event {
+    cursor: pointer;
+}
+
+.fc-event:hover {
+    opacity: 0.8;
+}

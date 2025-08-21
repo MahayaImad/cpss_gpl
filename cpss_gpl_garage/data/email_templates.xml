@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="email_template_technician_notification" model="mail.template">
+            <field name="name">Notification Technicien GPL</field>
+            <field name="model_id" ref="model_gpl_notification"/>
+            <field name="subject">{{ object.name }}</field>
+            <field name="email_from">{{ (user.email_formatted or user.company_id.email_formatted or 'noreply@localhost') }}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <p>Bonjour {{ ctx.get('technician').name }},</p>
+
+                    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;">
+                        <h3 style="color: #007bff;">🔧 Notification Atelier GPL</h3>
+
+                        <p><strong>{{ object.name }}</strong></p>
+
+                        <div style="background-color: white; padding: 15px; border-radius: 3px;">
+                            {{ object.message | safe }}
+                        </div>
+
+                        <div style="margin-top: 20px;">
+                            <a href="{{ ctx.get('base_url') }}/web#model=gpl.vehicle&amp;id={{ object.vehicle_id.id }}"
+                               style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 3px;">
+                                🚗 Voir le véhicule
+                            </a>
+                        </div>
+                    </div>
+
+                    <p>Cordialement,<br/>L'équipe GPL</p>
+
+                    <hr/>
+                    <small style="color: #6c757d;">
+                        Cette notification a été envoyée automatiquement par le système GPL.
+                    </small>
+                </div>
+            </field>
+        </record>
+
+    </data>
+</odoo>

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue arbre des notifications -->
+    <record id="view_gpl_notification_tree" model="ir.ui.view">
+        <field name="name">gpl.notification.tree</field>
+        <field name="model">gpl.notification</field>
+        <field name="arch" type="xml">
+            <tree string="Notifications GPL" decoration-info="state=='sent'" decoration-success="state=='read'">
+                <field name="create_date"/>
+                <field name="name"/>
+                <field name="notification_type"/>
+                <field name="vehicle_id"/>
+                <field name="technician_ids" widget="many2many_tags"/>
+                <field name="state" widget="badge"/>
+                <field name="sent_date"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Vue formulaire des notifications CORRIGÉE -->
+    <record id="view_gpl_notification_form" model="ir.ui.view">
+    <field name="name">gpl.notification.form</field>
+    <field name="model">gpl.notification</field>
+    <field name="arch" type="xml">
+        <form string="Notification GPL">
+            <header>
+                <!-- CORRIGÉ: Bouton avec méthode object -->
+                <button name="action_send_now" string="Envoyer maintenant"
+                        type="object" class="btn-primary"
+                        invisible="state != 'draft'"/>
+
+                <field name="state" widget="statusbar"/>
+            </header>
+
+            <sheet>
+                <group>
+                    <group>
+                        <field name="name"/>
+                        <field name="notification_type"/>
+                        <field name="vehicle_id"/>
+                    </group>
+                    <group>
+                        <field name="send_email"/>
+                        <field name="send_sms"/>
+                        <field name="send_internal"/>
+                    </group>
+                </group>
+
+                <group string="Destinataires">
+                    <field name="technician_ids" widget="many2many_tags"/>
+                </group>
+
+                <group string="Message">
+                    <field name="message" nolabel="1"/>
+                </group>
+
+                <group string="Informations d'envoi" invisible="state == 'draft'">
+                    <field name="sent_date"/>
+                    <field name="read_date"/>
+                </group>
+            </sheet>
+        </form>
+    </field>
+</record>
+
+    <!-- Action notifications -->
+    <record id="action_gpl_notifications" model="ir.actions.act_window">
+        <field name="name">Notifications GPL</field>
+        <field name="res_model">gpl.notification</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menu notifications -->
+    <menuitem id="menu_gpl_garage_notifications"
+              name="📧 Notifications"
+              parent="cpss_gpl_garage.menu_gpl_garage_config"
+              action="action_gpl_notifications"
+              sequence="80"/>
+
+</odoo>

@@ -9,7 +9,8 @@
                      date_start="appointment_date"
                      color="next_service_type"
                       date_delay="estimated_duration"
-                      event_open_popup="True"
+                      event_open_popup="false"
+                      js_class="simple_vehicle_calendar"
                      mode="month">
                 <field name="license_plate"/>
                 <field name="client_id"/>
@@ -29,7 +30,8 @@
             <calendar string="Planning Hebdomadaire"
                      date_start="appointment_date"
                      mode="week"
-                     event_open_popup="true">
+                      js_class="simple_vehicle_calendar"
+                     event_open_popup="false">
 
                 <field name="license_plate"/>
                 <field name="client_id"/>

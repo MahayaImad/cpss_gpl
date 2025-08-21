@@ -54,6 +54,11 @@ class GplVehicle(models.Model):
 
     # === STATUT ET WORKFLOW ===
     status_id = fields.Many2one('gpl.vehicle.status', 'Statut', default=lambda self: self._get_default_status())
+    status_name = fields.Char(
+        'Nom du statut',
+        related='status_id.name',
+        store=False
+    )
     active = fields.Boolean('Actif', default=True)
 
     # === TAGS ET CLASSIFICATION ===
@@ -79,6 +84,11 @@ class GplVehicle(models.Model):
         tracking=True
     )
 
+    image_128 = fields.Image(
+        related='model_id.image_128',
+        readonly=True
+    )
+
     # === CHAMPS CALCULÉS ===
     technician_names = fields.Char('Techniciens', compute='_compute_technician_names')
     is_appointment_today = fields.Boolean('RDV aujourd\'hui', compute='_compute_appointment_flags')
@@ -100,13 +110,18 @@ class GplVehicle(models.Model):
             else:
                 vehicle.name = "Nouveau véhicule"
 
-    @api.depends('name', 'client_id')
+    @api.depends('license_plate', 'client_id', 'model_id')
     def _compute_display_name(self):
         for vehicle in self:
+            parts = []
+            if vehicle.license_plate:
+                parts.append(vehicle.license_plate)
             if vehicle.client_id:
-                vehicle.display_name = f"{vehicle.name} ({vehicle.client_id.name})"
-            else:
-                vehicle.display_name = vehicle.name or "Nouveau véhicule"
+                parts.append(f"({vehicle.client_id.name})")
+            if vehicle.model_id and not vehicle.license_plate:
+                parts.append(vehicle.model_id.name)
+
+            vehicle.display_name = ' '.join(parts) if parts else 'Nouveau véhicule'
 
     @api.depends('assigned_technician_ids')
     def _compute_technician_names(self):
@@ -146,19 +161,19 @@ class GplVehicle(models.Model):
         return self.env.ref('cpss_gpl_garage.vehicle_status_nouveau', raise_if_not_found=False)
 
     # === ACTIONS PLANNING ===
-    def action_reschedule_appointment(self):
-        """Ouvre l'assistant de reprogrammation"""
-        self.ensure_one()
-        return {
-            'name': _('Reprogrammer le rendez-vous'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'gpl.reschedule.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_vehicle_id': self.id,
-            }
-        }
+    # def action_reschedule_appointment(self):
+    #     """Ouvre l'assistant de reprogrammation"""
+    #     self.ensure_one()
+    #     return {
+    #         'name': _('Reprogrammer le rendez-vous'),
+    #         'type': 'ir.actions.act_window',
+    #         'res_model': 'gpl.reschedule.wizard',
+    #         'view_mode': 'form',
+    #         'target': 'new',
+    #         'context': {
+    #             'default_vehicle_id': self.id,
+    #         }
+    #     }
 
     def action_start_service(self):
         """Démarre le service"""
@@ -175,12 +190,25 @@ class GplVehicle(models.Model):
 
         return {
             'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Service démarré'),
-                'message': _('Le service pour %s a été démarré.') % self.display_name,
-                'type': 'success',
-            }
+            'tag': 'reload',
+        }
+
+    def action_reschedule_appointment(self):
+        """Reprogrammer le service"""
+        self.ensure_one()
+        vehicle_status_nouveau = self.env.ref('cpss_gpl_garage.vehicle_status_nouveau', raise_if_not_found=False)
+        if vehicle_status_nouveau:
+            self.status_id = vehicle_status_nouveau
+
+        # Log de démarrage
+        self.message_post(
+            body=f"Service reprogrammer : {dict(self._fields['next_service_type'].selection)[self.next_service_type]}",
+            message_type='comment'
+        )
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
         }
 
     def action_complete_appointment(self):
@@ -201,12 +229,7 @@ class GplVehicle(models.Model):
 
         return {
             'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Rendez-vous terminé'),
-                'message': _('Le rendez-vous pour %s a été marqué comme terminé.') % self.display_name,
-                'type': 'success',
-            }
+            'tag': 'reload'
         }
 
     def action_annuler(self):
@@ -226,12 +249,7 @@ class GplVehicle(models.Model):
 
         return {
             'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Service annulé'),
-                'message': _('Le service pour %s a été annulé.') % self.display_name,
-                'type': 'success',
-            }
+            'tag': 'reload',
         }
 
     # === CONTRAINTES ===
@@ -253,6 +271,50 @@ class GplVehicle(models.Model):
             if vehicle.appointment_date and vehicle.appointment_date < fields.Datetime.now():
                 raise ValidationError(_("La date de rendez-vous ne peut pas être dans le passé."))
 
+    @api.model
+    def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
+        """Override pour forcer l'affichage de toutes les colonnes de statuts dans kanban"""
+        result = super().read_group(domain, fields, groupby, offset, limit, orderby, lazy)
+
+        # Si groupé par status_id
+        if groupby and len(groupby) > 0 and 'status_id' in groupby[0]:
+            # Récupérer tous les statuts actifs
+            all_statuses = self.env['gpl.vehicle.status'].search([('active', '=', True)], order='sequence, name')
+
+            # Extraire les IDs de statut déjà présents dans les résultats
+            existing_status_ids = []
+            for group in result:
+                if group.get('status_id') and isinstance(group['status_id'], (list, tuple)):
+                    existing_status_ids.append(group['status_id'][0])
+
+            # Ajouter les statuts manquants avec un count de 0
+            for status in all_statuses:
+                if status.id not in existing_status_ids:
+                    # Créer un groupe vide pour ce statut
+                    empty_group = {
+                        'status_id': (status.id, status.name),
+                        'status_id_count': 0,
+                        '__domain': [('status_id', '=', status.id)] + domain,
+                    }
+
+                    # Ajouter les autres champs nécessaires selon le groupby
+                    for field in fields:
+                        if field not in empty_group and field != 'status_id':
+                            empty_group[field] = 0 if 'count' in field else False
+
+                    result.append(empty_group)
+
+            # Trier les résultats par séquence des statuts
+            def sort_key(group):
+                if group.get('status_id') and isinstance(group['status_id'], (list, tuple)):
+                    status_id = group['status_id'][0]
+                    status = self.env['gpl.vehicle.status'].browse(status_id)
+                    return (status.sequence, status.name)
+                return (999, '')
+
+            result.sort(key=sort_key)
+
+        return result
 
 class GplVehicleStatus(models.Model):
     _name = 'gpl.vehicle.status'
