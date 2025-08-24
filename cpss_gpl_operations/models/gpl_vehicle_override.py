@@ -169,7 +169,7 @@ class GplVehicleOverride(models.Model):
         }
 
     def _create_installation_document(self, common_data):
-        """Crée un document d'installation GPL"""
+        """Crée un document d'installation GPL - VERSION CORRIGÉE"""
         installation_vals = {
             **common_data,
             'state': 'planned',  # Commencer en planifié
@@ -177,9 +177,7 @@ class GplVehicleOverride(models.Model):
 
         installation = self.env['gpl.service.installation'].create(installation_vals)
 
-        # Démarrer automatiquement l'installation si en mode simplifié
-        if installation._is_simplified_mode():
-            installation.action_start()
+        installation.action_start()  # Ceci va créer la vente automatiquement
 
         return {
             'type': 'ir.actions.act_window',
@@ -194,7 +192,7 @@ class GplVehicleOverride(models.Model):
         }
 
     def _create_repair_document(self, common_data):
-        """Crée un document de réparation GPL"""
+        """Crée un document de réparation GPL - VERSION CORRIGÉE"""
         repair_vals = {
             **common_data,
             'repair_type': 'repair',  # Type par défaut
@@ -206,9 +204,7 @@ class GplVehicleOverride(models.Model):
 
         repair = self.env['gpl.repair.order'].create(repair_vals)
 
-        # Démarrer automatiquement si en mode simplifié
-        if repair._is_simplified_mode():
-            repair.action_start_repair()
+        repair.action_start_repair()  # Ceci va créer la vente automatiquement
 
         return {
             'type': 'ir.actions.act_window',
@@ -223,7 +219,7 @@ class GplVehicleOverride(models.Model):
         }
 
     def _create_maintenance_document(self, common_data):
-        """Crée un document de maintenance (utilise le modèle réparation)"""
+        """Crée un document de maintenance - VERSION CORRIGÉE"""
         maintenance_vals = {
             **common_data,
             'repair_type': 'maintenance',
@@ -234,10 +230,8 @@ class GplVehicleOverride(models.Model):
         }
 
         maintenance = self.env['gpl.repair.order'].create(maintenance_vals)
-        maintenance.action_ready()
 
-        if maintenance._is_simplified_mode():
-            maintenance.action_start_repair()
+        maintenance.action_start_repair()  # Ceci va créer la vente automatiquement
 
         return {
             'type': 'ir.actions.act_window',

@@ -59,6 +59,7 @@
                                 <tree editable="bottom">
                                     <field name="product_id"
                                            options="{'no_create': True}"/>
+                                    <field name="name"/>
                                     <field name="product_tracking" invisible="1"/>
                                     <field name="lot_id"
                                            invisible="product_tracking == 'none'"

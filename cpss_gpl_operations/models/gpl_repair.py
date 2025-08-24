@@ -199,7 +199,7 @@ class GplRepairOrder(models.Model):
         return self.client_id
 
     def _get_order_lines(self):
-        """Retourne les lignes de réparation"""
+        """Retourne les lignes de réparation avec quantité > 0"""
         return self.repair_line_ids.filtered(lambda l: l.quantity > 0)
 
     def action_done(self):
@@ -334,6 +334,7 @@ class GplRepairLine(models.Model):
     def _onchange_product_id(self):
         if self.product_id:
             self.price_unit = self.product_id.list_price
+            self.name = self.product_id.name
 
             # FORCER quantité = 1 pour produits sériels
             if self.product_id.tracking == 'serial':

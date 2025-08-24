@@ -224,6 +224,14 @@ class GplServiceInstallation(models.Model):
             raise UserError(_("Une installation terminée ne peut pas être remise en brouillon."))
         self.state = 'draft'
 
+    def _get_partner(self):
+        """Retourne le client de l'installation"""
+        return self.client_id
+
+    def _get_order_lines(self):
+        """Retourne les lignes d'installation avec quantité > 0"""
+        return self.installation_line_ids.filtered(lambda l: l.quantity > 0)
+
 
 class GplInstallationLine(models.Model):
     """Lignes de produits pour l'installation"""
@@ -335,13 +343,44 @@ class GplServiceInstallationMixin(models.Model):
     _inherit = ['gpl.service.installation', 'gpl.auto.document.mixin']
 
     def action_start(self):
-        """Démarrage avec automatisation en mode simplifié"""
+        """Démarrage avec automatisation - SOLUTION UNIVERSELLE"""
         result = super().action_start()
 
+        # 🔧 CORRECTION : Toujours créer la vente lors du démarrage
+        # Peu importe d'où on vient (planned ou direct)
         if self._is_simplified_mode():
-            self._create_automatic_sale_order()
+            self._ensure_sale_order_created()
 
         return result
+
+    def action_confirm(self):
+        """Confirmation avec création optionnelle de vente"""
+        result = super().action_confirm()
+
+        # Créer la vente si mode simplifié activé
+        if self._is_simplified_mode():
+            self._ensure_sale_order_created()
+
+        return result
+
+    def _ensure_sale_order_created(self):
+        """S'assure qu'une commande de vente existe - MÉTHODE SÉCURISÉE"""
+        # Si une commande existe déjà, ne rien faire
+        if self.sale_order_id:
+            return
+
+        # Si pas de lignes, ne rien faire
+        if not self._get_order_lines():
+            return
+
+        # Créer la commande uniquement si nécessaire
+        try:
+            self._create_automatic_sale_order()
+        except Exception as e:
+            import logging
+            _logger = logging.getLogger(__name__)
+            _logger.error(f"Erreur création commande pour {self.name}: {str(e)}")
+            # Ne pas bloquer le processus si la vente échoue
 
     def _get_partner(self):
         """Retourne le client de l'installation"""
@@ -352,10 +391,40 @@ class GplServiceInstallationMixin(models.Model):
         return self.installation_line_ids.filtered(lambda l: l.quantity > 0)
 
     def action_done(self):
-        """Finalisation avec mise à jour du workflow"""
+        """Finalisation avec mise à jour du workflow - VERSION SIMPLE"""
         result = super().action_done()
 
-        if self.auto_workflow_state == 'invoiced':
+        # Solution KISS : Toujours marquer comme terminé quand installation terminée
+        if self.state == 'done':
+            # Si on a une commande, essayer de finaliser le workflow
+            if self.sale_order_id:
+                try:
+                    self._finalize_automatic_workflow()
+                except Exception as e:
+                    import logging
+                    _logger = logging.getLogger(__name__)
+                    _logger.warning(f"Erreur finalisation workflow {self.name}: {str(e)}")
+
+            # Dans tous les cas, marquer le workflow comme terminé
             self.auto_workflow_state = 'done'
 
         return result
+
+    def _finalize_automatic_workflow(self):
+        """Finalise le workflow si possible - VERSION SIMPLE"""
+        if not self.sale_order_id:
+            return
+
+        so = self.sale_order_id
+
+        # Vérifier si livré
+        outgoing_pickings = so.picking_ids.filtered(lambda p: p.picking_type_code == 'outgoing')
+        if outgoing_pickings and all(p.state == 'done' for p in outgoing_pickings):
+            if self.auto_workflow_state not in ['delivered', 'invoiced', 'done']:
+                self.auto_workflow_state = 'delivered'
+
+        # Vérifier si facturé
+        posted_invoices = so.invoice_ids.filtered(lambda i: i.state == 'posted')
+        if posted_invoices:
+            if self.auto_workflow_state != 'done':
+                self.auto_workflow_state = 'invoiced'

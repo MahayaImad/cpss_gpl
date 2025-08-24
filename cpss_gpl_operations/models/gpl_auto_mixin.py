@@ -80,8 +80,8 @@ class GplAutoDocumentMixin(models.AbstractModel):
         for line in self._get_order_lines():
             line_vals = {
                 'product_id': line.product_id.id,
-                # 'name': line.name or line.product_id.name,
-                'lot_id': line.lot_id.id,
+                'name': line.name or line.product_id.name,
+                #'lot_id': line.lot_id.id,
                 'product_uom_qty': line.quantity,
                 'price_unit': line.price_unit,
                 'product_uom': line.product_id.uom_id.id,
@@ -137,28 +137,40 @@ class GplAutoDocumentMixin(models.AbstractModel):
             self.auto_workflow_state = 'delivered'
 
     def _validate_picking_with_move_lines(self, picking):
-        """Valide un picking via les move_lines existants"""
-        for move_line in picking.move_line_ids:
-            # Forcer la quantité fait égale à la quantité prévue
-            if move_line.qty_done == 0:
-                move_line.qty_done = move_line.product_uom_qty
+        """Valide un picking en assignant les lots aux move_lines"""
+        for move in picking.move_ids:
+            # Trouver le lot correspondant depuis les lignes originales
+            lot_to_assign = None
+            for line in self._get_order_lines():
+                if (line.product_id.id == move.product_id.id and
+                    hasattr(line, 'lot_id') and line.lot_id):
+                    lot_to_assign = line.lot_id
+                    break
+
+            # Assigner aux move_lines existants
+            for move_line in move.move_line_ids:
+                if move_line.qty_done == 0:
+                    move_line.qty_done = move_line.product_uom_qty
+                    # Assigner le lot seulement si nécessaire et disponible
+                    if lot_to_assign and not move_line.lot_id:
+                        move_line.lot_id = lot_to_assign.id
 
         # Valider le picking
         picking.button_validate()
 
     def _force_picking_validation(self, picking):
-        """Force la validation d'un picking en créant les move_lines nécessaires"""
+        """Force la validation d'un picking en créant les move_lines avec lots"""
         for move in picking.move_ids:
-            # Créer des move_lines si elles n'existent pas
             if not move.move_line_ids:
-
-                # Trouver le lot correspondant depuis les lignes originales
-                corresponding_line = None
+                # Trouver le lot correspondant
+                lot_to_assign = None
                 for line in self._get_order_lines():
-                    if line.product_id.id == move.product_id.id:
-                        corresponding_line = line
+                    if (line.product_id.id == move.product_id.id and
+                        hasattr(line, 'lot_id') and line.lot_id):
+                        lot_to_assign = line.lot_id
                         break
 
+                # Créer le move_line
                 move_line_vals = {
                     'move_id': move.id,
                     'product_id': move.product_id.id,
@@ -169,27 +181,25 @@ class GplAutoDocumentMixin(models.AbstractModel):
                     'picking_id': picking.id,
                 }
 
-                # Ajouter le lot si spécifié
-                if corresponding_line and hasattr(corresponding_line, 'lot_id') and corresponding_line.lot_id:
-                    move_line_vals['lot_id'] = corresponding_line.lot_id.id
+                # Ajouter le lot seulement si nécessaire
+                if lot_to_assign:
+                    move_line_vals['lot_id'] = lot_to_assign.id
 
                 self.env['stock.move.line'].create(move_line_vals)
             else:
-                # Mettre à jour les move_lines existants
+                # Assigner aux move_lines existants
+                lot_to_assign = None
+                for line in self._get_order_lines():
+                    if (line.product_id.id == move.product_id.id and
+                        hasattr(line, 'lot_id') and line.lot_id):
+                        lot_to_assign = line.lot_id
+                        break
+
                 for move_line in move.move_line_ids:
                     if move_line.qty_done == 0:
                         move_line.qty_done = move_line.product_uom_qty
-
-                        # Assigner le lot si nécessaire
-                        corresponding_line = None
-                        for line in self._get_order_lines():
-                            if line.product_id.id == move_line.product_id.id:
-                                corresponding_line = line
-                                break
-
-                        if (corresponding_line and hasattr(corresponding_line, 'lot_id')
-                            and corresponding_line.lot_id and not move_line.lot_id):
-                            move_line.lot_id = corresponding_line.lot_id.id
+                        if lot_to_assign and not move_line.lot_id:
+                            move_line.lot_id = lot_to_assign.id
 
         # Valider le picking
         picking.button_validate()
