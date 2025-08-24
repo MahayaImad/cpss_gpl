@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 
 class GplRepairOrder(models.Model):
@@ -8,7 +7,7 @@ class GplRepairOrder(models.Model):
     Gestion simplifiée des réparations GPL
     """
     _name = 'gpl.repair.order'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'gpl.auto.document.mixin']
     _description = 'Ordre de Réparation GPL'
     _order = 'priority desc, date_order desc'
 
@@ -138,6 +137,22 @@ class GplRepairOrder(models.Model):
     # Notes
     notes = fields.Text(string='Notes')
 
+    sale_order_id = fields.Many2one(
+        'sale.order',
+        string='Commande de vente',
+        readonly=True,
+        help="Commande générée automatiquement"
+    )
+
+    auto_workflow_state = fields.Selection([
+        ('draft', 'Brouillon'),
+        ('sale_created', 'Commande créée'),
+        ('sale_confirmed', 'Commande confirmée'),
+        ('delivered', 'Livré'),
+        ('invoiced', 'Facturé'),
+        ('done', 'Terminé'),
+    ], string='État Workflow', default='draft', readonly=True)
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -168,11 +183,24 @@ class GplRepairOrder(models.Model):
             'date_start': fields.Datetime.now()
         })
 
+        # AJOUTER : Création automatique des documents de vente
+        if self._is_simplified_mode():
+            self._create_automatic_sale_order()
+
         # Mettre à jour le statut du véhicule
         if self.vehicle_id:
             repair_status = self.env.ref('cpss_gpl_garage.vehicle_status_en_cours', raise_if_not_found=False)
             if repair_status:
                 self.vehicle_id.status_id = repair_status
+
+    # AJOUTER ces méthodes dans la classe GplRepairOrder :
+    def _get_partner(self):
+        """Retourne le client de la réparation"""
+        return self.client_id
+
+    def _get_order_lines(self):
+        """Retourne les lignes de réparation"""
+        return self.repair_line_ids.filtered(lambda l: l.quantity > 0)
 
     def action_done(self):
         """Termine la réparation"""
@@ -185,11 +213,41 @@ class GplRepairOrder(models.Model):
             'date_end': fields.Datetime.now()
         })
 
+        # AJOUTER : Finaliser l'automatisation
+        if self.auto_workflow_state == 'invoiced':
+            self.auto_workflow_state = 'done'
+
         # Mettre à jour le statut du véhicule
         if self.vehicle_id:
             ready_status = self.env.ref('cpss_gpl_garage.vehicle_status_termine', raise_if_not_found=False)
             if ready_status:
                 self.vehicle_id.status_id = ready_status
+
+        self._update_vehicle_reservoir_links()
+
+    def _update_vehicle_reservoir_links(self):
+        """Met à jour les liens entre véhicule et réservoirs"""
+        if not self.vehicle_id:
+            return
+
+        # Chercher les réservoirs dans les lignes
+        reservoir_lines = self._get_order_lines().filtered(
+            lambda l: hasattr(l, 'lot_id') and l.lot_id
+                      and l.product_id.is_gpl_reservoir  # Assuming this field exists
+                      and l.lot_id
+        )
+
+        for line in reservoir_lines:
+            # Mettre à jour le réservoir : quel véhicule il équipe
+            line.lot_id.write({
+                'vehicle_id': self.vehicle_id.id,
+                'state': 'installed',  # ← CHANGEMENT D'ÉTAT
+                'installation_date': fields.Date.today()
+            })
+
+            # Mettre à jour le véhicule : quel réservoir il a
+            if not self.vehicle_id.reservoir_lot_id:
+                self.vehicle_id.reservoir_lot_id = line.lot_id.id
 
     def action_cancel(self):
         """Annule l'ordre de réparation"""
@@ -217,11 +275,6 @@ class GplRepairLine(models.Model):
         required=True
     )
 
-    name = fields.Text(
-        string='Description',
-        required=True
-    )
-
     product_type = fields.Selection([
         ('product', 'Produit'),
         ('service', 'Service'),
@@ -244,6 +297,26 @@ class GplRepairLine(models.Model):
         store=True
     )
 
+    # === NOUVEAU CHAMP LOT ===
+    lot_id = fields.Many2one(
+        'stock.lot',
+        string='Lot/Série',
+        domain="[('product_id', '=', product_id), ('product_qty', '>', 0)]",
+        help="Lot spécifique pour les produits gérés par lot"
+    )
+
+    # Champ pour savoir si le produit est géré par lot
+    product_tracking = fields.Selection(
+        related='product_id.tracking',
+        string='Suivi',
+        readonly=True
+    )
+
+    name = fields.Text(
+        string='Description',
+        required=True
+    )
+
     @api.depends('product_id')
     def _compute_product_type(self):
         for line in self:
@@ -260,36 +333,24 @@ class GplRepairLine(models.Model):
     @api.onchange('product_id')
     def _onchange_product_id(self):
         if self.product_id:
-            self.name = self.product_id.name
             self.price_unit = self.product_id.list_price
 
+            # FORCER quantité = 1 pour produits sériels
+            if self.product_id.tracking == 'serial':
+                self.quantity = 1.0
 
-class GplRepairOrderMixin(models.Model):
-    _name = 'gpl.repair.order'
-    _inherit = ['gpl.repair.order', 'gpl.auto.document.mixin']
+            self.lot_id = False
 
-    def action_start_repair(self):
-        """Démarrage réparation avec automatisation"""
-        result = super().action_start_repair()
+    @api.constrains('quantity', 'product_id', 'lot_id')
+    def _check_serial_quantity(self):
+        """Empêche quantité > 1 pour produits sériels"""
+        for line in self:
+            if (line.product_id.tracking == 'serial'
+                and line.lot_id
+                and line.quantity != 1):
+                raise ValidationError(_(
+                    "Les réservoirs sont gérés par numéro de série unique. "
+                    "La quantité doit être 1. "
+                    "Pour plusieurs réservoirs, créez une ligne par réservoir."
+                ))
 
-        if self._is_simplified_mode():
-            self._create_automatic_sale_order()
-
-        return result
-
-    def _get_partner(self):
-        """Retourne le client de la réparation"""
-        return self.client_id
-
-    def _get_order_lines(self):
-        """Retourne les lignes de réparation"""
-        return self.repair_line_ids.filtered(lambda l: l.quantity > 0)
-
-    def action_done(self):
-        """Finalisation avec mise à jour du workflow"""
-        result = super().action_done()
-
-        if self.auto_workflow_state == 'invoiced':
-            self.auto_workflow_state = 'done'
-
-        return result

@@ -35,11 +35,11 @@
                 <header>
                     <button name="action_start" string="Démarrer" type="object"
                             class="btn-primary"
-                            modifiers="{'invisible': [('state', 'not in', ['draft', 'planned'])]}"/>
+                            invisible="state not in ['draft', 'planned']"/>
                     <button name="action_done" string="Terminer" type="object"
-                            class="btn-success" modifiers="{'invisible': [('state', 'not in', ['in_progress'])]}"/>
+                            class="btn-success" invisible="state not in ['in_progress']"/>
                     <button name="action_cancel" string="Annuler" type="object"
-                            modifiers="{'invisible': [('state', 'not in', ['draft', 'planned', 'in_progress])]}"/>
+                            invisible="state not in ['draft', 'planned', 'in_progress']"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,planned,in_progress,done"/>
                 </header>
                 <sheet>
@@ -74,7 +74,13 @@
                             <field name="installation_line_ids">
                                 <tree editable="bottom">
                                     <field name="product_id" options="{'no_create': True}"/>
-                                    <field name="quantity"/>
+                                    <field name="product_tracking" invisible="1"/>
+                                    <field name="lot_id"
+                                           invisible="product_tracking == 'none'"
+                                           required="product_tracking in ['lot', 'serial']"/>
+                                    <field name="quantity"
+                                       readonly="product_tracking == 'serial'"
+                                       help="Quantité fixe à 1 pour les réservoirs"/>
                                     <field name="price_unit" widget="monetary"/>
                                     <field name="subtotal" widget="monetary" readonly="1"/>
                                 </tree>

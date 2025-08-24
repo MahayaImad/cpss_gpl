@@ -8,7 +8,7 @@
             <form string="Ordre de Réparation GPL">
                 <header>
                     <button name="action_start_repair" string="Démarrer" type="object"
-                            class="btn-primary" invisible ="state != 'planned'"/>
+                            class="btn-primary" invisible ="state not in ['draft', 'planned']"/>
                     <button name="action_done" string="Terminer" type="object"
                             class="btn-success" invisible = "state != 'in_progress'"/>
                     <button name="action_cancel" string="Annuler" type="object"
@@ -39,6 +39,8 @@
                                    invisible ="not sale_order_id"/>
                             <field name="date_planned"/>
                             <field name="date_start"/>
+                            <field name="auto_workflow_state" widget="badge" readonly="1"
+                               invisible="auto_workflow_state == 'draft'"/>
                             <field name="technician_ids" widget="many2many_tags"
                                    options="{'color_field': 'color', 'no_create': True}"/>
                             <field name="date_end" readonly="1"/>
@@ -57,7 +59,14 @@
                                 <tree editable="bottom">
                                     <field name="product_id"
                                            options="{'no_create': True}"/>
-                                    <field name="quantity"/>
+                                    <field name="product_tracking" invisible="1"/>
+                                    <field name="lot_id"
+                                           invisible="product_tracking == 'none'"
+                                           options="{'no_create': True}"
+                                           required="product_tracking in ['lot', 'serial']"/>
+                                    <field name="quantity"
+                                       readonly="product_tracking == 'serial'"
+                                       help="Quantité fixe à 1 pour les réservoirs"/>
                                     <field name="price_unit" widget="monetary"/>
                                     <field name="subtotal" widget="monetary" readonly="1"/>
                                 </tree>

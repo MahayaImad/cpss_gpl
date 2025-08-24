@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 
 class GplServiceInstallation(models.Model):
@@ -68,17 +68,25 @@ class GplServiceInstallation(models.Model):
         store=True
     )
 
-    reservoir_lot_id = fields.Many2one(
+    reservoir_lot_ids = fields.Many2many(
         'stock.lot',
-        string='Réservoir installé',
-        domain=[('product_id.is_gpl_reservoir', '=', True)]
+        string='Réservoirs installés',
+        compute='_compute_reservoir_lots',
+        store=True,
+        help="Réservoirs sélectionnés dans les lignes d'installation"
     )
 
-    # Lien vers le réservoir via stock.lot
-    reservoir_id = fields.Many2one(
+    reservoir_lot_id = fields.Many2one(
         'stock.lot',
-        string='Réservoir',
-        related='reservoir_lot_id',
+        string='Réservoir principal',
+        compute='_compute_reservoir_lots',
+        store=True,
+        help="Premier réservoir trouvé dans les lignes (pour compatibilité)"
+    )
+
+    reservoir_count = fields.Integer(
+        string='Nombre de réservoirs',
+        compute='_compute_reservoir_lots',
         store=True
     )
 
@@ -120,6 +128,21 @@ class GplServiceInstallation(models.Model):
         for record in self:
             record.total_amount = sum(record.installation_line_ids.mapped('subtotal'))
 
+    @api.depends('installation_line_ids.lot_id', 'installation_line_ids.product_id')
+    def _compute_reservoir_lots(self):
+        """Calcule les réservoirs depuis les lignes"""
+        for installation in self:
+            # Trouver tous les réservoirs dans les lignes
+            reservoir_lines = installation.installation_line_ids.filtered(
+                lambda l: l.product_id.is_gpl_reservoir and l.lot_id
+            )
+
+            reservoir_lots = reservoir_lines.mapped('lot_id')
+
+            installation.reservoir_lot_ids = [(6, 0, reservoir_lots.ids)]
+            installation.reservoir_lot_id = reservoir_lots[0] if reservoir_lots else False
+            installation.reservoir_count = len(reservoir_lots)
+
     def action_start(self):
         """Démarre l'installation"""
         self.ensure_one()
@@ -144,7 +167,7 @@ class GplServiceInstallation(models.Model):
             raise UserError(_("L'installation doit être en cours pour être terminée."))
 
         if not self.reservoir_lot_id:
-            raise UserError(_("Veuillez sélectionner le réservoir installé avant de terminer."))
+            raise UserError(_("Veuillez sélectionner le réservoir à installer avant de terminer."))
 
         self.write({
             'state': 'done',
@@ -159,6 +182,32 @@ class GplServiceInstallation(models.Model):
                     'status_id': completed_status.id,
                     'reservoir_lot_id': self.reservoir_lot_id.id
                 })
+
+        self._update_vehicle_reservoir_links()
+
+    def _update_vehicle_reservoir_links(self):
+        """Met à jour les liens entre véhicule et réservoirs"""
+        if not self.vehicle_id:
+            return
+
+        # Chercher les réservoirs dans les lignes
+        reservoir_lines = self._get_order_lines().filtered(
+            lambda l: hasattr(l, 'lot_id') and l.lot_id
+                      and l.product_id.is_gpl_reservoir  # Assuming this field exists
+                      and l.lot_id
+        )
+
+        for line in reservoir_lines:
+            # Mettre à jour le réservoir : quel véhicule il équipe
+            line.lot_id.write({
+                'vehicle_id': self.vehicle_id.id,
+                'state': 'installed',  # ← CHANGEMENT D'ÉTAT
+                'installation_date': fields.Date.today()
+            })
+
+            # Mettre à jour le véhicule : quel réservoir il a
+            if not self.vehicle_id.reservoir_lot_id:
+                self.vehicle_id.reservoir_lot_id = line.lot_id.id
 
     def action_cancel(self):
         """Annule l'installation"""
@@ -216,10 +265,69 @@ class GplInstallationLine(models.Model):
         store=True
     )
 
+    product_type = fields.Selection([
+        ('product', 'Produit'),
+        ('service', 'Service'),
+    ], string='Type', compute='_compute_product_type', store=True)
+
+    lot_id = fields.Many2one(
+        'stock.lot',
+        string='Lot/Série',
+        domain="[('product_id', '=', product_id), ('product_qty', '>', 0)]",
+        help="Lot spécifique pour les produits gérés par lot"
+    )
+
+    # Champ pour savoir si le produit est géré par lot
+    product_tracking = fields.Selection(
+        related='product_id.tracking',
+        string='Suivi',
+        readonly=True
+    )
+
     @api.depends('quantity', 'price_unit')
     def _compute_subtotal(self):
         for line in self:
             line.subtotal = line.quantity * line.price_unit
+
+    @api.onchange('product_id')
+    def _onchange_product_id(self):
+        if self.product_id:
+            self.name = self.product_id.name
+            self.price_unit = self.product_id.list_price
+
+            # FORCER quantité = 1 pour produits sériels
+            if self.product_id.tracking == 'serial':
+                self.quantity = 1.0
+
+            # Réinitialiser le lot si le produit change
+            self.lot_id = False
+
+    @api.onchange('lot_id')
+    def _onchange_lot_id(self):
+        """Met à jour la description avec le numéro de lot"""
+        if self.lot_id and self.product_id:
+            self.name = f"{self.product_id.name} - {self.lot_id.name}"
+
+    @api.depends('product_id')
+    def _compute_product_type(self):
+        for line in self:
+            if line.product_id:
+                line.product_type = 'service' if line.product_id.type == 'service' else 'product'
+            else:
+                line.product_type = 'product'
+
+    @api.constrains('quantity', 'product_id', 'lot_id')
+    def _check_serial_quantity(self):
+        """Empêche quantité > 1 pour produits sériels"""
+        for line in self:
+            if (line.product_id.tracking == 'serial'
+                and line.lot_id
+                and line.quantity != 1):
+                raise ValidationError(_(
+                    "Les réservoirs sont gérés par numéro de série unique. "
+                    "La quantité doit être 1. "
+                    "Pour plusieurs réservoirs, créez une ligne par réservoir."
+                ))
 
 
 class GplServiceInstallationMixin(models.Model):
