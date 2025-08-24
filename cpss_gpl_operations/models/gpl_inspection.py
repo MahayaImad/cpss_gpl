@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 from datetime import timedelta
@@ -43,6 +42,11 @@ class GplInspection(models.Model):
         string='Date du contrôle',
         default=fields.Date.today,
         required=True,
+        tracking=True
+    )
+
+    date_planned = fields.Datetime(
+        string='Date planifiée',
         tracking=True
     )
 
@@ -165,6 +169,8 @@ class GplInspection(models.Model):
         string='Date du certificat',
         readonly=True
     )
+    # Notes
+    notes = fields.Text(string='Notes internes')
 
     @api.model_create_multi
     def create(self, vals_list):

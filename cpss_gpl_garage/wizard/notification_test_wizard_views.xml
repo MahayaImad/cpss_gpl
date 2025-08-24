@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue formulaire du wizard -->
+    <record id="view_notification_test_wizard" model="ir.ui.view">
+        <field name="name">notification.test.wizard.form</field>
+        <field name="model">notification.test.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Test des notifications">
+                <group>
+                    <field name="test_type"/>
+                    <field name="technician_id" invisible="test_type != 'single_technician'"/>
+                </group>
+                <footer>
+                    <button name="action_test_notifications" string="Lancer le test"
+                            type="object" class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action pour ouvrir le wizard -->
+    <record id="action_notification_test_wizard" model="ir.actions.act_window">
+        <field name="name">Test notifications</field>
+        <field name="res_model">notification.test.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Menu pour accéder au test -->
+    <menuitem id="menu_notification_test"
+              name="Test notifications"
+              parent="menu_gpl_garage_config"
+              action="action_notification_test_wizard"
+              sequence="99"/>
+
+</odoo>

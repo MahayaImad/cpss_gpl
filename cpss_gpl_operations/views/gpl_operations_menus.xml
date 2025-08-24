@@ -1,22 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Menu principal Opérations -->
-    <menuitem id="menu_gpl_operations_root"
-              name="Opérations GPL"
-              sequence="30"
-              web_icon="cpss_gpl_operations,static/description/icon.png"/>
-
-    <!-- Tableau de bord -->
-    <menuitem id="menu_gpl_operations_dashboard"
-              name="Tableau de bord"
-              parent="menu_gpl_operations_root"
-              sequence="1"/>
-
     <!-- Services -->
     <menuitem id="menu_gpl_services"
-              name="Services"
-              parent="menu_gpl_operations_root"
-              sequence="10"/>
+              name="🔧 Services"
+              parent="cpss_gpl_garage.menu_gpl_garage_root"
+              sequence="40"/>
 
     <menuitem id="menu_gpl_installations"
               name="Installations"
@@ -32,9 +20,9 @@
 
     <!-- Contrôles -->
     <menuitem id="menu_gpl_controls"
-              name="Contrôles"
-              parent="menu_gpl_operations_root"
-              sequence="20"/>
+              name="🛡️ Contrôles"
+              parent="cpss_gpl_garage.menu_gpl_garage_root"
+              sequence="50"/>
 
     <menuitem id="menu_gpl_inspections"
               name="Contrôles Techniques"
@@ -48,9 +36,4 @@
               action="action_gpl_reservoir_testing"
               sequence="20"/>
 
-    <!-- Rapports -->
-    <menuitem id="menu_gpl_operations_reports"
-              name="Rapports"
-              parent="menu_gpl_operations_root"
-              sequence="100"/>
 </odoo>

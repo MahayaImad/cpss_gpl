@@ -35,6 +35,7 @@
         'base',
         'mail',  # Pour le suivi et notifications
         'web',  # Interface web
+        'stock'
     ],
 
     # Données à charger

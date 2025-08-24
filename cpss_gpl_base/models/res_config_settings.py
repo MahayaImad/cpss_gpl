@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from odoo import models, fields, api, _
 
 
@@ -43,10 +41,11 @@ class ResConfigSettings(models.TransientModel):
 
     # === PARAMÈTRES WORKFLOW ===
     gpl_use_advanced_workflow = fields.Boolean(
-        string="Utiliser le workflow avancé",
-        config_parameter='cpss_gpl.use_advanced_workflow',
-        default=False,
-        help="Activer le workflow détaillé avec plus d'étapes de validation"
+        string="Workflow avancé",
+        compute='_compute_advanced_workflow',
+        store=False,
+        readonly=True,
+        help="Automatiquement défini comme l'inverse du mode simplifié"
     )
 
     gpl_require_appointment = fields.Boolean(
@@ -54,6 +53,28 @@ class ResConfigSettings(models.TransientModel):
         config_parameter='cpss_gpl.require_appointment',
         default=True,
         help="Rendre les rendez-vous obligatoires pour les interventions"
+    )
+
+    # === MODE SIMPLIFIÉ ===
+    gpl_simplified_mode = fields.Boolean(
+        string="Mode Simplifié GPL",
+        config_parameter='cpss_gpl.simplified_mode',
+        default=True,
+        help="Active la création automatique : Commande → Livraison → Facture"
+    )
+
+    gpl_default_warehouse_id = fields.Many2one(
+        'stock.warehouse',
+        string="Entrepôt par défaut",
+        config_parameter='cpss_gpl.default_warehouse_id',
+        help="Entrepôt utilisé pour les livraisons automatiques"
+    )
+
+    gpl_default_pricelist_id = fields.Many2one(
+        'product.pricelist',
+        string="Liste de prix par défaut",
+        config_parameter='cpss_gpl.default_pricelist_id',
+        help="Liste de prix pour les commandes automatiques"
     )
 
     # === PARAMÈTRES NOTIFICATIONS ===
@@ -79,6 +100,12 @@ class ResConfigSettings(models.TransientModel):
         default='standard',
         help="Template à utiliser pour les certificats")
 
+    @api.depends('gpl_simplified_mode')
+    def _compute_advanced_workflow(self):
+        """Le workflow avancé est automatiquement l'inverse du mode simplifié"""
+        for record in self:
+            record.gpl_use_advanced_workflow = not record.gpl_simplified_mode
+
     @api.model
     def get_values(self):
         res = super().get_values()
@@ -92,8 +119,10 @@ class ResConfigSettings(models.TransientModel):
             gpl_default_warranty_months=int(params.get_param('cpss_gpl.default_warranty_months', 24)),
             gpl_reservoir_test_frequency=int(params.get_param('cpss_gpl.reservoir_test_frequency', 5)),
             gpl_reservoir_max_age=int(params.get_param('cpss_gpl.reservoir_max_age', 15)),
-            gpl_use_advanced_workflow=params.get_param('cpss_gpl.use_advanced_workflow', False),
             gpl_require_appointment=params.get_param('cpss_gpl.require_appointment', True),
+            gpl_simplified_mode=params.get_param('cpss_gpl.simplified_mode', True),
+            gpl_default_warehouse_id=int(params.get_param('cpss_gpl.default_warehouse_id', 0)) or False,
+            gpl_default_pricelist_id=int(params.get_param('cpss_gpl.default_pricelist_id', 0)) or False,
             gpl_notification_test_days=int(params.get_param('cpss_gpl.notification_test_days', 30)),
             gpl_notification_email=params.get_param('cpss_gpl.notification_email', ''),
             gpl_certificate_template=params.get_param('cpss_gpl.certificate_template', 'standard'),
@@ -111,9 +140,15 @@ class ResConfigSettings(models.TransientModel):
         params.set_param('cpss_gpl.default_warranty_months', self.gpl_default_warranty_months)
         params.set_param('cpss_gpl.reservoir_test_frequency', self.gpl_reservoir_test_frequency)
         params.set_param('cpss_gpl.reservoir_max_age', self.gpl_reservoir_max_age)
-        params.set_param('cpss_gpl.use_advanced_workflow', self.gpl_use_advanced_workflow)
         params.set_param('cpss_gpl.require_appointment', self.gpl_require_appointment)
+        params.set_param('cpss_gpl.simplified_mode', self.gpl_simplified_mode)
+        params.set_param('cpss_gpl.default_warehouse_id',
+                         self.gpl_default_warehouse_id.id if self.gpl_default_warehouse_id else 0)
+        params.set_param('cpss_gpl.default_pricelist_id',
+                         self.gpl_default_pricelist_id.id if self.gpl_default_pricelist_id else 0)
         params.set_param('cpss_gpl.notification_test_days', self.gpl_notification_test_days)
         params.set_param('cpss_gpl.notification_email', self.gpl_notification_email or '')
         params.set_param('cpss_gpl.certificate_template', self.gpl_certificate_template)
 
+        # Sauvegarder automatiquement le workflow avancé (inverse du mode simplifié)
+        params.set_param('cpss_gpl.use_advanced_workflow', not self.gpl_simplified_mode)

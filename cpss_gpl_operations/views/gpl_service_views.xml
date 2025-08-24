@@ -1,5 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+
+    <template id="gpl_auto_workflow_widget">
+        <div class="o_field_widget o_field_badge">
+            <span class="badge badge-pill">
+                <t t-if="record.auto_workflow_state.raw_value == 'draft'">
+                    <span class="badge-secondary">Brouillon</span>
+                </t>
+                <t t-elif="record.auto_workflow_state.raw_value == 'sale_created'">
+                    <span class="badge-info">Commande créée</span>
+                </t>
+                <t t-elif="record.auto_workflow_state.raw_value == 'sale_confirmed'">
+                    <span class="badge-primary">Commande confirmée</span>
+                </t>
+                <t t-elif="record.auto_workflow_state.raw_value == 'delivered'">
+                    <span class="badge-warning">Livré</span>
+                </t>
+                <t t-elif="record.auto_workflow_state.raw_value == 'invoiced'">
+                    <span class="badge-success">Facturé</span>
+                </t>
+                <t t-elif="record.auto_workflow_state.raw_value == 'done'">
+                    <span class="badge-dark">Terminé</span>
+                </t>
+            </span>
+        </div>
+    </template>
+
     <!-- Vue Formulaire Simplifiée pour Installation -->
     <record id="view_gpl_service_installation_form_simple" model="ir.ui.view">
         <field name="name">gpl.service.installation.form.simple</field>
@@ -27,10 +53,13 @@
                         <group string="Informations générales">
                             <field name="vehicle_id" options="{'no_create': True}"/>
                             <field name="client_id"/>
-                            <field name="date_service"/>
+                            <field name="date_start"/>
                             <field name="date_planned"/>
                         </group>
                         <group string="Exécution">
+                            <field name="sale_order_id" readonly="1"
+                                   invisible = "not sale_order_id"/>
+                            <field name="auto_workflow_state" widget="badge" readonly="1"/>
                             <field name="technician_ids" widget="many2many_tags"/>
                             <field name="reservoir_lot_id"
                                    domain="[('product_id.is_gpl_reservoir', '=', True)]"
@@ -75,7 +104,7 @@
                 <field name="name"/>
                 <field name="vehicle_id"/>
                 <field name="client_id"/>
-                <field name="date_service"/>
+                <field name="date_start"/>
                 <field name="technician_ids" widget="many2many_tags"/>
                 <field name="reservoir_lot_id" optional="show"/>
                 <field name="total_amount" widget="monetary" sum="Total"/>
@@ -114,7 +143,7 @@
                                     <i class="fa fa-user"/> <field name="client_id"/>
                                 </div>
                                 <div>
-                                    <i class="fa fa-calendar"/> <field name="date_service" widget="date"/>
+                                    <i class="fa fa-calendar"/> <field name="date_start" widget="date"/>
                                 </div>
                             </div>
                             <div class="o_kanban_record_bottom">
@@ -159,13 +188,13 @@
                 <filter string="Terminées" name="done" domain="[('state', '=', 'done')]"/>
                 <separator/>
                 <filter string="Cette semaine" name="this_week"
-                        domain="[('date_service', '>=', (context_today() - datetime.timedelta(days=context_today().weekday())).strftime('%Y-%m-%d')),
-                                ('date_service', '&lt;', (context_today() + datetime.timedelta(days=7-context_today().weekday())).strftime('%Y-%m-%d'))]"/>
+                        domain="[('date_start', '>=', (context_today() - datetime.timedelta(days=context_today().weekday())).strftime('%Y-%m-%d')),
+                                ('date_start', '&lt;', (context_today() + datetime.timedelta(days=7-context_today().weekday())).strftime('%Y-%m-%d'))]"/>
                 <filter string="Ce mois" name="this_month"
-                        domain="[('date_service', '&gt;=', (datetime.datetime.now()).strftime('%Y-%m-01'))]"/>
+                        domain="[('date_start', '&gt;=', (datetime.datetime.now()).strftime('%Y-%m-01'))]"/>
                 <group expand="0" string="Grouper par">
                     <filter name="group_by_state" string="État" context="{'group_by': 'state'}"/>
-                    <filter name="group_by_date" string="Date" context="{'group_by': 'date_service:month'}"/>
+                    <filter name="group_by_date" string="Date" context="{'group_by': 'date_start:month'}"/>
                 </group>
             </search>
         </field>

@@ -35,34 +35,55 @@
                         </block>
 
                         <!-- === PARAMÈTRES WORKFLOW === -->
+
                         <block title="Workflow et Processus" name="workflow">
-
-                        <setting>
-                            <field name="gpl_use_advanced_workflow"/>
-                            <div class="content-group">
-                                <div class="text-muted">
-                                    Activer le workflow détaillé avec plus d'étapes de validation
+                            <setting>
+                                <field name="gpl_require_appointment"/>
+                                <div class="content-group">
+                                    <div class="text-muted">
+                                        Rendre les rendez-vous obligatoires pour les interventions
+                                    </div>
                                 </div>
-                            </div>
-                        </setting>
+                            </setting>
 
-                        <setting>
-                            <field name="gpl_require_appointment"/>
-                            <div class="content-group">
-                                <div class="text-muted">
-                                    Rendre les rendez-vous obligatoires pour les interventions
+                            <setting>
+                                <field name="gpl_default_warranty_months"/>
+                                <div class="content-group">
+                                    <div class="text-muted">
+                                        Durée de garantie par défaut (en mois)
+                                    </div>
                                 </div>
-                            </div>
-                        </setting>
+                            </setting>
+                            <setting>
+                                <field name="gpl_simplified_mode"/>
+                                <div class="content-group">
+                                    <div class="text-muted">
+                                        <strong>Active l'automatisation complète :</strong><br/>
+                                        • Création automatique des commandes de vente<br/>
+                                        • Livraison automatique des produits stockables<br/>
+                                        • Facturation automatique<br/>
+                                        • Services traités sans gestion de stock
+                                    </div>
+                                </div>
+                            </setting>
 
-                        <setting>
-                            <field name="gpl_default_warranty_months"/>
-                            <div class="content-group">
-                                <div class="text-muted">
-                                    Durée de garantie par défaut (en mois)
+                            <setting invisible="not gpl_simplified_mode">
+                                <field name="gpl_default_warehouse_id"/>
+                                <div class="content-group">
+                                    <div class="text-muted">
+                                        Entrepôt utilisé pour les livraisons automatiques
+                                    </div>
                                 </div>
-                            </div>
-                        </setting>
+                            </setting>
+
+                            <setting invisible="not gpl_simplified_mode">
+                                <field name="gpl_default_pricelist_id"/>
+                                <div class="content-group">
+                                    <div class="text-muted">
+                                        Liste de prix par défaut pour les commandes
+                                    </div>
+                                </div>
+                            </setting>
                         </block>
 
                         <!-- === PARAMÈTRES RÉSERVOIRS === -->

@@ -32,9 +32,7 @@
                             <field name="gpl_vehicle_count" readonly="1"/>
                         </group>
                     </group>
-                    <group string="Notes GPL" invisible="not is_gpl_compatible">
-                        <field name="gpl_notes" nolabel="1" placeholder="Notes spécifiques à l'installation GPL sur ce modèle..."/>
-                    </group>
+
                 </page>
             </notebook>
         </field>

@@ -65,8 +65,7 @@ class GplVehicle(models.Model):
     tag_ids = fields.Many2many('gpl.vehicle.tag', string='Tags')
 
     # === INFORMATIONS COMPLÉMENTAIRES ===
-    notes = fields.Html('Notes')
-    internal_notes = fields.Text('Notes internes')
+    notes = fields.Text('Notes')
 
     # === INFORMATIONS RESERVOIR ===
     reservoir_lot_id = fields.Many2one('stock.lot', string="Réservoir installé",

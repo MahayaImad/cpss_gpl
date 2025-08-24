@@ -71,6 +71,11 @@ class GplReservoirTesting(models.Model):
         tracking=True
     )
 
+    date_planned = fields.Datetime(
+        string='Date planifiée',
+        tracking=True
+    )
+
     test_type = fields.Selection([
         ('periodic', 'Réépreuve périodique'),
         ('initial', 'Épreuve initiale'),
@@ -190,6 +195,9 @@ class GplReservoirTesting(models.Model):
     can_validate = fields.Boolean(compute='_compute_permissions', store=True)
     can_start = fields.Boolean(compute='_compute_permissions', store=True)
     can_schedule = fields.Boolean(compute='_compute_permissions', store=True)
+
+    # Notes
+    notes = fields.Text(string='Notes')
 
     @api.depends('state')
     def _compute_permissions(self):

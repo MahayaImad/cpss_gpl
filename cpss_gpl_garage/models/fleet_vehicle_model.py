@@ -7,7 +7,6 @@ class FleetVehicleModel(models.Model):
     # === INFORMATIONS GPL ===
     is_gpl_compatible = fields.Boolean('Compatible GPL', default=False)
     gpl_installation_time = fields.Float('Temps installation GPL (heures)', default=4.0)
-    gpl_notes = fields.Text('Notes GPL')
 
     # === STATISTIQUES ===
     gpl_vehicle_count = fields.Integer('Véhicules GPL', compute='_compute_gpl_vehicle_count')

@@ -62,6 +62,9 @@
                         <page string="Recommandations">
                             <field name="recommendations" placeholder="Recommandations pour le client..."/>
                         </page>
+                        <page string="Notes">
+                            <field name="notes" placeholder="Ajouter des notes internes..."/>
+                        </page>
                     </notebook>
                 </sheet>
                 <div class="oe_chatter">

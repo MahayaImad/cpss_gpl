@@ -35,8 +35,9 @@ Caractéristiques principales :
         'mail',  # Pour le chatter et les suivis
         'hr',  # Pour les techniciens
         'stock',  # Pour les réservoirs (stock.lot)
-        'cpss_gpl_base',
-        'cpss_gpl_reservoir',  # Module de reservoir CPSS
+        'sale',
+        #'cpss_gpl_base',
+        #'cpss_gpl_reservoir',  # Module de reservoir CPSS
         'cpss_gpl_garage',  # Module de garage CPSS
     ],
 
@@ -56,7 +57,7 @@ Caractéristiques principales :
     ],
 
     'installable': True,
-    'application': False,
+    'application': True,
     'auto_install': False,
 
     # Icône du module dans les paramètres

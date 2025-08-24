@@ -61,7 +61,6 @@
         'data/gpl_vehicle_status_data.xml',
         'data/calendar_event_type_data.xml',
         'data/hr_department_data.xml',
-        'data/email_templates.xml',
         'data/cron_jobs.xml',
 
         # === VUES PRINCIPALES ===
@@ -80,13 +79,12 @@
         # Planning et calendrier
         'views/calendar_views.xml',
 
-        # Notifications
-        'views/gpl_notification_views.xml',
 
         # === MENUS ===
         'views/gpl_garage_menus.xml',
 
         'wizard/vehicle_appointment_wizard_views.xml',
+        'wizard/notification_test_wizard_views.xml',
 
     ],
 

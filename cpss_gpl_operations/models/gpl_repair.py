@@ -55,7 +55,12 @@ class GplRepairOrder(models.Model):
         tracking=True
     )
 
-    date_done = fields.Datetime(
+    date_planned = fields.Datetime(
+        string='Date planifiée',
+        tracking=True
+    )
+
+    date_end = fields.Datetime(
         string='Date de fin',
         tracking=True
     )
@@ -110,9 +115,8 @@ class GplRepairOrder(models.Model):
     # État
     state = fields.Selection([
         ('draft', 'Brouillon'),
-        ('confirmed', 'Confirmé'),
-        ('ready', 'Prêt'),
-        ('under_repair', 'En réparation'),
+        ('planned', 'Planifié'),
+        ('in_progress', 'En cours'),
         ('done', 'Terminé'),
         ('cancel', 'Annulé'),
     ], string='État', default='draft', tracking=True)
@@ -131,6 +135,9 @@ class GplRepairOrder(models.Model):
         domain=[('product_id.is_gpl_reservoir', '=', True)]
     )
 
+    # Notes
+    notes = fields.Text(string='Notes')
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -148,23 +155,16 @@ class GplRepairOrder(models.Model):
         self.ensure_one()
         if self.state != 'draft':
             raise UserError(_("Seul un ordre en brouillon peut être confirmé."))
-        self.state = 'confirmed'
-
-    def action_ready(self):
-        """Marque l'ordre comme prêt"""
-        self.ensure_one()
-        if self.state != 'confirmed':
-            raise UserError(_("L'ordre doit être confirmé pour être marqué comme prêt."))
-        self.state = 'ready'
+        self.state = 'planned'
 
     def action_start_repair(self):
         """Démarre la réparation"""
         self.ensure_one()
-        if self.state not in ['confirmed', 'ready']:
-            raise UserError(_("L'ordre doit être confirmé ou prêt pour démarrer la réparation."))
+        if self.state not in ['draft', 'planned']:
+            raise UserError(_("L'ordre doit être plannifié ou en brouillon pour démarrer la réparation."))
 
         self.write({
-            'state': 'under_repair',
+            'state': 'in_progress',
             'date_start': fields.Datetime.now()
         })
 
@@ -177,12 +177,12 @@ class GplRepairOrder(models.Model):
     def action_done(self):
         """Termine la réparation"""
         self.ensure_one()
-        if self.state != 'under_repair':
+        if self.state != 'in_progress':
             raise UserError(_("La réparation doit être en cours pour être terminée."))
 
         self.write({
             'state': 'done',
-            'date_done': fields.Datetime.now()
+            'date_end': fields.Datetime.now()
         })
 
         # Mettre à jour le statut du véhicule
@@ -262,3 +262,34 @@ class GplRepairLine(models.Model):
         if self.product_id:
             self.name = self.product_id.name
             self.price_unit = self.product_id.list_price
+
+
+class GplRepairOrderMixin(models.Model):
+    _name = 'gpl.repair.order'
+    _inherit = ['gpl.repair.order', 'gpl.auto.document.mixin']
+
+    def action_start_repair(self):
+        """Démarrage réparation avec automatisation"""
+        result = super().action_start_repair()
+
+        if self._is_simplified_mode():
+            self._create_automatic_sale_order()
+
+        return result
+
+    def _get_partner(self):
+        """Retourne le client de la réparation"""
+        return self.client_id
+
+    def _get_order_lines(self):
+        """Retourne les lignes de réparation"""
+        return self.repair_line_ids.filtered(lambda l: l.quantity > 0)
+
+    def action_done(self):
+        """Finalisation avec mise à jour du workflow"""
+        result = super().action_done()
+
+        if self.auto_workflow_state == 'invoiced':
+            self.auto_workflow_state = 'done'
+
+        return result

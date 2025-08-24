@@ -1,256 +1,397 @@
 from odoo import models, fields, api, _
 from datetime import datetime, timedelta
+from odoo.exceptions import UserError
 import logging
 
 _logger = logging.getLogger(__name__)
 
+
 class GplNotificationSystem(models.Model):
     _name = 'gpl.notification.system'
-    _description = 'Système de notification automatique'
+    _description = 'Système de notification simplifié GPL'
 
     @api.model
-    def send_daily_notifications(self):
-        """Méthode appelée par le cron pour envoyer les notifications quotidiennes"""
-        _logger.info("Début des notifications quotidiennes GPL")
-
-        # Notifications pour demain
-        self._send_tomorrow_appointments()
-
-        # Notifications pour aujourd'hui
-        self._send_today_appointments()
-
-        # Notifications pour retards
-        self._send_overdue_appointments()
-
-        # Notifications de maintenance
-        self._send_maintenance_notifications()
-
-        _logger.info("Fin des notifications quotidiennes GPL")
-
-        return True
-
-    def _send_tomorrow_appointments(self):
-        """Envoyer notifications pour RDV de demain"""
-        tomorrow = fields.Date.today() + timedelta(days=1)
-        tomorrow_start = datetime.combine(tomorrow, datetime.min.time())
-        tomorrow_end = datetime.combine(tomorrow, datetime.max.time())
-
-        # Trouver les véhicules avec RDV demain
-        vehicles = self.env['gpl.vehicle'].search([
-            ('appointment_date', '>=', tomorrow_start),
-            ('appointment_date', '<=', tomorrow_end),
-            ('assigned_technician_ids', '!=', False)
-        ])
-
-        for vehicle in vehicles:
-            self._create_and_send_notification(
-                vehicle=vehicle,
-                notification_type='appointment_tomorrow',
-                subject=f"RDV demain: {vehicle.license_plate}",
-                message=self._get_appointment_message(vehicle, 'demain')
-            )
-
-    def _send_today_appointments(self):
-        """Envoyer notifications pour RDV d'aujourd'hui"""
-        today = fields.Date.today()
-        today_start = datetime.combine(today, datetime.min.time())
-        today_end = datetime.combine(today, datetime.max.time())
-
-        vehicles = self.env['gpl.vehicle'].search([
-            ('appointment_date', '>=', today_start),
-            ('appointment_date', '<=', today_end),
-            ('assigned_technician_ids', '!=', False)
-        ])
-
-        for vehicle in vehicles:
-            self._create_and_send_notification(
-                vehicle=vehicle,
-                notification_type='appointment_today',
-                subject=f"RDV aujourd'hui: {vehicle.license_plate}",
-                message=self._get_appointment_message(vehicle, 'aujourd\'hui')
-            )
-
-    def _send_overdue_appointments(self):
-        """Envoyer notifications pour RDV en retard"""
-        now = datetime.now()
-
-        vehicles = self.env['gpl.vehicle'].search([
-            ('appointment_date', '<', now),
-            ('status_id.name', '!=', 'Terminé'),
-            ('assigned_technician_ids', '!=', False)
-        ])
-
-        for vehicle in vehicles:
-            days_overdue = (now.date() - vehicle.appointment_date.date()).days
-            self._create_and_send_notification(
-                vehicle=vehicle,
-                notification_type='appointment_overdue',
-                subject=f"RDV en retard: {vehicle.license_plate}",
-                message=self._get_overdue_message(vehicle, days_overdue)
-            )
-
-    def _send_maintenance_notifications(self):
-        """Envoyer notifications pour maintenances dues"""
-        # Exemple: véhicules sans maintenance depuis 6 mois
-        six_months_ago = datetime.now() - timedelta(days=180)
-
-        vehicles = self.env['gpl.vehicle'].search([
-            '|',
-            ('last_maintenance_date', '<', six_months_ago),
-            ('last_maintenance_date', '=', False)
-        ])
-
-        # Regrouper par technicien
-        technician_vehicles = {}
-        for vehicle in vehicles:
-            for technician in vehicle.assigned_technician_ids:
-                if technician not in technician_vehicles:
-                    technician_vehicles[technician] = []
-                technician_vehicles[technician].append(vehicle)
-
-        # Envoyer une notification groupée par technicien
-        for technician, vehicle_list in technician_vehicles.items():
-            self._send_maintenance_summary(technician, vehicle_list)
-
-    def _create_and_send_notification(self, vehicle, notification_type, subject, message):
-        """Créer et envoyer une notification"""
-        notification = self.env['gpl.notification'].create({
-            'name': subject,
-            'message': message,
-            'vehicle_id': vehicle.id,
-            'notification_type': notification_type,
-            'technician_ids': [(6, 0, vehicle.assigned_technician_ids.ids)],
-            'send_email': True,
-            'send_internal': True,
-        })
-
-        self._send_notification(notification)
-
-    def _send_notification(self, notification):
-        """Envoyer la notification via différents canaux"""
-        for technician in notification.technician_ids:
-
-            # 1. Notification interne Odoo
-            if notification.send_internal:
-                self._send_internal_notification(technician, notification)
-
-            # 2. Email
-            if notification.send_email and technician.work_email:
-                self._send_email_notification(technician, notification)
-
-            # 3. SMS (si configuré)
-            if notification.send_sms and technician.mobile_phone:
-                self._send_sms_notification(technician, notification)
-
-        notification.write({
-            'state': 'sent',
-            'sent_date': datetime.now()
-        })
-
-    def _send_internal_notification(self, technician, notification):
-        """Envoyer notification interne Odoo - VERSION CORRIGÉE"""
+    def send_daily_technician_emails(self):
+        """
+        Méthode principale : Envoie un email quotidien à tous les techniciens
+        avec leurs tâches du jour
+        """
         try:
-            # SOLUTION SIMPLE: Utiliser uniquement les messages chatter
-            if notification.vehicle_id:
-                message_body = f"""
-                <div style='background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin: 10px 0;'>
-                    <h4 style='color: #1976d2; margin: 0 0 10px 0;'>
-                        🔔 Notification pour {technician.name}
-                    </h4>
-                    <p><strong>{notification.name}</strong></p>
-                    <div style='background-color: white; padding: 10px; border-radius: 3px;'>
-                        {notification.message}
+            # 1. Récupérer tous les techniciens de l'atelier
+            technicians = self.env['hr.employee'].search([
+                ('department_id.name', 'ilike', 'atelier'),
+                ('work_email', '!=', False),  # Seulement ceux avec email
+                ('active', '=', True)
+            ])
+
+            if not technicians:
+                _logger.warning("Aucun technicien trouvé avec email")
+                return
+
+            # 2. Pour chaque technicien, préparer et envoyer l'email
+            sent_count = 0
+            for technician in technicians:
+                if self._send_daily_email_to_technician(technician):
+                    sent_count += 1
+
+            _logger.info(f"Emails quotidiens envoyés à {sent_count}/{len(technicians)} techniciens")
+
+        except Exception as e:
+            _logger.error(f"Erreur envoi emails quotidiens: {e}")
+
+    def _send_daily_email_to_technician(self, technician):
+        """Envoyer l'email quotidien à un technicien"""
+        try:
+            # Récupérer les tâches du technicien
+            today = datetime.now().date()
+            tomorrow = today + timedelta(days=1)
+
+            # RDV d'aujourd'hui
+            today_appointments = self.env['gpl.vehicle'].search([
+                ('assigned_technician_ids', 'in', technician.id),
+                ('appointment_date', '>=', today),
+                ('appointment_date', '<', tomorrow)
+            ])
+
+            # RDV de demain
+            tomorrow_appointments = self.env['gpl.vehicle'].search([
+                ('assigned_technician_ids', 'in', technician.id),
+                ('appointment_date', '>=', tomorrow),
+                ('appointment_date', '<', tomorrow + timedelta(days=1))
+            ])
+
+            # RDV en retard
+            overdue_appointments = self.env['gpl.vehicle'].search([
+                ('assigned_technician_ids', 'in', technician.id),
+                ('appointment_date', '<', today),
+                ('next_service_type', '!=', False)  # RDV non traité
+            ])
+
+            # Véhicules nécessitant une maintenance (version simplifiée)
+            # On évite complètement les champs qui pourraient ne pas exister
+            maintenance_due = []
+            # Pour l'instant, on laisse vide - vous pourrez l'adapter selon vos besoins
+
+            # Créer le contenu de l'email
+            email_content = self._generate_daily_email_content(
+                technician, today_appointments, tomorrow_appointments,
+                overdue_appointments, maintenance_due
+            )
+
+            # Envoyer l'email
+            return self._send_simple_email(
+                technician.work_email,
+                f"📧 Vos tâches du {today.strftime('%d/%m/%Y')} - Atelier GPL",
+                email_content
+            )
+
+        except Exception as e:
+            _logger.error(f"Erreur email pour {technician.name}: {e}")
+            return False
+
+    def _generate_daily_email_content(self, technician, today, tomorrow, overdue, maintenance):
+        """Générer le contenu HTML de l'email quotidien"""
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #007bff; color: white; padding: 20px; text-align: center;">
+                <h2>🔧 Bonjour {technician.name}</h2>
+                <p>Voici vos tâches pour aujourd'hui</p>
+            </div>
+
+            <div style="padding: 20px; background-color: #f8f9fa;">
+        """
+
+        # RDV d'aujourd'hui
+        if today:
+            html_content += """
+                <div style="background-color: #d4edda; border: 1px solid #c3e6cb; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                    <h3 style="color: #155724; margin-top: 0;">📅 RDV AUJOURD'HUI</h3>
+            """
+            for vehicle in today:
+                service_type = "Service GPL"
+                if hasattr(vehicle, 'next_service_type') and vehicle.next_service_type:
+                    # Essayer de récupérer le libellé du type de service
+                    try:
+                        if hasattr(vehicle._fields.get('next_service_type', None), 'selection'):
+                            service_dict = dict(vehicle._fields['next_service_type'].selection)
+                            service_type = service_dict.get(vehicle.next_service_type, vehicle.next_service_type)
+                        else:
+                            service_type = vehicle.next_service_type
+                    except:
+                        service_type = "Service GPL"
+
+                html_content += f"""
+                    <div style="background-color: white; padding: 10px; margin: 5px 0; border-radius: 3px;">
+                        <strong>🚗 {vehicle.license_plate or 'N/A'}</strong><br/>
+                        👤 Client: {vehicle.client_id.name if vehicle.client_id else 'N/A'}<br/>
+                        ⏰ {vehicle.appointment_date.strftime('%H:%M') if vehicle.appointment_date else 'N/A'}<br/>
+                        🔧 {service_type}
                     </div>
-                    <small style='color: #666;'>
-                        Envoyé le {fields.Datetime.now().strftime('%d/%m/%Y à %H:%M')}
-                    </small>
-                </div>
                 """
+            html_content += "</div>"
+        else:
+            html_content += """
+                <div style="background-color: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                    <h3 style="color: #0c5460; margin-top: 0;">📅 RDV AUJOURD'HUI</h3>
+                    <p>✅ Aucun rendez-vous prévu aujourd'hui</p>
+                </div>
+            """
 
-                notification.vehicle_id.message_post(
-                    body=message_body,
-                    subject=f"📧 {notification.name}",
-                    message_type='comment',
-                    partner_ids=[technician.user_id.partner_id.id] if technician.user_id else []
-                )
+        # RDV de demain
+        if tomorrow:
+            html_content += """
+                <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                    <h3 style="color: #856404; margin-top: 0;">📋 PRÉPARATION DEMAIN</h3>
+            """
+            for vehicle in tomorrow:
+                service_type = "Service GPL"
+                if hasattr(vehicle, 'next_service_type') and vehicle.next_service_type:
+                    try:
+                        if hasattr(vehicle._fields.get('next_service_type', None), 'selection'):
+                            service_dict = dict(vehicle._fields['next_service_type'].selection)
+                            service_type = service_dict.get(vehicle.next_service_type, vehicle.next_service_type)
+                        else:
+                            service_type = vehicle.next_service_type
+                    except:
+                        service_type = "Service GPL"
 
-            # Notification popup si possible
-            if technician.user_id:
+                html_content += f"""
+                    <div style="background-color: white; padding: 10px; margin: 5px 0; border-radius: 3px;">
+                        <strong>🚗 {vehicle.license_plate or 'N/A'}</strong><br/>
+                        👤 Client: {vehicle.client_id.name if vehicle.client_id else 'N/A'}<br/>
+                        ⏰ {vehicle.appointment_date.strftime('%H:%M') if vehicle.appointment_date else 'N/A'}<br/>
+                        🔧 {service_type}
+                    </div>
+                """
+            html_content += "</div>"
+
+        # RDV en retard
+        if overdue:
+            html_content += """
+                <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                    <h3 style="color: #721c24; margin-top: 0;">⚠️ RETARDS À TRAITER</h3>
+            """
+            for vehicle in overdue:
+                days_late = (
+                        datetime.now().date() - vehicle.appointment_date.date()).days if vehicle.appointment_date else 0
+                html_content += f"""
+                    <div style="background-color: white; padding: 10px; margin: 5px 0; border-radius: 3px;">
+                        <strong>🚗 {vehicle.license_plate or 'N/A'}</strong><br/>
+                        👤 Client: {vehicle.client_id.name if vehicle.client_id else 'N/A'}<br/>
+                        ⏰ Prévu: {vehicle.appointment_date.strftime('%d/%m/%Y %H:%M') if vehicle.appointment_date else 'N/A'}<br/>
+                        🔴 Retard: {days_late} jour(s)
+                    </div>
+                """
+            html_content += "</div>"
+
+        # Maintenances dues (si disponible)
+        if maintenance:
+            html_content += """
+                <div style="background-color: #e2e3e5; border: 1px solid #d6d8db; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                    <h3 style="color: #383d41; margin-top: 0;">🔧 MAINTENANCES DUES</h3>
+            """
+            for vehicle in maintenance:
+                last_maintenance = "Jamais"
+                if hasattr(vehicle, 'last_maintenance_date') and vehicle.last_maintenance_date:
+                    last_maintenance = vehicle.last_maintenance_date.strftime('%d/%m/%Y')
+
+                html_content += f"""
+                    <div style="background-color: white; padding: 10px; margin: 5px 0; border-radius: 3px;">
+                        <strong>🚗 {vehicle.license_plate or 'N/A'}</strong><br/>
+                        👤 Client: {vehicle.client_id.name if vehicle.client_id else 'N/A'}<br/>
+                        📅 Dernière maintenance: {last_maintenance}
+                    </div>
+                """
+            html_content += "</div>"
+
+        html_content += """
+            </div>
+            <div style="background-color: #6c757d; color: white; padding: 15px; text-align: center;">
+                <p style="margin: 0;">
+                    Bonne journée ! 💪<br/>
+                    <small>Email automatique - Système GPL CPSS</small>
+                </p>
+            </div>
+        </div>
+        """
+
+        return html_content
+
+    def _send_simple_email(self, email_to, subject, html_content):
+        """Envoyer un email simple sans template"""
+        try:
+            # Utiliser le système de mail d'Odoo
+            mail_values = {
+                'subject': subject,
+                'body_html': html_content,
+                'email_to': email_to,
+                'email_from': self.env.user.company_id.email or 'noreply@localhost',
+                'auto_delete': True,
+            }
+
+            mail = self.env['mail.mail'].create(mail_values)
+            mail.send()
+            _logger.info(f"Email envoyé avec succès à {email_to}")
+            return True
+
+        except Exception as e:
+            _logger.error(f"Erreur envoi email à {email_to}: {e}")
+            return False
+
+    @api.model
+    def send_manager_notifications(self):
+        """
+        Envoyer notifications internes aux managers
+        (notifications dans Odoo pour ceux qui ont un compte)
+        """
+        try:
+            # Récupérer les managers/superviseurs
+            managers = self.env['hr.employee'].search([
+                ('user_id', '!=', False),  # Seulement ceux avec compte Odoo
+                ('active', '=', True),
+                '|',
+                ('category_ids.name', 'ilike', 'manager'),
+                ('department_id.manager_id', '!=', False)
+            ])
+
+            if not managers:
+                # Fallback : utiliser les utilisateurs admin ou avec droits sur véhicules
+                admin_users = self.env['res.users'].search([
+                    ('groups_id', 'in', self.env.ref('base.group_system').id)
+                ])
+                managers = self.env['hr.employee'].search([
+                    ('user_id', 'in', admin_users.ids),
+                    ('active', '=', True)
+                ])
+
+            # Générer le rapport quotidien
+            daily_summary = self._generate_daily_manager_summary()
+
+            # Envoyer notification interne à chaque manager
+            sent_count = 0
+            for manager in managers:
+                if self._send_internal_notification_to_manager(manager, daily_summary):
+                    sent_count += 1
+
+            _logger.info(f"Notifications envoyées à {sent_count}/{len(managers)} managers")
+
+        except Exception as e:
+            _logger.error(f"Erreur notifications managers: {e}")
+
+    def _generate_daily_manager_summary(self):
+        """Générer le résumé quotidien pour les managers"""
+        today = datetime.now().date()
+
+        # Statistiques du jour
+        stats = {
+            'total_appointments_today': self.env['gpl.vehicle'].search_count([
+                ('appointment_date', '>=', today),
+                ('appointment_date', '<', today + timedelta(days=1))
+            ]),
+            'overdue_appointments': self.env['gpl.vehicle'].search_count([
+                ('appointment_date', '<', today),
+                ('next_service_type', '!=', False)
+            ]),
+            'total_technicians_active': self.env['hr.employee'].search_count([
+                ('department_id.name', 'ilike', 'atelier'),
+                ('active', '=', True)
+            ])
+        }
+
+        # Pour l'instant, on évite le calcul de maintenance due
+        # Vous pourrez l'ajouter plus tard selon vos besoins
+        stats['maintenance_due'] = 0
+
+        return stats
+
+    def _send_internal_notification_to_manager(self, manager, stats):
+        """Envoyer notification interne au manager"""
+        try:
+            priority_alerts = self._get_priority_alerts()
+            alert_icon = "⚠️" if priority_alerts else "✅"
+
+            message = f"""📊 Rapport quotidien atelier GPL - {datetime.now().strftime('%d/%m/%Y')}
+
+📅 RDV aujourd'hui: {stats['total_appointments_today']}
+⚠️ RDV en retard: {stats['overdue_appointments']}
+🔧 Maintenances dues: {stats['maintenance_due']}
+👥 Techniciens actifs: {stats['total_technicians_active']}
+
+{alert_icon} {priority_alerts}"""
+
+            # Utiliser le système de notification bus d'Odoo
+            if hasattr(self.env['bus.bus'], '_sendone'):
                 self.env['bus.bus']._sendone(
-                    technician.user_id.partner_id,
+                    manager.user_id.partner_id,
                     'notification',
                     {
-                        'type': 'info',
-                        'title': f"🔧 {notification.name}",
-                        'message': notification.message[:200],
+                        'type': 'info' if stats['overdue_appointments'] == 0 else 'warning',
+                        'title': '📊 Rapport atelier GPL',
+                        'message': message,
                         'sticky': True,
                     }
                 )
+                return True
+            else:
+                _logger.warning("Système de notification bus non disponible")
+                return False
 
         except Exception as e:
-            _logger.error(f"Erreur notification interne: {e}")
+            _logger.error(f"Erreur notification manager {manager.name}: {e}")
+            return False
 
-    def _send_email_notification(self, technician, notification):
-        """Envoyer notification par email"""
+    def _get_priority_alerts(self):
+        """Générer les alertes prioritaires pour les managers"""
+        alerts = []
+
+        # Vérifier les retards critiques (plus de 3 jours)
         try:
-            template = self.env.ref('cpss_gpl_garage.email_template_technician_notification')
+            critical_overdue = self.env['gpl.vehicle'].search_count([
+                ('appointment_date', '<', datetime.now().date() - timedelta(days=3)),
+                ('next_service_type', '!=', False)
+            ])
 
-            template.with_context({
-                'technician': technician,
-                'notification': notification,
-                'vehicle': notification.vehicle_id
-            }).send_mail(
-                notification.id,
-                email_values={
-                    'email_to': technician.work_email,
-                    'subject': notification.name
-                },
-                force_send=True
-            )
+            if critical_overdue > 0:
+                alerts.append(f"URGENT: {critical_overdue} RDV avec plus de 3 jours de retard")
 
         except Exception as e:
-            _logger.error(f"Erreur email notification: {e}")
+            _logger.error(f"Erreur calcul retards critiques: {e}")
 
-    def _send_sms_notification(self, technician, notification):
-        """Envoyer notification par SMS"""
+        return " | ".join(alerts) if alerts else "Aucune alerte critique"
+
+
+# Extension de la classe existante pour ajouter les nouvelles méthodes
+class GplNotificationSystem(models.Model):
+    _inherit = 'gpl.notification.system'
+
+    @api.model
+    def send_simple_daily_notifications(self):
+        """Nouvelle méthode utilisant le système simplifié"""
+        simple_system = self.env['gpl.notification.system']
+
+        # Emails pour techniciens
+        simple_system.send_daily_technician_emails()
+
+        # Notifications pour managers
+        simple_system.send_manager_notifications()
+
+
+# Modèle pour les tâches cron
+class GplCronJobs(models.Model):
+    _name = 'gpl.cron.jobs'
+    _description = 'Tâches automatisées GPL'
+
+    @api.model
+    def daily_notification_job(self):
+        """Tâche quotidienne : emails techniciens + notifications managers"""
         try:
-            # Utiliser le module SMS d'Odoo si disponible
-            sms_api = self.env['sms.api']
-            if sms_api:
-                sms_api.send_sms(
-                    numbers=[technician.mobile_phone],
-                    message=f"{notification.name}: {notification.message[:100]}..."
-                )
+            notification_system = self.env['gpl.notification.system']
+
+            # Emails pour techniciens (tous les jours à 7h)
+            notification_system.send_daily_technician_emails()
+
+            # Notifications internes pour managers (tous les jours à 8h)
+            notification_system.send_manager_notifications()
+
         except Exception as e:
-            _logger.error(f"Erreur SMS notification: {e}")
-
-    def _get_appointment_message(self, vehicle, when):
-        """Générer le message pour RDV"""
-        service_type = dict(vehicle._fields['next_service_type'].selection).get(
-            vehicle.next_service_type, 'Service'
-        )
-
-        return f"""
-🚗 Véhicule: {vehicle.license_plate}
-👤 Client: {vehicle.client_id.name if vehicle.client_id else 'N/A'}
-🔧 Service: {service_type}
-📅 Date: {vehicle.appointment_date.strftime('%d/%m/%Y à %H:%M')}
-⏱️ Durée estimée: {vehicle.estimated_duration or 2.0} heures
-
-📝 Notes: {vehicle.notes or 'Aucune note particulière'}
-
-Bonne intervention !
-        """.strip()
-
-    def _get_overdue_message(self, vehicle, days_overdue):
-        """Générer le message pour RDV en retard"""
-        return f"""
-⚠️ RETARD DÉTECTÉ ⚠️
-
-🚗 Véhicule: {vehicle.license_plate}
-👤 Client: {vehicle.client_id.name if vehicle.client_id else 'N/A'}
-📅 RDV prévu: {vehicle.appointment_date.strftime('%d/%m/%Y à %H:%M')}
-⏰ Retard: {days_overdue} jour(s)
-
-Merci de traiter ce dossier en priorité.
-        """.strip()
+            _logger.error(f"Erreur job quotidien notifications: {e}")

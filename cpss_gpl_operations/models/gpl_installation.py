@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
@@ -11,7 +10,7 @@ class GplServiceInstallation(models.Model):
     _name = 'gpl.service.installation'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Installation GPL Simplifiée'
-    _order = 'date_service desc'
+    _order = 'date_start desc'
 
     name = fields.Char(
         string='Référence',
@@ -38,7 +37,7 @@ class GplServiceInstallation(models.Model):
     )
 
     # Dates
-    date_service = fields.Datetime(
+    date_start = fields.Datetime(
         string='Date de début',
         default=fields.Datetime.now,
         required=True,
@@ -107,7 +106,7 @@ class GplServiceInstallation(models.Model):
     )
 
     # Notes
-    notes = fields.Text(string='Notes internes')
+    notes = fields.Text(string='Notes')
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -129,7 +128,7 @@ class GplServiceInstallation(models.Model):
 
         self.write({
             'state': 'in_progress',
-            'date_service': fields.Datetime.now()
+            'date_start': fields.Datetime.now()
         })
 
         # Mettre à jour le statut du véhicule
@@ -221,3 +220,34 @@ class GplInstallationLine(models.Model):
     def _compute_subtotal(self):
         for line in self:
             line.subtotal = line.quantity * line.price_unit
+
+
+class GplServiceInstallationMixin(models.Model):
+    _name = 'gpl.service.installation'
+    _inherit = ['gpl.service.installation', 'gpl.auto.document.mixin']
+
+    def action_start(self):
+        """Démarrage avec automatisation en mode simplifié"""
+        result = super().action_start()
+
+        if self._is_simplified_mode():
+            self._create_automatic_sale_order()
+
+        return result
+
+    def _get_partner(self):
+        """Retourne le client de l'installation"""
+        return self.client_id
+
+    def _get_order_lines(self):
+        """Retourne les lignes d'installation"""
+        return self.installation_line_ids.filtered(lambda l: l.quantity > 0)
+
+    def action_done(self):
+        """Finalisation avec mise à jour du workflow"""
+        result = super().action_done()
+
+        if self.auto_workflow_state == 'invoiced':
+            self.auto_workflow_state = 'done'
+
+        return result
