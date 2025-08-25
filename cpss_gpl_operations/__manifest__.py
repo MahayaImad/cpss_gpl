@@ -46,9 +46,9 @@ Caractéristiques principales :
         'security/ir.model.access.csv',
 
         # Views
-        'views/gpl_service_views.xml',
+        'views/gpl_installation_views.xml',
         'views/gpl_repair_views.xml',
-        'views/gpl_inspection_views.xml',
+        'views/gpl_control_views.xml',
         'views/gpl_reservoir_testing_views.xml',
         'views/gpl_operations_menus.xml',
 

@@ -149,14 +149,18 @@ class GplAutoDocumentMixin(models.AbstractModel):
 
             # Assigner aux move_lines existants
             for move_line in move.move_line_ids:
-                if move_line.qty_done == 0:
-                    move_line.qty_done = move_line.product_uom_qty
-                    # Assigner le lot seulement si nécessaire et disponible
-                    if lot_to_assign and not move_line.lot_id:
-                        move_line.lot_id = lot_to_assign.id
+                if hasattr(move_line, 'qty_done'):
+                    if move_line.qty_done == 0:
+                        move_line.qty_done = move_line.product_uom_qty
+                else:
+                    # Fallback pour versions Odoo différentes
+                    move_line.product_uom_qty = move_line.reserved_uom_qty or move_line.product_uom_qty
 
         # Valider le picking
-        picking.button_validate()
+        if hasattr(picking, 'button_validate'):
+            picking.button_validate()
+        else:
+            picking.action_done()
 
     def _force_picking_validation(self, picking):
         """Force la validation d'un picking en créant les move_lines avec lots"""
@@ -181,6 +185,11 @@ class GplAutoDocumentMixin(models.AbstractModel):
                     'picking_id': picking.id,
                 }
 
+                if hasattr(self.env['stock.move.line']._fields, 'qty_done'):
+                    move_line_vals['qty_done'] = move.product_uom_qty
+                else:
+                    move_line_vals['product_uom_qty'] = move.product_uom_qty
+
                 # Ajouter le lot seulement si nécessaire
                 if lot_to_assign:
                     move_line_vals['lot_id'] = lot_to_assign.id
@@ -201,37 +210,49 @@ class GplAutoDocumentMixin(models.AbstractModel):
                         if lot_to_assign and not move_line.lot_id:
                             move_line.lot_id = lot_to_assign.id
 
+
         # Valider le picking
-        picking.button_validate()
+        if hasattr(picking, 'button_validate'):
+            picking.button_validate()
+        else:
+            picking.action_done()
 
     def _process_automatic_invoice(self):
         """Traite automatiquement la facturation"""
+
         if not self.sale_order_id:
             return
+
+        import logging
+        _logger = logging.getLogger(__name__)
 
         try:
             # En mode simplifié, facturer directement depuis la commande de vente
             # Utiliser la méthode standard d'Odoo pour créer la facture
             if self.sale_order_id.invoice_status in ['to invoice', 'no']:
-                # Créer la facture via l'action standard
-                invoice_action = self.sale_order_id.action_create_invoice()
-
-                if invoice_action and 'res_id' in invoice_action:
-                    invoice = self.env['account.move'].browse(invoice_action['res_id'])
-                elif invoice_action and 'domain' in invoice_action:
-                    # Si plusieurs factures, prendre la dernière
-                    invoices = self.env['account.move'].search(invoice_action['domain'])
-                    invoice = invoices[-1] if invoices else False
+                # Méthode pour Odoo 17
+                if hasattr(self.sale_order_id, '_create_invoices'):
+                    invoice = self.sale_order_id._create_invoices()
+                    _logger.info(f"Facture créée via _create_invoices: {invoice.name if invoice else 'Aucune'}")
+                elif hasattr(self.sale_order_id, 'action_invoice_create'):
+                    # Méthode pour versions antérieures
+                    invoice_ids = self.sale_order_id.action_invoice_create()
+                    invoice = self.env['account.move'].browse(invoice_ids) if invoice_ids else False
+                    _logger.info(f"Facture créée via action_invoice_create: {invoice.name if invoice else 'Aucune'}")
                 else:
-                    # Fallback : chercher la facture liée à cette commande
-                    invoice = self.sale_order_id.invoice_ids.filtered(lambda i: i.state == 'draft')[-1:]
+                    # Fallback : création manuelle
+                    _logger.info("Utilisation fallback création manuelle")
+                    return self._create_manual_invoice()
 
                 if invoice:
                     # Comptabiliser automatiquement
-                    if invoice.state == 'draft':
+                    if hasattr(invoice, 'action_post'):
                         invoice.action_post()
+                    elif hasattr(invoice, 'action_invoice_open'):
+                        invoice.action_invoice_open()
 
                     self.auto_workflow_state = 'invoiced'
+                    _logger.info(f"Facture postée: {invoice.name}")
                     return
 
             # Fallback si la méthode standard ne fonctionne pas

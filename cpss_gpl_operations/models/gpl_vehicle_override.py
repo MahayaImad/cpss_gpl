@@ -179,6 +179,7 @@ class GplVehicleOverride(models.Model):
 
         installation.action_start()  # Ceci va créer la vente automatiquement
 
+
         return {
             'type': 'ir.actions.act_window',
             'name': _('Installation GPL - %s') % self.license_plate,

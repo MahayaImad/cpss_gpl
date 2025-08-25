@@ -183,17 +183,29 @@ class GplRepairOrder(models.Model):
             'date_start': fields.Datetime.now()
         })
 
-        # AJOUTER : Création automatique des documents de vente
-        if self._is_simplified_mode():
-            self._create_automatic_sale_order()
-
         # Mettre à jour le statut du véhicule
         if self.vehicle_id:
             repair_status = self.env.ref('cpss_gpl_garage.vehicle_status_en_cours', raise_if_not_found=False)
             if repair_status:
                 self.vehicle_id.status_id = repair_status
+            self.vehicle_id.appointment_date = self.date_start
+            self.vehicle_id.next_service_type = 'repair'
 
-    # AJOUTER ces méthodes dans la classe GplRepairOrder :
+    def _ensure_sale_order_created(self):
+        """S'assure qu'une commande de vente existe"""
+        if self.sale_order_id:
+            return
+
+        if not self._get_order_lines():
+            return
+
+        try:
+            self._create_automatic_sale_order()
+        except Exception as e:
+            import logging
+            _logger = logging.getLogger(__name__)
+            _logger.error(f"Erreur création commande pour {self.name}: {str(e)}")
+
     def _get_partner(self):
         """Retourne le client de la réparation"""
         return self.client_id
@@ -213,8 +225,19 @@ class GplRepairOrder(models.Model):
             'date_end': fields.Datetime.now()
         })
 
-        # AJOUTER : Finaliser l'automatisation
-        if self.auto_workflow_state == 'invoiced':
+        if self._is_simplified_mode():
+            self._ensure_sale_order_created()
+
+        # Finaliser l'automatisation
+        if self.state == 'done':
+            if self.sale_order_id:
+                try:
+                    self._finalize_automatic_workflow()
+                except Exception as e:
+                    import logging
+                    _logger = logging.getLogger(__name__)
+                    _logger.warning(f"Erreur finalisation workflow {self.name}: {str(e)}")
+
             self.auto_workflow_state = 'done'
 
         # Mettre à jour le statut du véhicule
@@ -224,6 +247,25 @@ class GplRepairOrder(models.Model):
                 self.vehicle_id.status_id = ready_status
 
         self._update_vehicle_reservoir_links()
+
+    def _finalize_automatic_workflow(self):
+        """Finalise le workflow si possible"""
+        if not self.sale_order_id:
+            return
+
+        so = self.sale_order_id
+
+        # Vérifier si livré
+        outgoing_pickings = so.picking_ids.filtered(lambda p: p.picking_type_code == 'outgoing')
+        if outgoing_pickings and all(p.state == 'done' for p in outgoing_pickings):
+            if self.auto_workflow_state not in ['delivered', 'invoiced', 'done']:
+                self.auto_workflow_state = 'delivered'
+
+        # Vérifier si facturé
+        posted_invoices = so.invoice_ids.filtered(lambda i: i.state == 'posted')
+        if posted_invoices:
+            if self.auto_workflow_state != 'done':
+                self.auto_workflow_state = 'invoiced'
 
     def _update_vehicle_reservoir_links(self):
         """Met à jour les liens entre véhicule et réservoirs"""

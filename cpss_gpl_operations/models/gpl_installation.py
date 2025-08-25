@@ -8,7 +8,7 @@ class GplServiceInstallation(models.Model):
     Gère uniquement les informations essentielles pour l'installation GPL
     """
     _name = 'gpl.service.installation'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'gpl.auto.document.mixin']
     _description = 'Installation GPL Simplifiée'
     _order = 'date_start desc'
 
@@ -143,48 +143,6 @@ class GplServiceInstallation(models.Model):
             installation.reservoir_lot_id = reservoir_lots[0] if reservoir_lots else False
             installation.reservoir_count = len(reservoir_lots)
 
-    def action_start(self):
-        """Démarre l'installation"""
-        self.ensure_one()
-        if self.state not in ['draft', 'planned']:
-            raise UserError(_("L'installation doit être en brouillon ou planifiée pour être démarrée."))
-
-        self.write({
-            'state': 'in_progress',
-            'date_start': fields.Datetime.now()
-        })
-
-        # Mettre à jour le statut du véhicule
-        if self.vehicle_id:
-            in_progress_status = self.env.ref('cpss_gpl_garage.vehicle_status_en_cours', raise_if_not_found=False)
-            if in_progress_status:
-                self.vehicle_id.status_id = in_progress_status
-
-    def action_done(self):
-        """Termine l'installation"""
-        self.ensure_one()
-        if self.state != 'in_progress':
-            raise UserError(_("L'installation doit être en cours pour être terminée."))
-
-        if not self.reservoir_lot_id:
-            raise UserError(_("Veuillez sélectionner le réservoir à installer avant de terminer."))
-
-        self.write({
-            'state': 'done',
-            'date_end': fields.Datetime.now()
-        })
-
-        # Mettre à jour le véhicule
-        if self.vehicle_id:
-            completed_status = self.env.ref('cpss_gpl_garage.vehicle_status_termine', raise_if_not_found=False)
-            if completed_status:
-                self.vehicle_id.write({
-                    'status_id': completed_status.id,
-                    'reservoir_lot_id': self.reservoir_lot_id.id
-                })
-
-        self._update_vehicle_reservoir_links()
-
     def _update_vehicle_reservoir_links(self):
         """Met à jour les liens entre véhicule et réservoirs"""
         if not self.vehicle_id:
@@ -231,6 +189,99 @@ class GplServiceInstallation(models.Model):
     def _get_order_lines(self):
         """Retourne les lignes d'installation avec quantité > 0"""
         return self.installation_line_ids.filtered(lambda l: l.quantity > 0)
+
+    def action_start(self):
+        """Démarre l'installation"""
+        self.ensure_one()
+        if self.state not in ['draft', 'planned']:
+            raise UserError(_("L'installation doit être en brouillon ou planifiée pour être démarrée."))
+
+        self.write({
+            'state': 'in_progress',
+            'date_start': fields.Datetime.now()
+        })
+
+        # Mettre à jour le statut du véhicule
+        if self.vehicle_id:
+            in_progress_status = self.env.ref('cpss_gpl_garage.vehicle_status_en_cours', raise_if_not_found=False)
+            if in_progress_status:
+                self.vehicle_id.status_id = in_progress_status
+            self.vehicle_id.appointment_date = self.date_start
+            self.vehicle_id.next_service_type = 'installation'
+
+    def _ensure_sale_order_created(self):
+        """S'assure qu'une commande de vente existe - MÉTHODE SÉCURISÉE"""
+        if self.sale_order_id:
+            return
+
+        if not self._get_order_lines():
+            return
+
+        try:
+            self._create_automatic_sale_order()
+        except Exception as e:
+            import logging
+            _logger = logging.getLogger(__name__)
+            _logger.error(f"Erreur création commande pour {self.name}: {str(e)}")
+
+    def action_done(self):
+        """Termine l'installation"""
+        self.ensure_one()
+        if self.state != 'in_progress':
+            raise UserError(_("L'installation doit être en cours pour être terminée."))
+
+        if not self.reservoir_lot_id:
+            raise UserError(_("Veuillez sélectionner le réservoir à installer avant de terminer."))
+
+        self.write({
+            'state': 'done',
+            'date_end': fields.Datetime.now()
+        })
+
+        if self._is_simplified_mode():
+            self._ensure_sale_order_created()
+
+        if self.state == 'done':
+            if self.sale_order_id:
+                try:
+                    self._finalize_automatic_workflow()
+                except Exception as e:
+                    import logging
+                    _logger = logging.getLogger(__name__)
+                    _logger.warning(f"Erreur finalisation workflow {self.name}: {str(e)}")
+
+            # Dans tous les cas, marquer le workflow comme terminé
+            self.auto_workflow_state = 'done'
+
+        # Mettre à jour le véhicule
+        if self.vehicle_id:
+            completed_status = self.env.ref('cpss_gpl_garage.vehicle_status_termine', raise_if_not_found=False)
+            if completed_status:
+                self.vehicle_id.write({
+                    'status_id': completed_status.id,
+                    'reservoir_lot_id': self.reservoir_lot_id.id
+                })
+
+        self._update_vehicle_reservoir_links()
+
+    def _finalize_automatic_workflow(self):
+        """Finalise le workflow si possible"""
+        if not self.sale_order_id:
+            return
+
+        so = self.sale_order_id
+
+        # Vérifier si livré
+        outgoing_pickings = so.picking_ids.filtered(lambda p: p.picking_type_code == 'outgoing')
+        if outgoing_pickings and all(p.state == 'done' for p in outgoing_pickings):
+            if self.auto_workflow_state not in ['delivered', 'invoiced', 'done']:
+                self.auto_workflow_state = 'delivered'
+
+        # Vérifier si facturé
+        posted_invoices = so.invoice_ids.filtered(lambda i: i.state == 'posted')
+        if posted_invoices:
+            if self.auto_workflow_state != 'done':
+                self.auto_workflow_state = 'invoiced'
 
 
 class GplInstallationLine(models.Model):
@@ -336,95 +387,3 @@ class GplInstallationLine(models.Model):
                     "La quantité doit être 1. "
                     "Pour plusieurs réservoirs, créez une ligne par réservoir."
                 ))
-
-
-class GplServiceInstallationMixin(models.Model):
-    _name = 'gpl.service.installation'
-    _inherit = ['gpl.service.installation', 'gpl.auto.document.mixin']
-
-    def action_start(self):
-        """Démarrage avec automatisation - SOLUTION UNIVERSELLE"""
-        result = super().action_start()
-
-        # 🔧 CORRECTION : Toujours créer la vente lors du démarrage
-        # Peu importe d'où on vient (planned ou direct)
-        if self._is_simplified_mode():
-            self._ensure_sale_order_created()
-
-        return result
-
-    def action_confirm(self):
-        """Confirmation avec création optionnelle de vente"""
-        result = super().action_confirm()
-
-        # Créer la vente si mode simplifié activé
-        if self._is_simplified_mode():
-            self._ensure_sale_order_created()
-
-        return result
-
-    def _ensure_sale_order_created(self):
-        """S'assure qu'une commande de vente existe - MÉTHODE SÉCURISÉE"""
-        # Si une commande existe déjà, ne rien faire
-        if self.sale_order_id:
-            return
-
-        # Si pas de lignes, ne rien faire
-        if not self._get_order_lines():
-            return
-
-        # Créer la commande uniquement si nécessaire
-        try:
-            self._create_automatic_sale_order()
-        except Exception as e:
-            import logging
-            _logger = logging.getLogger(__name__)
-            _logger.error(f"Erreur création commande pour {self.name}: {str(e)}")
-            # Ne pas bloquer le processus si la vente échoue
-
-    def _get_partner(self):
-        """Retourne le client de l'installation"""
-        return self.client_id
-
-    def _get_order_lines(self):
-        """Retourne les lignes d'installation"""
-        return self.installation_line_ids.filtered(lambda l: l.quantity > 0)
-
-    def action_done(self):
-        """Finalisation avec mise à jour du workflow - VERSION SIMPLE"""
-        result = super().action_done()
-
-        # Solution KISS : Toujours marquer comme terminé quand installation terminée
-        if self.state == 'done':
-            # Si on a une commande, essayer de finaliser le workflow
-            if self.sale_order_id:
-                try:
-                    self._finalize_automatic_workflow()
-                except Exception as e:
-                    import logging
-                    _logger = logging.getLogger(__name__)
-                    _logger.warning(f"Erreur finalisation workflow {self.name}: {str(e)}")
-
-            # Dans tous les cas, marquer le workflow comme terminé
-            self.auto_workflow_state = 'done'
-
-        return result
-
-    def _finalize_automatic_workflow(self):
-        """Finalise le workflow si possible - VERSION SIMPLE"""
-        if not self.sale_order_id:
-            return
-
-        so = self.sale_order_id
-
-        # Vérifier si livré
-        outgoing_pickings = so.picking_ids.filtered(lambda p: p.picking_type_code == 'outgoing')
-        if outgoing_pickings and all(p.state == 'done' for p in outgoing_pickings):
-            if self.auto_workflow_state not in ['delivered', 'invoiced', 'done']:
-                self.auto_workflow_state = 'delivered'
-
-        # Vérifier si facturé
-        posted_invoices = so.invoice_ids.filtered(lambda i: i.state == 'posted')
-        if posted_invoices:
-            if self.auto_workflow_state != 'done':
-                self.auto_workflow_state = 'invoiced'

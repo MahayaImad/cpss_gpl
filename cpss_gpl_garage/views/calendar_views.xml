@@ -9,7 +9,7 @@
                      date_start="appointment_date"
                      color="next_service_type"
                       date_delay="estimated_duration"
-                      event_open_popup="false"
+                      event_open_popup="true"
                       js_class="simple_vehicle_calendar"
                      mode="month">
                 <field name="license_plate"/>
