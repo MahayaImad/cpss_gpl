@@ -125,7 +125,7 @@
 
     <!-- Vue Kanban Simplifiée -->
     <record id="view_gpl_service_installation_kanban_simple" model="ir.ui.view">
-        <field name="name">gpl.service.installation.kanban.simple</field>
+        <field name="name">gpl.service.installation.kanban.modern</field>
         <field name="model">gpl.service.installation</field>
         <field name="arch" type="xml">
             <kanban default_group_by="state"
@@ -136,36 +136,114 @@
                     group_edit="false"
                     sample="1"
                     create="true"
-                    group_create="false">
+                    group_create="false"
+                    groups_draggable="true">
+
+                <!-- Champs nécessaires -->
                 <field name="state"/>
-                <progressbar field="state" colors='{"draft": "info", "in_progress": "warning", "done": "success", "cancel": "danger"}'/>
+                <field name="id"/>
+                <field name="name"/>
+                <field name="vehicle_id"/>
+                <field name="client_id"/>
+                <field name="date_start"/>
+                <field name="technician_ids"/>
+                <field name="reservoir_lot_id"/>
+                <field name="total_amount"/>
+                <field name="activity_ids"/>
+                <field name="activity_state"/>
+
+                <!-- Progressbar -->
+                <progressbar field="state"
+                            colors='{"draft": "muted", "planned": "info", "in_progress": "warning", "done": "success", "cancel": "danger"}'
+                            sum_field="total_amount"/>
+
                 <templates>
                     <t t-name="kanban-box">
-                        <div class="o_kanban_card oe_kanban_global_click o_kanban_card_simple">
-                            <!-- En-tête -->
-                            <div class="o_kanban_primary_left">
-                                <strong class="o_kanban_record_title">
-                                    <field name="name"/>
-                                </strong>
+                        <div t-attf-class="oe_kanban_global_click oe_kanban_card"
+                             t-attf-style="border-left: 5px solid #{
+                                record.state.raw_value == 'done' ? '#28a745' :
+                                record.state.raw_value == 'in_progress' ? '#ffc107' :
+                                record.state.raw_value == 'planned' ? '#17a2b8' :
+                                record.state.raw_value == 'cancel' ? '#dc3545' : '#6c757d'};">
+
+                            <!-- Menu dropdown -->
+                            <div class="o_dropdown_kanban dropdown position-absolute top-0 end-0">
+                                <a class="dropdown-toggle o-no-caret btn" role="button" data-bs-toggle="dropdown" href="#" title="Menu">
+                                    <span class="fa fa-ellipsis-v"/>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-end" role="menu">
+                                    <a role="menuitem" type="edit" class="dropdown-item">Modifier</a>
+                                    <a role="menuitem" type="delete" class="dropdown-item">Supprimer</a>
+                                    <div role="separator" class="dropdown-divider"/>
+                                    <ul class="oe_kanban_colorpicker" data-field="color"/>
+                                </div>
                             </div>
 
-                            <!-- Corps -->
-                            <div class="o_kanban_details mt-2">
-                                <div class="o_kanban_field">
-                                    <i class="fa fa-car text-primary me-1" title=" "/> <field name="vehicle_id"/>
+                            <!-- Card Body -->
+                            <div class="oe_kanban_content p-2">
+                                <!-- Header avec icône -->
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="me-2">
+                                        <i class="fa fa-cogs fa-2x text-success" title="Installation GPL"/>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="name"/>
+                                        </strong>
+                                        <br/>
+                                        <small class="text-muted">
+                                            <i class="fa fa-calendar me-1"/>
+                                            <field name="date_start"/>
+                                        </small>
+                                    </div>
                                 </div>
-                                <div class="o_kanban_field">
-                                    <i class="fa fa-calendar text-success me-1" title=" "/> <field name="date_start" widget="date"/>
-                                </div>
-                            </div>
 
-                            <!-- Pied -->
-                            <div class="o_kanban_footer mt-2 d-flex justify-between">
-                                <div>
-                                    <field name="technician_ids" widget="many2many_avatar_employee"/>
+                                <!-- Informations principales -->
+                                <div class="d-flex flex-column mb-2">
+                                    <!-- Véhicule -->
+                                    <div class="mb-1" t-if="record.vehicle_id.raw_value">
+                                        <i class="fa fa-car text-primary me-2"/>
+                                        <strong><field name="vehicle_id"/></strong>
+                                    </div>
+
+                                    <!-- Client
+                                    <div class="mb-1" t-if="record.client_id.raw_value">
+                                        <i class="fa fa-user text-info me-2"/>
+                                        <span><field name="client_id"/></span>
+                                    </div>-->
+
+                                    <!-- Réservoir
+                                    <div class="mb-1" t-if="record.reservoir_lot_id.raw_value">
+                                        <i class="fa fa-flask text-warning me-2"/>
+                                        <span><field name="reservoir_lot_id"/></span>
+                                    </div>-->
                                 </div>
-                                <div class="text-end fw-bold">
-                                    <field name="total_amount" widget="monetary"/>
+
+                                <!-- Status Badge
+                                <div class="mb-2">
+                                    <span t-attf-class="badge rounded-pill text-white #{
+                                        record.state.raw_value == 'done' ? 'bg-success' :
+                                        record.state.raw_value == 'in_progress' ? 'bg-warning' :
+                                        record.state.raw_value == 'planned' ? 'bg-info' :
+                                        record.state.raw_value == 'cancel' ? 'bg-danger' : 'bg-secondary'}">
+                                        <i class="fa fa-circle me-1"/>
+                                        <field name="state"/>
+                                    </span>
+                                </div>-->
+
+                                <!-- Footer avec montant et techniciens -->
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div t-if="record.total_amount.raw_value">
+                                        <strong class="text-success">
+                                            <field name="total_amount" widget="monetary"/>
+                                        </strong>
+                                    </div>
+                                    <div t-if="record.technician_ids.raw_value">
+                                        <span class="badge bg-light text-dark">
+                                            <i class="fa fa-users me-1"/>
+                                            <field name="technician_ids" widget="many2many_tags"/>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -217,17 +295,30 @@
 
     <!-- Action -->
     <record id="action_gpl_service_installation_simple" model="ir.actions.act_window">
-        <field name="name">Installations GPL</field>
-        <field name="res_model">gpl.service.installation</field>
-        <field name="view_mode">kanban,tree,form,calendar</field>
-        <field name="context">{'search_default_this_month': 1}</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Créer une nouvelle installation GPL
-            </p>
-            <p>
-                Gérez vos installations de systèmes GPL sur véhicules.
-            </p>
-        </field>
-    </record>
+    <field name="name">Installations GPL</field>
+    <field name="res_model">gpl.service.installation</field>
+    <field name="view_mode">kanban,tree,form,calendar</field>
+    <field name="view_ids" eval="[
+        (5, 0, 0),
+        (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_gpl_service_installation_kanban_simple')}),
+        (0, 0, {'view_mode': 'tree', 'view_id': ref('view_gpl_service_installation_tree_simple')}),
+        (0, 0, {'view_mode': 'form', 'view_id': ref('view_gpl_service_installation_form_simple')}),
+        (0, 0, {'view_mode': 'calendar', 'view_id': ref('view_gpl_service_installation_calendar')})
+    ]"/>
+    <field name="context">{
+        'group_by': ['state'],
+        'force_all_groups': True,
+        'kanban_states_visibility': 'visible',
+        'search_default_this_month': 1
+    }</field>
+    <field name="help" type="html">
+        <p class="o_view_nocontent_smiling_face">
+            Créer une nouvelle installation GPL
+        </p>
+        <p>
+            Gérez vos installations de systèmes GPL sur véhicules.
+        </p>
+    </field>
+</record>
+
 </odoo>

@@ -292,6 +292,69 @@ class GplRepairOrder(models.Model):
             raise UserError(_("Un ordre terminé ne peut pas être annulé."))
         self.state = 'cancel'
 
+    # Ajouter cette méthode dans le modèle gpl.repair.order
+
+    @api.model
+    def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
+        """Override pour forcer l'affichage de toutes les colonnes d'états dans kanban"""
+        result = super().read_group(domain, fields, groupby, offset, limit, orderby, lazy)
+
+        # Si groupé par state
+        if groupby and len(groupby) > 0 and 'state' in groupby[0]:
+            # Définir tous les états possibles dans l'ordre souhaité
+            all_states = [
+                ('draft', 'Brouillon'),
+                ('planned', 'Planifié'),
+                ('in_progress', 'En réparation'),
+                ('done', 'Terminé'),
+                ('cancel', 'Annulé'),
+            ]
+
+            # Extraire les états déjà présents dans les résultats
+            existing_states = []
+            for group in result:
+                if group.get('state'):
+                    existing_states.append(group['state'])
+
+            # Ajouter les états manquants avec un count de 0
+            for state_key, state_name in all_states:
+                if state_key not in existing_states:
+                    # Créer un groupe vide pour cet état
+                    empty_group = {
+                        'state': state_key,
+                        'state_count': 0,
+                        '__count': 0,  # AJOUT DU CHAMP __count REQUIS
+                        '__domain': [('state', '=', state_key)] + domain,
+                    }
+
+                    # Ajouter les autres champs nécessaires selon le groupby
+                    for field in fields:
+                        if field not in empty_group and field != 'state':
+                            if 'count' in field:
+                                empty_group[field] = 0
+                            elif field in ['estimated_cost', 'total_cost', 'amount_total']:
+                                empty_group[field] = 0.0
+                            else:
+                                empty_group[field] = False
+
+                    result.append(empty_group)
+
+            # Trier les résultats dans l'ordre souhaité: draft > planned > in_progress > done > cancel
+            def sort_key(group):
+                state = group.get('state', '')
+                order_map = {
+                    'draft': 1,
+                    'planned': 2,
+                    'in_progress': 3,  # ou 'in_progress' selon votre modèle
+                    'done': 4,
+                    'cancel': 5
+                }
+                return order_map.get(state, 999)
+
+            result.sort(key=sort_key)
+
+        return result
+
 
 class GplRepairLine(models.Model):
     """Lignes de produits/services pour la réparation"""

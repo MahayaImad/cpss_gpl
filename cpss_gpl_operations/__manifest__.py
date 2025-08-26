@@ -48,13 +48,21 @@ Caractéristiques principales :
         # Views
         'views/gpl_installation_views.xml',
         'views/gpl_repair_views.xml',
-        'views/gpl_control_views.xml',
+        'views/gpl_inspection_views.xml',
         'views/gpl_reservoir_testing_views.xml',
         'views/gpl_operations_menus.xml',
 
         # Reports
         'reports/gpl_service_report.xml',
     ],
+    'assets': {
+        'web.assets_frontend': [
+            'cpss_gpl_operations/static/src/css/kanban_modern.css',
+        ],
+        'web.assets_backend': [
+            'cpss_gpl_operations/static/src/css/kanban_modern.css',
+        ],
+    },
 
     'installable': True,
     'application': True,

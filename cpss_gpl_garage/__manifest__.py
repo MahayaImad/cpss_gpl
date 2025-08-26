@@ -96,6 +96,7 @@
         ],
     },
 
+
     # Configuration
     'installable': True,
     'application': True,  # Module d'extension

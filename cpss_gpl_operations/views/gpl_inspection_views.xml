@@ -108,46 +108,103 @@
         <field name="name">gpl.inspection.kanban</field>
         <field name="model">gpl.inspection</field>
         <field name="arch" type="xml">
-            <kanban default_group_by="state" class="o_kanban_mobile" quick_create="false">
+            <kanban default_group_by="state"
+                    class="o_kanban_small_column"
+                    quick_create="false"
+                    sample="1">
+
+                <!-- Champs nécessaires -->
                 <field name="state"/>
                 <field name="result"/>
-                <progressbar field="state" colors='{"done": "success", "in_progress": "info", "cancel": "danger"}'/>
+                <field name="name"/>
+                <field name="vehicle_id"/>
+                <field name="client_id"/>
+                <field name="date_start"/>
+                <field name="inspection_type"/>
+                <field name="certificate_number"/>
+                <field name="technician_ids"/>
+
+                <!-- Progressbar -->
+                <progressbar field="state"
+                            colors='{"draft": "muted", "planned": "info", "in_progress": "warning", "done": "success", "cancel": "danger"}' />
+
                 <templates>
                     <t t-name="kanban-box">
-                        <div class="oe_kanban_card oe_kanban_global_click">
-                            <div class="oe_kanban_content">
-                                <div class="o_kanban_record_top">
-                                    <div class="o_kanban_record_headings">
+                        <div t-attf-class="oe_kanban_global_click oe_kanban_card"
+                             t-attf-style="border-left: 5px solid
+                                #{record.result.raw_value == 'pass' ? '#28a745' : ''}
+                                #{record.result.raw_value == 'fail' ? '#dc3545' : '#6c757d'};">
+
+                            <!-- Menu dropdown -->
+                            <div class="o_dropdown_kanban dropdown position-absolute top-0 end-0">
+                                <a class="dropdown-toggle o-no-caret btn" role="button" data-bs-toggle="dropdown" href="#" title="Menu">
+                                    <span class="fa fa-ellipsis-v"/>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-end" role="menu">
+                                    <a role="menuitem" type="edit" class="dropdown-item">Modifier</a>
+                                    <a role="menuitem" type="delete" class="dropdown-item">Supprimer</a>
+                                </div>
+                            </div>
+
+                            <!-- Card Body -->
+                            <div class="oe_kanban_content p-2">
+                                <!-- Header avec icône -->
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="me-2">
+                                        <i class="fa fa-search fa-2x text-primary" title="Inspection GPL"/>
+                                    </div>
+                                    <div class="flex-grow-1">
                                         <strong class="o_kanban_record_title">
                                             <field name="name"/>
                                         </strong>
-                                    </div>
-                                    <span t-if="record.result.raw_value == 'pass'"
-                                          class="badge badge-success">Validé</span>
-                                    <span t-if="record.result.raw_value == 'fail'"
-                                          class="badge badge-danger">Refusé</span>
-                                </div>
-                                <div class="o_kanban_record_body">
-                                    <div>
-                                        <i class="fa fa-car" title=" "/> <field name="vehicle_id"/>
-                                    </div>
-                                    <div>
-                                        <i class="fa fa-user" title=" "/> <field name="client_id"/>
-                                    </div>
-                                    <div>
-                                        <i class="fa fa-check-square-o" title=" "/> <field name="inspection_type"/>
-                                    </div>
-                                    <div>
-                                        <i class="fa fa-calendar" title=" "/> <field name="date_start"/>
-                                    </div>
-                                </div>
-                                <div class="o_kanban_record_bottom">
-                                    <div class="oe_kanban_bottom_left">
-                                        <field name="technician_ids" widget="many2one_avatar_user"/>
-                                    </div>
-                                    <div class="oe_kanban_bottom_right" t-if="record.certificate_number.raw_value">
+                                        <br/>
                                         <small class="text-muted">
-                                            <i class="fa fa-certificate" title=" "/> <field name="certificate_number"/>
+                                            <field name="inspection_type"/>
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <!-- Badge résultat -->
+                                <div class="mb-1" t-if="record.result.raw_value != 'pending'">
+                                    <span t-attf-class="badge text-white
+                                        #{record.result.raw_value == 'pass' ? 'bg-success' : ''}
+                                        #{record.result.raw_value == 'fail' ? 'bg-danger' : 'bg-warning'}">
+                                        <i t-attf-class="fa
+                                            #{record.result.raw_value == 'pass' ? 'fa-check' :''}
+                                            #{record.result.raw_value == 'fail' ? 'fa-times' : 'fa-clock-o'} me-1"/>
+                                        <span t-if="record.result.raw_value == 'pass'">CONFORME</span>
+                                        <span t-elif="record.result.raw_value == 'fail'">NON CONFORME</span>
+                                        <span t-else="">EN ATTENTE</span>
+                                    </span>
+                                </div>
+
+                                <!-- Informations principales -->
+                                <div class="d-flex flex-column mb-1">
+                                    <!-- Véhicule -->
+                                    <div class="mb-1" t-if="record.vehicle_id.raw_value">
+                                        <i class="fa fa-car text-primary me-2"/>
+                                        <strong><field name="vehicle_id"/></strong>
+                                    </div>
+
+                                    <!-- Client
+                                    <div class="mb-1" t-if="record.client_id.raw_value">
+                                        <i class="fa fa-user text-info me-2"/>
+                                        <span><field name="client_id"/></span>
+                                    </div>-->
+
+                                    <!-- Certificat
+                                    <div class="mb-1" t-if="record.certificate_number.raw_value">
+                                        <i class="fa fa-certificate text-success me-2"/>
+                                        <small><field name="certificate_number"/></small>
+                                    </div>-->
+                                </div>
+
+                                <!-- Footer -->
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div t-if="record.date_start.raw_value">
+                                        <small class="text-muted">
+                                            <i class="fa fa-calendar me-1"/>
+                                            <field name="date_start"/>
                                         </small>
                                     </div>
                                 </div>

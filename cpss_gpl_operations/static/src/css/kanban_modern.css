@@ -1,0 +1,292 @@
+/* ===========================================
+   CSS PERSONNALISÉ POUR LES VUES KANBAN GPL
+   Style moderne inspiré du garage
+   =========================================== */
+
+/* Amélioration générale des cartes Kanban */
+.oe_kanban_card {
+    border-radius: 8px !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+    margin-bottom: 8px !important;
+}
+
+.oe_kanban_card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+/* Colonnes Kanban plus propres */
+.o_kanban_small_column {
+    min-height: 500px;
+    border-radius: 6px;
+    background-color: #f8f9fa;
+    padding: 8px;
+}
+
+.o_kanban_group_header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    border-radius: 6px 6px 0 0 !important;
+    padding: 12px !important;
+    font-weight: 600 !important;
+}
+
+/* Badges et indicateurs spéciaux GPL */
+.badge-gpl-installation {
+    background: linear-gradient(45deg, #28a745, #20c997) !important;
+    color: white !important;
+    border-radius: 20px !important;
+    padding: 6px 12px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+}
+
+.badge-gpl-repair {
+    background: linear-gradient(45deg, #dc3545, #fd7e14) !important;
+    color: white !important;
+    border-radius: 20px !important;
+    padding: 6px 12px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+}
+
+.badge-gpl-inspection {
+    background: linear-gradient(45deg, #007bff, #6610f2) !important;
+    color: white !important;
+    border-radius: 20px !important;
+    padding: 6px 12px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+}
+
+.badge-gpl-testing {
+    background: linear-gradient(45deg, #ffc107, #fd7e14) !important;
+    color: white !important;
+    border-radius: 20px !important;
+    padding: 6px 12px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+}
+
+/* Icônes colorées selon le module */
+.fa-cogs.text-success {
+    color: #28a745 !important;
+    filter: drop-shadow(1px 1px 2px rgba(40, 167, 69, 0.3));
+}
+
+.fa-wrench.text-danger,
+.fa-wrench.text-warning,
+.fa-wrench.text-info {
+    filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.fa-search.text-primary {
+    color: #007bff !important;
+    filter: drop-shadow(1px 1px 2px rgba(0, 123, 255, 0.3));
+}
+
+.fa-flask.text-warning {
+    color: #ffc107 !important;
+    filter: drop-shadow(1px 1px 2px rgba(255, 193, 7, 0.3));
+}
+
+/* Barres de progression personnalisées */
+.progress-gpl {
+    height: 8px !important;
+    border-radius: 10px !important;
+    background-color: #e9ecef !important;
+    overflow: hidden !important;
+}
+
+.progress-gpl .progress-bar {
+    border-radius: 10px !important;
+    transition: width 0.3s ease !important;
+}
+
+/* Bordures colorées selon l'état */
+.kanban-border-draft {
+    border-left: 5px solid #6c757d !important;
+}
+
+.kanban-border-planned {
+    border-left: 5px solid #17a2b8 !important;
+}
+
+.kanban-border-progress {
+    border-left: 5px solid #ffc107 !important;
+}
+
+.kanban-border-done {
+    border-left: 5px solid #28a745 !important;
+}
+
+.kanban-border-cancel {
+    border-left: 5px solid #dc3545 !important;
+}
+
+.kanban-border-urgent {
+    border-left: 5px solid #fd7e14 !important;
+    box-shadow: 0 0 10px rgba(253, 126, 20, 0.3) !important;
+}
+
+.kanban-border-very-urgent {
+    border-left: 5px solid #dc3545 !important;
+    box-shadow: 0 0 15px rgba(220, 53, 69, 0.4) !important;
+    animation: pulse-urgent 2s infinite;
+}
+
+/* Animation pour les éléments très urgents */
+@keyframes pulse-urgent {
+    0% {
+        box-shadow: 0 0 15px rgba(220, 53, 69, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(220, 53, 69, 0.6);
+    }
+    100% {
+        box-shadow: 0 0 15px rgba(220, 53, 69, 0.4);
+    }
+}
+
+/* Conteneur de contenu Kanban amélioré */
+.oe_kanban_content {
+    padding: 16px !important;
+}
+
+.o_kanban_record_title {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #2c3e50 !important;
+    margin-bottom: 4px !important;
+}
+
+.o_kanban_record_subtitle {
+    font-size: 12px !important;
+    color: #6c757d !important;
+    font-weight: 400 !important;
+}
+
+/* Amélioration des dropdown menus */
+.o_dropdown_kanban .btn {
+    background: transparent !important;
+    border: none !important;
+    color: #6c757d !important;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+}
+
+.o_dropdown_kanban .btn:hover {
+    background-color: rgba(0,0,0,0.1) !important;
+    color: #333 !important;
+}
+
+/* Responsive pour mobile */
+@media (max-width: 768px) {
+    .oe_kanban_card {
+        margin-bottom: 12px !important;
+    }
+
+    .o_kanban_record_title {
+        font-size: 13px !important;
+    }
+
+    .oe_kanban_content {
+        padding: 12px !important;
+    }
+}
+
+/* Badges de statut spéciaux */
+.badge-status-new {
+    background: linear-gradient(135deg, #74b9ff, #0984e3) !important;
+}
+
+.badge-status-progress {
+    background: linear-gradient(135deg, #fdcb6e, #e17055) !important;
+}
+
+.badge-status-done {
+    background: linear-gradient(135deg, #55efc4, #00b894) !important;
+}
+
+.badge-status-cancel {
+    background: linear-gradient(135deg, #fd79a8, #e84393) !important;
+}
+
+/* Amélioration des icônes dans les cartes */
+.kanban-icon {
+    width: 40px !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    margin-right: 12px !important;
+}
+
+.kanban-icon-installation {
+    background: linear-gradient(135deg, #a8e6cf, #88d8a3) !important;
+    color: #00695c !important;
+}
+
+.kanban-icon-repair {
+    background: linear-gradient(135deg, #ffaaa5, #ff8a80) !important;
+    color: #c62828 !important;
+}
+
+.kanban-icon-inspection {
+    background: linear-gradient(135deg, #b3e5fc, #81d4fa) !important;
+    color: #0277bd !important;
+}
+
+.kanban-icon-testing {
+    background: linear-gradient(135deg, #fff3c4, #ffecb3) !important;
+    color: #ef6c00 !important;
+}
+
+/* Amélioration des progressbar Kanban */
+.o_kanban_progressbar {
+    background: rgba(255,255,255,0.9) !important;
+    border-radius: 6px !important;
+    padding: 8px !important;
+    margin-bottom: 8px !important;
+}
+
+/* Animations subtiles */
+.oe_kanban_card {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Style pour les champs monétaires */
+.kanban-amount {
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    color: #28a745 !important;
+}
+
+/* Style pour les dates */
+.kanban-date {
+    font-size: 11px !important;
+    color: #6c757d !important;
+    font-weight: 500 !important;
+}
+
+/* Amélioration des tags de techniciens */
+.kanban-technicians .badge {
+    background-color: #e3f2fd !important;
+    color: #1976d2 !important;
+    font-size: 10px !important;
+    margin-right: 4px !important;
+    border-radius: 12px !important;
+}

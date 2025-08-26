@@ -85,6 +85,11 @@ class GplReservoirTesting(models.Model):
         'employee_id',
         string='Techniciens'
     )
+    inspector_id = fields.Many2one(
+        'hr.employee',
+        string='Inspecteur',
+        help="Ingérieur des mines"
+    )
 
     # === ÉTAT ===
     state = fields.Selection([
@@ -366,3 +371,65 @@ class GplReservoirTesting(models.Model):
         self.write({
             'safety_systems_ok': True,
         })
+
+
+    @api.model
+    def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
+        """Override pour forcer l'affichage de toutes les colonnes d'états dans kanban"""
+        result = super().read_group(domain, fields, groupby, offset, limit, orderby, lazy)
+
+        # Si groupé par state
+        if groupby and len(groupby) > 0 and 'state' in groupby[0]:
+            # Définir tous les états possibles dans l'ordre souhaité
+            all_states = [
+                ('draft', 'Brouillon'),
+                ('planned', 'Planifié'),
+                ('in_progress', 'En cours'),
+                ('done', 'Terminé'),
+                ('cancel', 'Annulé'),
+            ]
+
+            # Extraire les états déjà présents dans les résultats
+            existing_states = []
+            for group in result:
+                if group.get('state'):
+                    existing_states.append(group['state'])
+
+            # Ajouter les états manquants avec un count de 0
+            for state_key, state_name in all_states:
+                if state_key not in existing_states:
+                    # Créer un groupe vide pour cet état
+                    empty_group = {
+                        'state': state_key,
+                        'state_count': 0,
+                        '__count': 0,  # AJOUT DU CHAMP __count REQUIS
+                        '__domain': [('state', '=', state_key)] + domain,
+                    }
+
+                    # Ajouter les autres champs nécessaires selon le groupby
+                    for field in fields:
+                        if field not in empty_group and field != 'state':
+                            if 'count' in field:
+                                empty_group[field] = 0
+                            elif field in ['conformity_percentage', 'test_pressure', 'pressure_drop']:
+                                empty_group[field] = 0.0
+                            else:
+                                empty_group[field] = False
+
+                    result.append(empty_group)
+
+            # Trier les résultats dans l'ordre souhaité: draft > planned > in_progress > done > cancel
+            def sort_key(group):
+                state = group.get('state', '')
+                order_map = {
+                    'draft': 1,
+                    'planned': 2,
+                    'in_progress': 3,
+                    'done': 4,
+                    'cancel': 5
+                }
+                return order_map.get(state, 999)
+
+            result.sort(key=sort_key)
+
+        return result
