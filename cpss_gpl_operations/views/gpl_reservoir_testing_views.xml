@@ -1,247 +1,516 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data>
+    <!-- FORMULAIRE GPL RESERVOIR TESTING - Style Inspections -->
+    <record id="view_gpl_reservoir_testing_form" model="ir.ui.view">
+        <field name="name">gpl.reservoir.testing.form</field>
+        <field name="model">gpl.reservoir.testing</field>
+        <field name="arch" type="xml">
+            <form string="Réépreuve Réservoir GPL">
+                <header>
+                    <button name="action_plan" string="Planifier" type="object"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_start" string="Commencer le test" type="object"
+                            class="btn-primary" invisible="state not in ('draft', 'planned')"/>
 
-        <!-- === VUE FORMULAIRE === -->
-        <record id="view_gpl_reservoir_testing_form" model="ir.ui.view">
-            <field name="name">gpl.reservoir.testing.form</field>
-            <field name="model">gpl.reservoir.testing</field>
-            <field name="arch" type="xml">
-                <form string="Réépreuve Réservoir GPL">
-                    <header>
-                        <field name="can_schedule" invisible="1"/>
-                        <field name="can_start" invisible="1"/>
-                        <field name="can_validate" invisible="1"/>
-                        <field name="can_cancel" invisible="1"/>
-                        <!-- Boutons d'action -->
-                        <button name="action_schedule" type="object" string="Planifier"
-                                invisible="not can_schedule"/>
+                    <!-- Actions de validation comme inspections -->
+                    <button name="action_validate_pass" string="Valider - CONFORME" type="object"
+                            class="btn-success" invisible="state != 'in_progress'"/>
+                    <button name="action_validate_fail" string="Terminer - NON CONFORME" type="object"
+                            class="btn-danger" invisible="state != 'in_progress'"/>
 
-                        <button name="action_start" type="object" string="Commencer"
-                                invisible="not can_start"/>
+                    <button name="action_cancel" string="Annuler" type="object"
+                            invisible="state == 'done'"/>
+                    <button name="action_reset_to_draft" string="Remettre en brouillon" type="object"
+                            invisible="state not in ('planned', 'cancel')"/>
 
-                        <button name="action_done" type="object" string="Valider (Conforme)"
-                                invisible="not can_validate"/>
+                    <!-- Impression certificat -->
+                    <button name="action_print_certificate" string="Imprimer Certificat" type="object"
+                            class="btn-secondary" invisible="state != 'done' or result != 'pass'"/>
 
-                        <button name="action_validate_fail" type="object" string="Rejeter (Non conforme)"
-                                invisible="not can_validate"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,planned,in_progress,done"/>
+                </header>
 
-                        <button name="action_cancel" type="object" string="Annuler"
-                                class="btn-secondary" invisible="can_cancel == False"/>
+                <sheet>
+                    <!-- En-tête avec résultat -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_print_certificate" type="object" class="oe_stat_button" icon="fa-certificate"
+                                invisible="state != 'done' or result != 'pass'">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Certificat</span>
+                            </div>
+                        </button>
 
-                        <button name="action_reset_to_draft" type="object" string="Remettre en brouillon"
-                                class="btn-secondary" invisible="state not in ['planned']"/>
+                        <button class="oe_stat_button" icon="fa-percent" invisible="state != 'done'">
+                            <field name="conformity_percentage" class="o_stat_value" widget="integer"/>
+                            <span class="o_stat_text">% Conformité</span>
+                        </button>
+                    </div>
 
-                        <!-- Barre d'état -->
-                        <field name="state" widget="statusbar" statusbar_visible="draft,planned,in_progress,done"/>
-                    </header>
-
-                    <sheet>
-                        <div class="oe_title">
-                            <h1>
-                                <field name="name" readonly="1"/>
-                            </h1>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                        <div class="o_row" name="title">
+                            <h2>
+                                <field name="test_type" readonly="state == 'done'"/>
+                                <span invisible="state != 'done'"> - </span>
+                                <field name="result" invisible="state != 'done'"
+                                       decoration-success="result == 'pass'"
+                                       decoration-danger="result == 'fail'"
+                                       decoration-warning="result == 'pending'"/>
+                            </h2>
                         </div>
+                    </div>
 
-                        <group>
-                            <group string="Informations générales">
-                                <field name="vehicle_id" options="{'no_create': True}"
-                                       readonly="state != 'draft'"/>
-                                <field name="client_id" readonly="1"/>
-                                <field name="start_date"
-                                       readonly="state in ['done', 'cancel']"/>
-                                <field name="technician_ids" options="{'no_create': True}"
-                                       readonly="state in ['done', 'cancel']"/>
-                            </group>
-
-                            <group string="Réservoir">
-                                <field name="reservoir_lot_id" readonly="1"/>
-                                <field name="last_test_date" readonly="1"/>
-                            </group>
+                    <group>
+                        <group name="general_info" string="Informations Générales">
+                            <field name="date_start" readonly="state == 'done'"/>
+                            <field name="date_planned" readonly="state == 'done'"/>
                         </group>
 
-                        <notebook>
-                            <page string="Tests et résultats" invisible="state == 'draft'">
-                                <group>
-                                    <group string="Paramètres de test">
-                                        <field name="pressure_test"
-                                               readonly="state in ['done', 'cancel']"/>
-                                        <field name="test_duration"
-                                               readonly="state in ['done', 'cancel']"/>
-                                        <field name="result"
-                                               readonly="state in ['done', 'cancel']"/>
-                                    </group>
-
-                                    <group string="Nouvelle certification"
-                                           invisible="result not in ['pass']">
-                                        <field name="certificate_number"
-                                               required="result == 'pass'"
-                                               readonly="result == 'pass'"/>
-                                        <field name="certificate_date"
-                                               required="result == 'pass'"
-                                               readonly="result == 'pass'"/>
-                                        <field name="next_test_date" readonly="1"/>
-                                    </group>
-                                </group>
-
-                                <group string="Observations">
-                                    <field name="observations" placeholder="Observations détaillées de la réépreuve..."
-                                           nolabel="1"/>
-                                </group>
-
-                                <group string="Défauts constatés" invisible="result != 'fail'">
-                                    <field name="result" placeholder="Décrivez les défauts constatés..."
-                                           nolabel="1"/>
-                                </group>
-                            </page>
-
-                            <page string="Observations">
-                                <field name="observations" placeholder="Notes et observations générales..."/>
-                            </page>
-                            <page string="Notes">
-                                <field name="notes" placeholder="Ajouter des notes internes..."/>
-                            </page>
-                        </notebook>
-                    </sheet>
-
-                    <!-- Chatter -->
-                    <div class="oe_chatter">
-                        <field name="message_follower_ids"/>
-                        <field name="activity_ids"/>
-                        <field name="message_ids"/>
-                    </div>
-                </form>
-            </field>
-        </record>
-
-        <!-- === VUE ARBRE === -->
-        <record id="view_gpl_reservoir_testing_tree" model="ir.ui.view">
-            <field name="name">gpl.reservoir.testing.tree</field>
-            <field name="model">gpl.reservoir.testing</field>
-            <field name="arch" type="xml">
-                <tree string="Réépreuves Réservoirs"
-                      decoration-info="state == 'draft'"
-                      decoration-primary="state == 'planned'"
-                      decoration-warning="state == 'in_progress'"
-                      decoration-success="state == 'done'"
-                      decoration-muted="state == 'cancel'">
-                    <field name="name"/>
-                    <field name="vehicle_id"/>
-                    <field name="client_id"/>
-                    <field name="reservoir_lot_id"/>
-                    <field name="start_date"/>
-                    <field name="technician_ids"/>
-                    <field name="result" widget="badge"/>
-                    <field name="state" widget="badge"/>
-                </tree>
-            </field>
-        </record>
-
-        <!-- === VUE RECHERCHE === -->
-        <record id="view_gpl_reservoir_testing_search" model="ir.ui.view">
-            <field name="name">gpl.reservoir.testing.search</field>
-            <field name="model">gpl.reservoir.testing</field>
-            <field name="arch" type="xml">
-                <search string="Recherche Réépreuves Réservoirs">
-                    <field name="name"/>
-                    <field name="vehicle_id"/>
-                    <field name="client_id"/>
-                    <field name="reservoir_lot_id"/>
-                    <field name="technician_ids"/>
-                    <field name="certificate_number"/>
-
-                    <filter string="Brouillons" name="filter_draft"
-                            domain="[('state', '=', 'draft')]"/>
-                    <filter string="Planifiées" name="filter_scheduled"
-                            domain="[('state', '=', 'planned')]"/>
-                    <filter string="En cours" name="filter_in_progress"
-                            domain="[('state', '=', 'in_progress')]"/>
-                    <filter string="Validées" name="filter_passed"
-                            domain="[('state', '=', 'done')]"/>
-                    <filter string="Refusées" name="filter_failed"
-                            domain="[('result', '=', 'fail')]"/>
-
-                    <separator/>
-                    <filter string="Ce mois" name="filter_this_month"
-                            domain="[('start_date', '>=', (context_today().replace(day=1)).strftime('%Y-%m-%d')),
-                                   ('start_date', '&lt;', ((context_today().replace(day=1)) + relativedelta(months=1)).strftime('%Y-%m-%d'))]"/>
-
-                    <group expand="0" string="Grouper par">
-                        <filter string="État" name="group_state" context="{'group_by': 'state'}"/>
-                        <filter string="Technicien" name="group_technician" context="{'group_by': 'technician_ids'}"/>
-                        <filter string="Mois" name="group_month" context="{'group_by': 'start_date:month'}"/>
-                        <filter string="Véhicule" name="group_vehicle" context="{'group_by': 'vehicle_id'}"/>
+                        <group name="reservoir_info" string="Réservoir">
+                            <field name="reservoir_lot_id" readonly="state == 'done'"
+                                   options="{'no_create': True}"/>
+                            <field name="reservoir_serial"/>
+                            <field name="fabrication_date"/>
+                            <field name="next_test_date" invisible="state != 'done'"/>
+                        </group>
                     </group>
-                </search>
-            </field>
-        </record>
 
-        <!-- === VUE KANBAN === -->
-        <record id="view_gpl_reservoir_testing_kanban" model="ir.ui.view">
-            <field name="name">gpl.reservoir.testing.kanban</field>
-            <field name="model">gpl.reservoir.testing</field>
-            <field name="arch" type="xml">
-                <kanban default_group_by="state" class="o_kanban_small_column">
-                    <field name="state"/>
-                    <field name="vehicle_id"/>
-                    <field name="client_id"/>
-                    <field name="start_date"/>
-                    <field name="technician_ids"/>
-                    <field name="result"/>
+                    <group>
+                        <group name="vehicle_info" string="Véhicule et Client">
+                            <field name="vehicle_id" readonly="state == 'done'"
+                                   options="{'no_create': True}"/>
+                            <field name="client_id"/>
+                        </group>
 
-                    <templates>
-                        <t t-name="kanban-box">
-                            <div class="oe_kanban_card oe_kanban_global_click">
-                                <div class="oe_kanban_content">
-                                    <div class="o_kanban_record_top mb8">
-                                        <div class="o_kanban_record_headings">
-                                            <strong class="o_kanban_record_title">
-                                                <field name="name"/>
-                                            </strong>
+                        <group name="certificate_info" string="Certificat" invisible="state != 'done'">
+                            <field name="certificate_number"/>
+                            <field name="certificate_date"/>
+                            <field name="test_passed" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <!-- NOTEBOOK - Tests et Résultats comme inspections -->
+                    <notebook>
+                        <!-- Page 1: Tests et Vérifications -->
+                        <page string="Tests et Vérifications" name="tests">
+
+                            <!-- Section A: Inspection Visuelle -->
+                            <group string="A. INSPECTION VISUELLE">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <field name="visual_inspection_ok"
+                                               decoration-success="visual_inspection_ok == True"
+                                               decoration-danger="visual_inspection_ok == False"
+                                               readonly="state == 'done'"/>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <button name="action_mark_all_visual_ok" string="✓ Marquer tout conforme"
+                                                type="object" class="btn-sm btn-success"
+                                                invisible="state == 'done'"/>
+                                    </div>
+                                </div>
+
+                                <group>
+                                    <group>
+                                        <field name="reservoir_external_ok" string="État externe"
+                                               readonly="state == 'done'"/>
+                                        <field name="reservoir_marking_ok" string="Marquage conforme"
+                                               readonly="state == 'done'"/>
+                                    </group>
+                                    <group>
+                                        <field name="reservoir_fixation_ok" string="Fixation correcte"
+                                               readonly="state == 'done'"/>
+                                        <field name="reservoir_support_ok" string="Support adapté"
+                                               readonly="state == 'done'"/>
+                                    </group>
+                                </group>
+
+                                <field name="visual_notes" string="Observations"
+                                       placeholder="Notes sur l'inspection visuelle..."
+                                       readonly="state == 'done'"/>
+                            </group>
+
+                            <separator/>
+
+                            <!-- Section B: Test de Pression -->
+                            <group string="B. TEST DE PRESSION">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <field name="pressure_test_ok"
+                                               decoration-success="pressure_test_ok == True"
+                                               decoration-danger="pressure_test_ok == False"
+                                               readonly="state == 'done'"/>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <button name="action_mark_all_pressure_ok" string="✓ Test réussi"
+                                                type="object" class="btn-sm btn-success"
+                                                invisible="state == 'done'"/>
+                                    </div>
+                                </div>
+
+                                <group>
+                                    <group string="Paramètres">
+                                        <field name="test_pressure" readonly="state == 'done'"/>
+                                        <field name="test_duration" readonly="state == 'done'"/>
+                                        <field name="ambient_temperature" readonly="state == 'done'"/>
+                                    </group>
+                                    <group string="Mesures">
+                                        <field name="initial_pressure" readonly="state == 'done'"/>
+                                        <field name="final_pressure" readonly="state == 'done'"/>
+                                        <field name="pressure_drop" readonly="1"/>
+                                    </group>
+                                </group>
+
+                                <field name="pressure_notes" string="Observations"
+                                       placeholder="Notes sur le test de pression..."
+                                       readonly="state == 'done'"/>
+                            </group>
+
+                            <separator/>
+
+                            <!-- Section C: Test d'Étanchéité -->
+                            <group string="C. TEST D'ÉTANCHÉITÉ">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <field name="tightness_test_ok"
+                                               decoration-success="tightness_test_ok == True"
+                                               decoration-danger="tightness_test_ok == False"
+                                               readonly="state == 'done'"/>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <button name="action_mark_all_tightness_ok" string="✓ Marquer tout étanche"
+                                                type="object" class="btn-sm btn-success"
+                                                invisible="state == 'done'"/>
+                                    </div>
+                                </div>
+
+                                <group>
+                                    <group>
+                                        <field name="valve_tightness_ok" string="Vanne" readonly="state == 'done'"/>
+                                        <field name="fitting_tightness_ok" string="Raccords" readonly="state == 'done'"/>
+                                    </group>
+                                    <group>
+                                        <field name="weld_tightness_ok" string="Soudures" readonly="state == 'done'"/>
+                                        <field name="humidity" readonly="state == 'done'"/>
+                                    </group>
+                                </group>
+
+                                <field name="tightness_notes" string="Observations"
+                                       placeholder="Notes sur les tests d'étanchéité..."
+                                       readonly="state == 'done'"/>
+                            </group>
+
+                            <separator/>
+
+                            <!-- Section D: Systèmes de Sécurité -->
+                            <group string="D. SYSTÈMES DE SÉCURITÉ">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <field name="safety_systems_ok"
+                                               decoration-success="safety_systems_ok == True"
+                                               decoration-danger="safety_systems_ok == False"
+                                               readonly="state == 'done'"/>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <button name="action_mark_all_safety_ok" string="✓ Sécurité conforme"
+                                                type="object" class="btn-sm btn-success"
+                                                invisible="state == 'done'"/>
+                                    </div>
+                                </div>
+
+                                <field name="safety_notes" string="Observations"
+                                       placeholder="Notes sur les systèmes de sécurité..."
+                                       readonly="state == 'done'"/>
+                            </group>
+                        </page>
+
+                        <!-- Page 2: Résultats et Actions -->
+                        <page string="Résultats et Actions" name="results">
+                            <group>
+                                <group string="Résultat Final" name="final_result">
+                                    <field name="result" readonly="1"
+                                           decoration-success="result == 'pass'"
+                                           decoration-danger="result == 'fail'"
+                                           decoration-warning="result == 'pending'"/>
+                                    <field name="conformity_percentage" readonly="1"/>
+                                    <field name="test_passed" invisible="1"/>
+                                </group>
+
+                                <group string="Suivi" name="follow_up" invisible="state != 'done'">
+                                    <field name="certificate_number"/>
+                                    <field name="certificate_date"/>
+                                    <field name="next_test_date"/>
+                                </group>
+                            </group>
+
+                            <separator string="Observations et Actions"/>
+
+                            <group>
+                                <field name="notes" string="Observations générales"
+                                       placeholder="Remarques générales sur le test..."
+                                       readonly="state == 'done'"/>
+                            </group>
+
+                            <group invisible="result != 'fail'">
+                                <field name="corrective_actions" string="Actions correctives nécessaires"
+                                       placeholder="Actions à entreprendre pour la conformité..."
+                                       readonly="state == 'done'"/>
+                            </group>
+
+                            <group>
+                                <field name="recommendations" string="Recommandations"
+                                       placeholder="Recommandations pour l'avenir..."
+                                       readonly="state == 'done'"/>
+                            </group>
+                        </page>
+
+                        <!-- Page 3: Personnel -->
+                        <page string="Personnel" name="staff">
+                            <group string="Équipe de Test">
+                                <field name="technician_ids" readonly="state == 'done'"
+                                       widget="many2many_tags"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+
+                <!-- Chatter -->
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- VUE LISTE GPL RESERVOIR TESTING -->
+    <record id="view_gpl_reservoir_testing_tree" model="ir.ui.view">
+        <field name="name">gpl.reservoir.testing.tree</field>
+        <field name="model">gpl.reservoir.testing</field>
+        <field name="arch" type="xml">
+            <tree string="Réépreuves Réservoirs GPL"
+                  decoration-success="result == 'pass'"
+                  decoration-danger="result == 'fail'"
+                  decoration-warning="result == 'pending'"
+                  decoration-muted="state == 'cancel'">
+
+                <field name="name"/>
+                <field name="date_start"/>
+                <field name="test_type"/>
+                <field name="reservoir_serial"/>
+                <field name="vehicle_id" optional="show"/>
+                <field name="client_id" optional="show"/>
+
+                <!-- Résultats principaux -->
+                <field name="visual_inspection_ok" widget="boolean" optional="hide"/>
+                <field name="pressure_test_ok" widget="boolean" optional="hide"/>
+                <field name="tightness_test_ok" widget="boolean" optional="hide"/>
+                <field name="safety_systems_ok" widget="boolean" optional="hide"/>
+
+                <!-- Résultat final -->
+                <field name="conformity_percentage" widget="percentage" optional="show"/>
+                <field name="result"
+                       decoration-success="result == 'pass'"
+                       decoration-danger="result == 'fail'"
+                       decoration-warning="result == 'pending'"/>
+
+                <field name="state" widget="badge"
+                       decoration-success="state == 'done'"
+                       decoration-info="state in ('planned', 'in_progress')"
+                       decoration-muted="state in ('draft', 'cancel')"/>
+
+                <field name="certificate_number" optional="hide"/>
+                <field name="next_test_date" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- VUE KANBAN GPL RESERVOIR TESTING -->
+    <record id="view_gpl_reservoir_testing_kanban" model="ir.ui.view">
+        <field name="name">gpl.reservoir.testing.kanban</field>
+        <field name="model">gpl.reservoir.testing</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_small_column">
+                <field name="name"/>
+                <field name="date_start"/>
+                <field name="test_type"/>
+                <field name="reservoir_serial"/>
+                <field name="vehicle_id"/>
+                <field name="client_id"/>
+                <field name="result"/>
+                <field name="conformity_percentage"/>
+                <field name="state"/>
+                <field name="certificate_number"/>
+
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click
+                                          #{record.result.raw_value == 'pass' ? 'oe_kanban_color_20' : ''}
+                                          #{record.result.raw_value == 'fail' ? 'oe_kanban_color_2' : ''}">
+
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="name"/>
+                                        </strong>
+                                        <br/>
+                                        <span class="o_kanban_record_subtitle text-muted">
+                                            <field name="test_type"/>
+                                        </span>
+                                    </div>
+
+                                    <div class="o_kanban_record_top_right">
+                                        <span t-if="record.result.raw_value == 'pass'"
+                                              class="badge badge-success">✓ Conforme</span>
+                                        <span t-elif="record.result.raw_value == 'fail'"
+                                              class="badge badge-danger">✗ Non conforme</span>
+                                        <span t-else=""
+                                              class="badge badge-warning">En attente</span>
+                                    </div>
+                                </div>
+
+                                <div class="o_kanban_record_body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <span class="fa fa-wrench"/>
+                                            <field name="reservoir_serial"/>
                                         </div>
-                                        <div class="o_kanban_record_subtitle">
+                                        <div class="col-6">
+                                            <span class="fa fa-calendar"/>
+                                            <field name="date_start"/>
+                                        </div>
+                                    </div>
+
+                                    <div class="row" t-if="record.vehicle_id.raw_value">
+                                        <div class="col-12">
+                                            <span class="fa fa-car"/>
                                             <field name="vehicle_id"/>
                                         </div>
                                     </div>
 
-                                    <div class="o_kanban_record_body">
-                                        <div>Client: <field name="client_id"/></div>
-                                        <div>Date: <field name="start_date"/></div>
-                                        <div t-if="record.technician_id.raw_value">
-                                            Technicien: <field name="technician_ids"/>
-                                        </div>
-                                    </div>
-
-                                    <div class="o_kanban_record_bottom mt8">
-                                        <div class="oe_kanban_bottom_left">
-                                            <field name="result" widget="badge"/>
+                                    <div class="row" t-if="record.client_id.raw_value">
+                                        <div class="col-12">
+                                            <span class="fa fa-user"/>
+                                            <field name="client_id"/>
                                         </div>
                                     </div>
                                 </div>
+
+                                <div class="o_kanban_record_bottom">
+                                    <div class="oe_kanban_bottom_left">
+                                        <span t-if="record.conformity_percentage.raw_value > 0">
+                                            <field name="conformity_percentage" widget="percentage"/>
+                                        </span>
+                                    </div>
+
+                                    <div class="oe_kanban_bottom_right">
+                                        <span t-if="record.certificate_number.raw_value"
+                                              class="fa fa-certificate text-success"
+                                              title="Certificat délivré"/>
+                                    </div>
+                                </div>
                             </div>
-                        </t>
-                    </templates>
-                </kanban>
-            </field>
-        </record>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
 
-        <!-- === ACTIONS === -->
-        <record id="action_gpl_reservoir_testing" model="ir.actions.act_window">
-            <field name="name">Réépreuves Réservoirs</field>
-            <field name="res_model">gpl.reservoir.testing</field>
-            <field name="view_mode">tree,kanban,form</field>
-            <field name="context">{}</field>
-            <field name="help" type="html">
-                <p class="o_view_nocontent_smiling_face">
-                    Créer une nouvelle réépreuve de réservoir GPL
-                </p>
-                <p>
-                    Gérez les réépreuves périodiques des réservoirs GPL installés sur vos véhicules.
-                </p>
-            </field>
-        </record>
+    <!-- VUE RECHERCHE GPL RESERVOIR TESTING -->
+    <record id="view_gpl_reservoir_testing_search" model="ir.ui.view">
+        <field name="name">gpl.reservoir.testing.search</field>
+        <field name="model">gpl.reservoir.testing</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher Réépreuves">
+                <!-- Champs de recherche -->
+                <field name="name" string="Référence"/>
+                <field name="reservoir_serial" string="N° Série Réservoir"/>
+                <field name="vehicle_id" string="Véhicule"/>
+                <field name="client_id" string="Client"/>
 
+                <!-- Filtres -->
+                <filter string="Aujourd'hui" name="today"
+                        domain="[('date_start', '=', context_today())]"/>
+                <filter string="Cette semaine" name="this_week"
+                        domain="[('date_start', '&gt;=', (datetime.date.today() - datetime.timedelta(days=datetime.date.today().weekday())).strftime('%Y-%m-%d'))]"/>
+                <filter string="Ce mois" name="this_month"
+                        domain="[('date_start', '&gt;=', time.strftime('%Y-%m-01'))]"/>
 
+                <separator/>
 
-    </data>
+                <!-- Filtres par état -->
+                <filter string="Brouillon" name="draft"
+                        domain="[('state', '=', 'draft')]"/>
+                <filter string="Planifiés" name="planned"
+                        domain="[('state', '=', 'planned')]"/>
+                <filter string="En cours" name="in_progress"
+                        domain="[('state', '=', 'in_progress')]"/>
+                <filter string="Terminés" name="done"
+                        domain="[('state', '=', 'done')]"/>
+
+                <separator/>
+
+                <!-- Filtres par résultat -->
+                <filter string="Conformes" name="passed"
+                        domain="[('result', '=', 'pass')]"/>
+                <filter string="Non conformes" name="failed"
+                        domain="[('result', '=', 'fail')]"/>
+                <filter string="En attente" name="pending"
+                        domain="[('result', '=', 'pending')]"/>
+
+                <separator/>
+
+                <!-- Filtres par type -->
+                <filter string="Réépreuve périodique" name="periodic"
+                        domain="[('test_type', '=', 'periodic')]"/>
+                <filter string="Épreuve initiale" name="initial"
+                        domain="[('test_type', '=', 'initial')]"/>
+                <filter string="Réépreuve exceptionnelle" name="exceptional"
+                        domain="[('test_type', '=', 'exceptional')]"/>
+
+                <!-- Groupes -->
+                <group expand="1" string="Grouper par">
+                    <filter string="État" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Résultat" name="group_result" context="{'group_by': 'result'}"/>
+                    <filter string="Type de test" name="group_test_type" context="{'group_by': 'test_type'}"/>
+                    <filter string="Client" name="group_client" context="{'group_by': 'client_id'}"/>
+                    <filter string="Date" name="group_date" context="{'group_by': 'date_start:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ACTION WINDOW GPL RESERVOIR TESTING -->
+    <record id="action_gpl_reservoir_testing" model="ir.actions.act_window">
+        <field name="name">Réépreuves Réservoirs GPL</field>
+        <field name="res_model">gpl.reservoir.testing</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+                                       (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_gpl_reservoir_testing_kanban')}),
+                                       (0, 0, {'view_mode': 'tree', 'view_id': ref('view_gpl_reservoir_testing_tree')}),
+                                       (0, 0, {'view_mode': 'form', 'view_id': ref('view_gpl_reservoir_testing_form')})]"/>
+        <field name="search_view_id" ref="view_gpl_reservoir_testing_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créer une nouvelle réépreuve de réservoir GPL
+            </p>
+            <p>
+                Les réépreuves permettent de vérifier la conformité et la sécurité
+                des réservoirs GPL selon les normes en vigueur.
+            </p>
+            <p>
+                Chaque test comprend une inspection visuelle, un test de pression,
+                un contrôle d'étanchéité et une vérification des systèmes de sécurité.
+            </p>
+        </field>
+        <field name="context">{
+            'search_default_this_month': 1
+        }</field>
+    </record>
+
 </odoo>

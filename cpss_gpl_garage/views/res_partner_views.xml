@@ -43,6 +43,10 @@
                     </field>
                 </page>
             </notebook>
+
+            <xpath expr="//div[contains(@class, 'o_row')]" position="inside">
+                <field name="contact_type"/>
+            </xpath>
         </field>
     </record>
 </odoo>

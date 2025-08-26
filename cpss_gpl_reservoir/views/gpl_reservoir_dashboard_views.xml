@@ -180,105 +180,6 @@
                         </div>
                     </div>
 
-                    <!-- Graphiques -->
-                    <div class="row mt-4 dashboard-chart-row">
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <h5><i class="fa fa-pie-chart text-primary"/> Répartition par Statut</h5>
-                                    <small class="text-muted">État des réservoirs</small>
-                                </div>
-                                <div class="card-body">
-                                    <field name="chart_data_status" invisible="1"/>
-                                    <div id="chart_status" class="o_chart_container">
-                                        <div class="chart-loading">Chargement du graphique...</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <h5><i class="fa fa-industry text-success"/> Répartition par Fabricant</h5>
-                                    <small class="text-muted">Nombre par marque</small>
-                                </div>
-                                <div class="card-body">
-                                    <field name="chart_data_fabricant" invisible="1"/>
-                                    <div id="chart_fabricant" class="o_chart_container">
-                                        <div class="chart-loading">Chargement du graphique...</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Graphique âge en pleine largeur -->
-                    <div class="row mt-4">
-                        <div class="col-md-12">
-                            <div class="card">
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <h5><i class="fa fa-calendar text-warning"/> Répartition par Âge</h5>
-                                    <div>
-                                        <small class="text-muted">Années depuis fabrication</small>
-                                        <button name ="actualiser"
-                                                type="button"
-                                                class="btn btn-sm btn-outline-secondary ml-2"
-                                                onclick="window.GPLDashboardCharts?.refresh()"
-                                                title="Actualiser les graphiques">
-                                            <i class="fa fa-refresh"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <field name="chart_data_age" invisible="1"/>
-                                    <div id="chart_age" class="o_chart_container">
-                                        <div class="chart-loading">Chargement du graphique...</div>
-                                    </div>
-                                    <div class="row mt-3">
-                                        <div class="col-12">
-                                            <div class="alert alert-info py-2">
-                                                <i class="fa fa-lightbulb-o"/>
-                                                <strong>Rappel :</strong> Les réservoirs doivent être rééprouvés tous les 5 ans.
-                                                Les réservoirs de plus de 15 ans nécessitent une attention particulière.
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-
-                    <!-- Script simplifié pour diagnostic -->
-<script type="text/javascript">
-    console.log('GPL Dashboard: Template chargé');
-
-    // Test simple de fonctionnement
-    $(document).ready(function() {
-        console.log('GPL Dashboard: DOM prêt');
-
-        // Afficher les données dans la console pour vérification
-        var statusData = $('input[name="chart_data_status"]').val();
-        var fabricantData = $('input[name="chart_data_fabricant"]').val();
-        var ageData = $('input[name="chart_data_age"]').val();
-
-        console.log('Données statut:', statusData);
-        console.log('Données fabricant:', fabricantData);
-        console.log('Données âge:', ageData);
-
-        // Remplacer le message de chargement par les données
-        if (statusData) {
-            $('#chart_status').html('<pre>' + statusData + '</pre>');
-        }
-        if (fabricantData) {
-            $('#chart_fabricant').html('<pre>' + fabricantData + '</pre>');
-        }
-        if (ageData) {
-            $('#chart_age').html('<pre>' + ageData + '</pre>');
-        }
-    });
-</script>
                     <!-- Champs cachés pour les données -->
                     <div class="d-none">
                         <field name="reservoirs_test_required"/>
@@ -517,7 +418,7 @@
                                                     </t>
                                                 </td>
 
-                                                <td>
+                                               <!-- <td>
                                                     <t t-if="reservoir.vehicle_id">
                                                         <span t-esc="reservoir.vehicle_id.name"/>
                                                         <t t-if="reservoir.vehicle_id.license_plate">
@@ -525,7 +426,7 @@
                                                         </t>
                                                     </t>
                                                     <t t-else="">Aucun</t>
-                                                </td>
+                                                </td>-->
 
                                                 <td>
                                                     <t t-if="reservoir.location_id">

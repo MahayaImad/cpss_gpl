@@ -10,6 +10,11 @@ class ResPartner(models.Model):
 
     # === INFORMATIONS CLIENT GARAGE ===
     is_gpl_client = fields.Boolean('Client GPL', compute='_compute_is_gpl_client', store=True)
+    contact_type = fields.Selection([
+        ('client', 'Client'),
+        ('supplier', 'Fournisseur'),
+        ('other', 'Autre'),
+    ], string='Type de contact', default='client', tracking=True)
     last_gpl_appointment = fields.Datetime('Dernier RDV GPL', compute='_compute_gpl_stats')
     next_gpl_appointment = fields.Datetime('Prochain RDV GPL', compute='_compute_gpl_stats')
 

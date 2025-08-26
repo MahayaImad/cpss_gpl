@@ -37,9 +37,9 @@
               sequence="20"/>
 
     <menuitem id="menu_gpl_garage_vehicles_all"
-              name="Tous les véhicules"
+              name="RDV aujourd'hui"
               parent="menu_gpl_garage_vehicles"
-              action="action_gpl_vehicle_all"
+              action="action_gpl_vehicle_today"
               sequence="10"/>
 
     <menuitem id="menu_gpl_garage_vehicles_planning"
@@ -49,7 +49,7 @@
               sequence="20"/>
 
     <menuitem id="menu_gpl_need_inspection_section"
-              name="────────────"
+              name="───  Control Périodique  ───"
               parent="menu_gpl_garage_vehicles"
               sequence="40"/>
 

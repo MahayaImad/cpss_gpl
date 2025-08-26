@@ -15,11 +15,11 @@
 
         <!-- Réservoirs GPL -->
         <record id="action_stock_lot_reservoir" model="ir.actions.act_window">
-            <field name="name">Réservoirs GPL</field>
+            <field name="name">Lots des Réservoirs</field>
             <field name="res_model">stock.lot</field>
             <field name="view_mode">tree,form</field>
             <field name="domain">[('is_gpl_reservoir', '=', True)]</field>
-            <field name="context">{'search_default_is_gpl_reservoir': 1}</field>
+            <field name="context">{'search_default_is_gpl_reservoir': 1, 'create': False}</field>
         </record>
 
         <!-- Produits GPL -->
@@ -76,7 +76,7 @@
 
         <!-- Réservoirs -->
         <menuitem id="menu_gpl_reservoirs"
-                  name="Réservoirs"
+                  name="Lots des Réservoirs"
                   parent="menu_gpl_reservoir_main"
                   action="action_stock_lot_reservoir"
                   sequence="20"

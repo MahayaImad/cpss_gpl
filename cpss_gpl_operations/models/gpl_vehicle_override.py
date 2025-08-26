@@ -198,7 +198,7 @@ class GplVehicleOverride(models.Model):
             'priority': '0',  # Priorité normale
             'state': 'draft',
             'symptoms': self.notes or '',
-            'date_scheduled': common_data['date_planned'],
+            'date_planned': common_data['date_planned'],
         }
 
         repair = self.env['gpl.repair.order'].create(repair_vals)
@@ -245,7 +245,7 @@ class GplVehicleOverride(models.Model):
         testing_vals = {
             **common_data,
             'reservoir_lot_id': self.reservoir_lot_id.id,
-            'test_type': 'hydraulic',  # Type par défaut
+            'test_type': 'periodic',  # Type par défaut
             'state': 'draft',
         }
 

@@ -67,16 +67,6 @@
                         <strong>INFO:</strong> Ce réservoir est trop ancien et doit être remplacé.
                     </div>
 
-
-
-
-
-                    <!-- Alerte pour lots avec mouvements récents -->
-                    <div class="alert alert-info" role="alert"
-                         invisible="not quant_ids">
-                        <strong>INFO:</strong> Ce lot a des mouvements de stock actifs.
-                    </div>
-
                 </xpath>
 
                 <!-- Ajouter onglet GPL -->
