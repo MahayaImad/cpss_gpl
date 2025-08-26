@@ -111,8 +111,8 @@
                 <field name="amount_total" widget="monetary" sum="Total"/>
                 <field name="state" widget="badge"
                        decoration-success="state == 'done'"
-                       decoration-info="state == 'under_repair'"
-                       decoration-warning="state == 'ready'"
+                       decoration-info="state == 'in_progress'"
+                       decoration-warning="state == 'planned'"
                        decoration-muted="state == 'cancel'"/>
             </tree>
         </field>
@@ -132,7 +132,7 @@
                         <div class="oe_kanban_card oe_kanban_global_click">
                             <div class="o_dropdown_kanban dropdown" groups="base.group_user">
                                 <a role="button" class="dropdown-toggle o-no-caret btn" data-toggle="dropdown">
-                                    <span class="fa fa-ellipsis-v"/>
+                                    <span class="fa fa-ellipsis-v" title=" "/>
                                 </a>
                                 <div class="dropdown-menu" role="menu">
                                     <t t-if="widget.editable"><a role="menuitem" type="edit" class="dropdown-item">Modifier</a></t>
@@ -150,13 +150,13 @@
                                 </div>
                                 <div class="o_kanban_record_body">
                                     <div>
-                                        <i class="fa fa-car"/> <field name="vehicle_id"/>
+                                        <i class="fa fa-car" title=" "/> <field name="vehicle_id"/>
                                     </div>
                                     <div>
-                                        <i class="fa fa-wrench"/> <field name="repair_type"/>
+                                        <i class="fa fa-wrench" title=" "/> <field name="repair_type"/>
                                     </div>
                                     <div>
-                                        <i class="fa fa-calendar"/> <field name="date_end" widget="date"/>
+                                        <i class="fa fa-calendar" title=" "/> <field name="date_end" widget="date"/>
                                     </div>
                                 </div>
                                 <div class="o_kanban_record_bottom">
@@ -188,8 +188,8 @@
                 <field name="repair_type"/>
                 <filter string="Urgent" name="urgent" domain="[('priority', 'in', ['1', '2'])]"/>
                 <separator/>
-                <filter string="En cours" name="under_repair" domain="[('state', '=', 'under_repair')]"/>
-                <filter string="Planifiées" name="ready" domain="[('state', '=', 'ready')]"/>
+                <filter string="En cours" name="under_repair" domain="[('state', '=', 'in_progress')]"/>
+                <filter string="Planifiées" name="ready" domain="[('state', '=', 'planned')]"/>
                 <filter string="Terminées" name="done" domain="[('state', '=', 'done')]"/>
                 <separator/>
                 <filter string="Aujourd'hui" name="today"

@@ -15,7 +15,6 @@ const GarageCalendarUtils = {
         const serviceIcons = {
             'installation': '🔧',
             'repair': '🔨',
-            'maintenance': '⚙️',
             'inspection': '✅',
             'testing': '🧪'
         };
@@ -31,7 +30,6 @@ const GarageCalendarUtils = {
         const colors = {
             'installation': '#28a745',
             'repair': '#dc3545',
-            'maintenance': '#ffc107',
             'inspection': '#17a2b8',
             'testing': '#6f42c1'
         };

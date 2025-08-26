@@ -148,8 +148,6 @@ class GplVehicleOverride(models.Model):
             return self._create_installation_document(common_data)
         elif service_type == 'repair':
             return self._create_repair_document(common_data)
-        elif service_type == 'maintenance':
-            return self._create_maintenance_document(common_data)
         elif service_type == 'inspection':
             return self._create_inspection_document(common_data)
         elif service_type == 'testing':
@@ -219,29 +217,6 @@ class GplVehicleOverride(models.Model):
             }
         }
 
-    def _create_maintenance_document(self, common_data):
-        """Crée un document de maintenance - VERSION CORRIGÉE"""
-        maintenance_vals = {
-            **common_data,
-            'repair_type': 'maintenance',
-            'priority': '0',
-            'state': 'draft',
-            'symptoms': 'Maintenance préventive programmée',
-            'date_scheduled': common_data['date_planned'],
-        }
-
-        maintenance = self.env['gpl.repair.order'].create(maintenance_vals)
-
-        maintenance.action_start_repair()  # Ceci va créer la vente automatiquement
-
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Maintenance GPL - %s') % self.license_plate,
-            'res_model': 'gpl.repair.order',
-            'res_id': maintenance.id,
-            'view_mode': 'form',
-            'target': 'current',
-        }
 
     def _create_inspection_document(self, common_data):
         """Crée un document d'inspection GPL"""
@@ -293,7 +268,6 @@ class GplVehicleOverride(models.Model):
         return [
             ('installation', 'Installation GPL'),
             ('repair', 'Réparation'),
-            ('maintenance', 'Maintenance'),
             ('inspection', 'Contrôle Technique'),
             ('testing', 'Réépreuve Réservoir'),
         ]

@@ -152,10 +152,10 @@
                             <!-- Corps -->
                             <div class="o_kanban_details mt-2">
                                 <div class="o_kanban_field">
-                                    <i class="fa fa-car text-primary me-1"/> <field name="vehicle_id"/>
+                                    <i class="fa fa-car text-primary me-1" title=" "/> <field name="vehicle_id"/>
                                 </div>
                                 <div class="o_kanban_field">
-                                    <i class="fa fa-calendar text-success me-1"/> <field name="date_start" widget="date"/>
+                                    <i class="fa fa-calendar text-success me-1" title=" "/> <field name="date_start" widget="date"/>
                                 </div>
                             </div>
 

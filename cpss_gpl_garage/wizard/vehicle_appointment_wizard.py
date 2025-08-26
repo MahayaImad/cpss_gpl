@@ -29,7 +29,6 @@ class VehicleAppointmentWizard(models.TransientModel):
     service_type = fields.Selection([
         ('installation', 'Installation GPL'),
         ('repair', 'Réparation'),
-        ('maintenance', 'Maintenance'),
         ('inspection', 'Contrôle/Inspection'),
         ('testing', 'Réépreuve réservoir'),
     ], string='Type de service', default='installation', required=True)

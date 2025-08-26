@@ -67,15 +67,11 @@ class GplNotificationSystem(models.Model):
                 ('next_service_type', '!=', False)  # RDV non traité
             ])
 
-            # Véhicules nécessitant une maintenance (version simplifiée)
-            # On évite complètement les champs qui pourraient ne pas exister
-            maintenance_due = []
-            # Pour l'instant, on laisse vide - vous pourrez l'adapter selon vos besoins
 
             # Créer le contenu de l'email
             email_content = self._generate_daily_email_content(
                 technician, today_appointments, tomorrow_appointments,
-                overdue_appointments, maintenance_due
+                overdue_appointments
             )
 
             # Envoyer l'email
@@ -89,7 +85,7 @@ class GplNotificationSystem(models.Model):
             _logger.error(f"Erreur email pour {technician.name}: {e}")
             return False
 
-    def _generate_daily_email_content(self, technician, today, tomorrow, overdue, maintenance):
+    def _generate_daily_email_content(self, technician, today, tomorrow, overdue):
         """Générer le contenu HTML de l'email quotidien"""
         html_content = f"""
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -101,27 +97,30 @@ class GplNotificationSystem(models.Model):
             <div style="padding: 20px; background-color: #f8f9fa;">
         """
 
+        # -----------------------
         # RDV d'aujourd'hui
+        # -----------------------
         if today:
             html_content += """
-                <div style="background-color: #d4edda; border: 1px solid #c3e6cb; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                <div style="background-color: #d4edda; border: 1px solid #c3e6cb;
+                            padding: 15px; margin: 10px 0; border-radius: 5px;">
                     <h3 style="color: #155724; margin-top: 0;">📅 RDV AUJOURD'HUI</h3>
             """
             for vehicle in today:
                 service_type = "Service GPL"
-                if hasattr(vehicle, 'next_service_type') and vehicle.next_service_type:
-                    # Essayer de récupérer le libellé du type de service
+                if getattr(vehicle, "next_service_type", False):
                     try:
-                        if hasattr(vehicle._fields.get('next_service_type', None), 'selection'):
-                            service_dict = dict(vehicle._fields['next_service_type'].selection)
+                        if hasattr(vehicle._fields.get("next_service_type"), "selection"):
+                            service_dict = dict(vehicle._fields["next_service_type"].selection)
                             service_type = service_dict.get(vehicle.next_service_type, vehicle.next_service_type)
                         else:
                             service_type = vehicle.next_service_type
-                    except:
+                    except Exception:
                         service_type = "Service GPL"
 
                 html_content += f"""
-                    <div style="background-color: white; padding: 10px; margin: 5px 0; border-radius: 3px;">
+                    <div style="background-color: white; padding: 10px;
+                                margin: 5px 0; border-radius: 3px;">
                         <strong>🚗 {vehicle.license_plate or 'N/A'}</strong><br/>
                         👤 Client: {vehicle.client_id.name if vehicle.client_id else 'N/A'}<br/>
                         ⏰ {vehicle.appointment_date.strftime('%H:%M') if vehicle.appointment_date else 'N/A'}<br/>
@@ -131,32 +130,37 @@ class GplNotificationSystem(models.Model):
             html_content += "</div>"
         else:
             html_content += """
-                <div style="background-color: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                <div style="background-color: #d1ecf1; border: 1px solid #bee5eb;
+                            padding: 15px; margin: 10px 0; border-radius: 5px;">
                     <h3 style="color: #0c5460; margin-top: 0;">📅 RDV AUJOURD'HUI</h3>
                     <p>✅ Aucun rendez-vous prévu aujourd'hui</p>
                 </div>
             """
 
+        # -----------------------
         # RDV de demain
+        # -----------------------
         if tomorrow:
             html_content += """
-                <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                <div style="background-color: #fff3cd; border: 1px solid #ffeaa7;
+                            padding: 15px; margin: 10px 0; border-radius: 5px;">
                     <h3 style="color: #856404; margin-top: 0;">📋 PRÉPARATION DEMAIN</h3>
             """
             for vehicle in tomorrow:
                 service_type = "Service GPL"
-                if hasattr(vehicle, 'next_service_type') and vehicle.next_service_type:
+                if getattr(vehicle, "next_service_type", False):
                     try:
-                        if hasattr(vehicle._fields.get('next_service_type', None), 'selection'):
-                            service_dict = dict(vehicle._fields['next_service_type'].selection)
+                        if hasattr(vehicle._fields.get("next_service_type"), "selection"):
+                            service_dict = dict(vehicle._fields["next_service_type"].selection)
                             service_type = service_dict.get(vehicle.next_service_type, vehicle.next_service_type)
                         else:
                             service_type = vehicle.next_service_type
-                    except:
+                    except Exception:
                         service_type = "Service GPL"
 
                 html_content += f"""
-                    <div style="background-color: white; padding: 10px; margin: 5px 0; border-radius: 3px;">
+                    <div style="background-color: white; padding: 10px;
+                                margin: 5px 0; border-radius: 3px;">
                         <strong>🚗 {vehicle.license_plate or 'N/A'}</strong><br/>
                         👤 Client: {vehicle.client_id.name if vehicle.client_id else 'N/A'}<br/>
                         ⏰ {vehicle.appointment_date.strftime('%H:%M') if vehicle.appointment_date else 'N/A'}<br/>
@@ -165,17 +169,23 @@ class GplNotificationSystem(models.Model):
                 """
             html_content += "</div>"
 
+        # -----------------------
         # RDV en retard
+        # -----------------------
         if overdue:
             html_content += """
-                <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                <div style="background-color: #f8d7da; border: 1px solid #f5c6cb;
+                            padding: 15px; margin: 10px 0; border-radius: 5px;">
                     <h3 style="color: #721c24; margin-top: 0;">⚠️ RETARDS À TRAITER</h3>
             """
             for vehicle in overdue:
                 days_late = (
-                        datetime.now().date() - vehicle.appointment_date.date()).days if vehicle.appointment_date else 0
+                    (datetime.now().date() - vehicle.appointment_date.date()).days
+                    if vehicle.appointment_date else 0
+                )
                 html_content += f"""
-                    <div style="background-color: white; padding: 10px; margin: 5px 0; border-radius: 3px;">
+                    <div style="background-color: white; padding: 10px;
+                                margin: 5px 0; border-radius: 3px;">
                         <strong>🚗 {vehicle.license_plate or 'N/A'}</strong><br/>
                         👤 Client: {vehicle.client_id.name if vehicle.client_id else 'N/A'}<br/>
                         ⏰ Prévu: {vehicle.appointment_date.strftime('%d/%m/%Y %H:%M') if vehicle.appointment_date else 'N/A'}<br/>
@@ -184,29 +194,13 @@ class GplNotificationSystem(models.Model):
                 """
             html_content += "</div>"
 
-        # Maintenances dues (si disponible)
-        if maintenance:
-            html_content += """
-                <div style="background-color: #e2e3e5; border: 1px solid #d6d8db; padding: 15px; margin: 10px 0; border-radius: 5px;">
-                    <h3 style="color: #383d41; margin-top: 0;">🔧 MAINTENANCES DUES</h3>
-            """
-            for vehicle in maintenance:
-                last_maintenance = "Jamais"
-                if hasattr(vehicle, 'last_maintenance_date') and vehicle.last_maintenance_date:
-                    last_maintenance = vehicle.last_maintenance_date.strftime('%d/%m/%Y')
-
-                html_content += f"""
-                    <div style="background-color: white; padding: 10px; margin: 5px 0; border-radius: 3px;">
-                        <strong>🚗 {vehicle.license_plate or 'N/A'}</strong><br/>
-                        👤 Client: {vehicle.client_id.name if vehicle.client_id else 'N/A'}<br/>
-                        📅 Dernière maintenance: {last_maintenance}
-                    </div>
-                """
-            html_content += "</div>"
-
+        # -----------------------
+        # Pied de mail
+        # -----------------------
         html_content += """
             </div>
-            <div style="background-color: #6c757d; color: white; padding: 15px; text-align: center;">
+            <div style="background-color: #6c757d; color: white;
+                        padding: 15px; text-align: center;">
                 <p style="margin: 0;">
                     Bonne journée ! 💪<br/>
                     <small>Email automatique - Système GPL CPSS</small>
@@ -298,10 +292,6 @@ class GplNotificationSystem(models.Model):
             ])
         }
 
-        # Pour l'instant, on évite le calcul de maintenance due
-        # Vous pourrez l'ajouter plus tard selon vos besoins
-        stats['maintenance_due'] = 0
-
         return stats
 
     def _send_internal_notification_to_manager(self, manager, stats):
@@ -314,7 +304,6 @@ class GplNotificationSystem(models.Model):
 
 📅 RDV aujourd'hui: {stats['total_appointments_today']}
 ⚠️ RDV en retard: {stats['overdue_appointments']}
-🔧 Maintenances dues: {stats['maintenance_due']}
 👥 Techniciens actifs: {stats['total_technicians_active']}
 
 {alert_icon} {priority_alerts}"""

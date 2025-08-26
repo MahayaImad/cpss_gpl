@@ -16,7 +16,7 @@
             <field name="department_id" ref="department_atelier_gpl"/>
             <field name="no_of_recruitment">5</field>
             <field name="description">
-                Technicien spécialisé dans l'installation, la maintenance et la réparation
+                Technicien spécialisé dans l'installation et la réparation
                 des systèmes GPL automobile. Responsable des contrôles techniques et
                 de la conformité des installations.
 

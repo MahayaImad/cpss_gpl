@@ -65,7 +65,6 @@ class StockLot(models.Model):
         ('too_old', 'Trop ancien')
     ], string="Statut réservoir", compute='_compute_reservoir_status', store=True)
 
-
     installation_date = fields.Date(
         string="Date d'installation",
         help="Date d'installation sur le véhicule"
@@ -92,10 +91,11 @@ class StockLot(models.Model):
     )
 
     # === CHAMPS CALCULÉS ===
-    age_years = fields.Float(
+    age_years = fields.Integer(
         string="Âge (années)",
         compute='_compute_age_years',
-        help="Âge du réservoir en années"
+        help="Âge du réservoir en années",
+        store = True
     )
 
     days_until_test = fields.Integer(

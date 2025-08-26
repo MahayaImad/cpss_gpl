@@ -11,7 +11,7 @@ class GplReservoirTesting(models.Model):
     _name = 'gpl.reservoir.testing'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Réépreuve Réservoir GPL'
-    _order = 'test_date desc'
+    _order = 'start_date desc'
 
     name = fields.Char(
         string='Référence',
@@ -22,11 +22,14 @@ class GplReservoirTesting(models.Model):
     )
 
     # Réservoir
+
     reservoir_lot_id = fields.Many2one(
         'stock.lot',
         string='Réservoir',
-        required=True,
-        domain=[('product_id.is_gpl_reservoir', '=', True)],
+        related='vehicle_id.reservoir_lot_id',
+        store=True,
+        readonly=False,  # si tu veux permettre de modifier via ce champ et que ça modifie aussi le véhicule
+        domain="[('product_id.is_gpl_reservoir', '=', True)]",
         tracking=True
     )
 
@@ -43,9 +46,21 @@ class GplReservoirTesting(models.Model):
         readonly=True
     )
 
+    test_frequency_years = fields.Integer(
+        string='Fréquence tests (années)',
+        related='reservoir_lot_id.test_frequency_years',
+        readonly=True
+    )
+
+    age_years = fields.Integer(
+        string='Âge (années)',
+        related='reservoir_lot_id.age_years',
+        readonly=True
+    )
+
     last_test_date = fields.Date(
         string='Dernière réépreuve',
-        compute='_compute_last_test_date',
+        related='reservoir_lot_id.last_test_date',
         store=True
     )
 
@@ -64,7 +79,7 @@ class GplReservoirTesting(models.Model):
     )
 
     # Test information
-    test_date = fields.Date(
+    start_date = fields.Date(
         string='Date du test',
         default=fields.Date.today,
         required=True,
@@ -84,10 +99,12 @@ class GplReservoirTesting(models.Model):
     ], string='Type de test', default='periodic', required=True)
 
     # Technicien/Organisme
-    technician_id = fields.Many2one(
+    technician_ids = fields.Many2many(
         'hr.employee',
-        string='Technicien',
-        required=True
+        'gpl_testing_technician_rel',
+        'testing_id',
+        'employee_id',
+        string='Techniciens'
     )
 
     # Paramètres du test
@@ -147,19 +164,13 @@ class GplReservoirTesting(models.Model):
     # État
     state = fields.Selection([
         ('draft', 'Brouillon'),
-        ('scheduled', 'Planifié'),
+        ('planned', 'Planifié'),
         ('in_progress', 'En cours'),
         ('done', 'Terminé'),
-        ('failed', 'Refusées'),
         ('cancel', 'Annulé'),
     ], string='État', default='draft', tracking=True)
 
     # Validité
-    validity_years = fields.Integer(
-        string='Validité (années)',
-        default=5,
-        required=True
-    )
 
     next_test_date = fields.Date(
         string='Prochaine réépreuve',
@@ -202,9 +213,9 @@ class GplReservoirTesting(models.Model):
     @api.depends('state')
     def _compute_permissions(self):
         for rec in self:
-            rec.can_cancel = rec.state in ['draft', 'scheduled', 'in_progress']
+            rec.can_cancel = rec.state in ['draft', 'planned', 'in_progress']
             rec.can_validate = rec.state == 'in_progress'
-            rec.can_start = rec.state == 'scheduled'
+            rec.can_start = rec.state == 'planned'
             rec.can_schedule = rec.state == 'draft'
 
     @api.model_create_multi
@@ -221,20 +232,6 @@ class GplReservoirTesting(models.Model):
                 test.client_id = test.vehicle_id.client_id
             else:
                 test.client_id = False
-
-    @api.depends('reservoir_lot_id')
-    def _compute_last_test_date(self):
-        for test in self:
-            if test.reservoir_lot_id:
-                # Chercher le dernier test terminé pour ce réservoir
-                last_test = self.search([
-                    ('reservoir_lot_id', '=', test.reservoir_lot_id.id),
-                    ('state', '=', 'done'),
-                    ('id', '!=', test.id)
-                ], order='test_date desc', limit=1)
-                test.last_test_date = last_test.test_date if last_test else False
-            else:
-                test.last_test_date = False
 
     @api.depends('initial_pressure', 'final_pressure')
     def _compute_pressure_drop(self):
@@ -255,20 +252,20 @@ class GplReservoirTesting(models.Model):
             else:
                 test.result = 'pending'
 
-    @api.depends('test_date', 'validity_years')
+    @api.depends('start_date', 'test_frequency_years')
     def _compute_next_test_date(self):
         for test in self:
-            if test.test_date and test.validity_years:
-                test.next_test_date = test.test_date + timedelta(days=test.validity_years * 365)
+            if test.start_date and test.test_frequency_years:
+                test.next_test_date = test.start_date + timedelta(days=test.test_frequency_years * 365)
             else:
                 test.next_test_date = False
 
-    @api.constrains('reservoir_lot_id', 'test_date')
+    @api.constrains('reservoir_lot_id', 'start_date')
     def _check_reservoir_age(self):
         for test in self:
             if test.reservoir_lot_id and test.reservoir_lot_id.fabrication_date:
-                age_years = (test.test_date - test.reservoir_lot_id.fabrication_date).days / 365
-                if age_years > 15:
+                age_years_res = (test.start_date - test.reservoir_lot_id.fabrication_date).days / 365
+                if age_years_res > self.age_years:
                     raise UserError(_("Ce réservoir a plus de 15 ans et ne peut plus être rééprouvé."))
 
     def action_schedule(self):
@@ -276,7 +273,7 @@ class GplReservoirTesting(models.Model):
         self.ensure_one()
         if self.state != 'draft':
             raise UserError(_("Seul un test en brouillon peut être planifié."))
-        self.state = 'scheduled'
+        self.state = 'planned'
 
     def action_validate_fail(self):
         self.ensure_one()
@@ -285,12 +282,12 @@ class GplReservoirTesting(models.Model):
 
         if self.result == 'pending':
             raise UserError(_("Veuillez compléter tous les résultats de test."))
-        self.state = 'failed'
+        self.result = 'fail'
 
     def action_start(self):
         """Démarre le test"""
         self.ensure_one()
-        if self.state not in ['draft', 'scheduled']:
+        if self.state not in ['draft', 'planned']:
             raise UserError(_("Le test doit être en brouillon ou planifié pour être démarré."))
         self.state = 'in_progress'
 
@@ -314,7 +311,7 @@ class GplReservoirTesting(models.Model):
         # Mettre à jour le réservoir
         if self.reservoir_lot_id:
             self.reservoir_lot_id.write({
-                'last_test_date': self.test_date,
+                'last_test_date': self.start_date,
                 'next_test_date': self.next_test_date,
                 'reservoir_status': 'valid' if self.result == 'pass' else 'expired'
             })

@@ -44,11 +44,6 @@ class GplRepairOrder(models.Model):
         readonly=True
     )
 
-    date_scheduled = fields.Datetime(
-        string='Date planifiée',
-        tracking=True
-    )
-
     date_start = fields.Datetime(
         string='Date de début',
         tracking=True
@@ -68,7 +63,6 @@ class GplRepairOrder(models.Model):
     repair_type = fields.Selection([
         ('maintenance', 'Maintenance préventive'),
         ('repair', 'Réparation'),
-        ('inspection', 'Inspection'),
         ('modification', 'Modification'),
         ('urgent', 'Intervention urgente'),
     ], string='Type de réparation', default='repair', required=True)

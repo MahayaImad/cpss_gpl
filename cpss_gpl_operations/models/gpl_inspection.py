@@ -10,7 +10,7 @@ class GplInspection(models.Model):
     _name = 'gpl.inspection'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Contrôle Technique GPL'
-    _order = 'date_inspection desc'
+    _order = 'date_start desc'
 
     name = fields.Char(
         string='Référence',
@@ -38,7 +38,7 @@ class GplInspection(models.Model):
     )
 
     # Informations du contrôle
-    date_inspection = fields.Date(
+    date_start = fields.Date(
         string='Date du contrôle',
         default=fields.Date.today,
         required=True,
@@ -56,26 +56,20 @@ class GplInspection(models.Model):
         store=True
     )
 
-    validity_months = fields.Integer(
-        string='Validité (mois)',
-        default=12,
-        required=True
-    )
-
     # Type de contrôle
     inspection_type = fields.Selection([
-        ('periodic', 'Contrôle périodique'),
-        ('initial', 'Contrôle initial'),
-        ('counter_visit', 'Contre-visite'),
+        ('periodic', 'Contrôle triennal'),
+        ('initial', 'Contrôle d\'homologation initial'),
         ('voluntary', 'Contrôle volontaire'),
-        ('administrative', 'Vérification administrative'),
     ], string='Type de contrôle', default='periodic', required=True)
 
     # Technicien
-    inspector_id = fields.Many2one(
+    technician_ids = fields.Many2many(
         'hr.employee',
-        string='Contrôleur',
-        required=True
+        'gpl_inspection_technician_rel',
+        'inspection_id',
+        'employee_id',
+        string='Contrôleurs'
     )
 
     # Points de contrôle
@@ -137,7 +131,7 @@ class GplInspection(models.Model):
     # État
     state = fields.Selection([
         ('draft', 'Brouillon'),
-        ('scheduled', 'Planifié'),
+        ('planned', 'Planifié'),
         ('in_progress', 'En cours'),
         ('done', 'Terminé'),
         ('cancel', 'Annulé'),
@@ -169,6 +163,12 @@ class GplInspection(models.Model):
         string='Date du certificat',
         readonly=True
     )
+
+    gpl_control_periodic = fields.Integer(
+        string="Contrôle périodique (mois)",
+        default=lambda self: int(self.env['ir.config_parameter'].sudo().get_param('cpss_gpl.control_periodic', 36)),
+        help="Contrôle périodique obligatoire de l'installation par l'ingénieur des mines"
+    )
     # Notes
     notes = fields.Text(string='Notes internes')
 
@@ -179,12 +179,12 @@ class GplInspection(models.Model):
                 vals['name'] = self.env['ir.sequence'].next_by_code('gpl.inspection') or 'New'
         return super().create(vals_list)
 
-    @api.depends('date_inspection', 'validity_months')
+    @api.depends('date_start', 'gpl_control_periodic')
     def _compute_next_inspection(self):
         for inspection in self:
-            if inspection.date_inspection and inspection.validity_months:
-                inspection.date_next_inspection = inspection.date_inspection + timedelta(
-                    days=inspection.validity_months * 30)
+            if inspection.date_start and inspection.gpl_control_periodic:
+                inspection.date_next_inspection = inspection.date_start + timedelta(
+                    days=inspection.gpl_control_periodic * 30)
             else:
                 inspection.date_next_inspection = False
 
@@ -219,12 +219,12 @@ class GplInspection(models.Model):
         self.ensure_one()
         if self.state != 'draft':
             raise UserError(_("Seul un contrôle en brouillon peut être planifié."))
-        self.state = 'scheduled'
+        self.state = 'planned'
 
     def action_start(self):
         """Démarre le contrôle"""
         self.ensure_one()
-        if self.state not in ['draft', 'scheduled']:
+        if self.state not in ['draft', 'planned']:
             raise UserError(_("Le contrôle doit être en brouillon ou planifié pour être démarré."))
         self.state = 'in_progress'
 
@@ -240,13 +240,16 @@ class GplInspection(models.Model):
             self.certificate_date = fields.Date.today()
 
         self.state = 'done'
+        if self.result == 'fail':
+            return
 
         # Mettre à jour le véhicule
-        if self.vehicle_id:
-            self.vehicle_id.write({
-                'date_inspection': self.date_inspection,
-                'date_next_inspection': self.date_next_inspection
-            })
+        if self.inspection_type != 'voluntary':
+            if self.vehicle_id:
+                self.vehicle_id.write({
+                    'date_inspection': self.date_start,
+                    'date_next_inspection': self.date_next_inspection
+                })
 
     def action_cancel(self):
         """Annule le contrôle"""

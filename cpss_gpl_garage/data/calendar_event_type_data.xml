@@ -12,11 +12,6 @@
             <field name="color">1</field>
         </record>
 
-        <record id="calendar_event_type_maintenance" model="calendar.event.type">
-            <field name="name">⚙️ Maintenance GPL</field>
-            <field name="color">3</field>
-        </record>
-
         <record id="calendar_event_type_inspection" model="calendar.event.type">
             <field name="name">✅ Contrôle GPL</field>
             <field name="color">4</field>

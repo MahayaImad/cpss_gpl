@@ -48,6 +48,18 @@
               action="action_gpl_vehicle_planning"
               sequence="20"/>
 
+    <menuitem id="menu_gpl_need_inspection_section"
+              name="────────────"
+              parent="menu_gpl_garage_vehicles"
+              sequence="40"/>
+
+    <menuitem id="menu_gpl_vehicle_need_inspection"
+              name="Véhicules à contrôler"
+              parent="menu_gpl_need_inspection_section"
+              action="action_gpl_vehicle_need_inspection_tree"
+              sequence="50"/>
+
+
     <!-- === CLIENTS === -->
     <menuitem id="menu_gpl_garage_clients"
               name="👥 Clients"

@@ -1,6 +1,7 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -38,7 +39,6 @@ class GplVehicle(models.Model):
     next_service_type = fields.Selection([
         ('installation', 'Installation GPL'),
         ('repair', 'Réparation'),
-        ('maintenance', 'Maintenance'),
         ('inspection', 'Contrôle/Inspection'),
         ('testing', 'Réépreuve réservoir'),
     ], string='Type de service', tracking=True)
@@ -155,24 +155,34 @@ class GplVehicle(models.Model):
             else:
                 vehicle.appointment_status = 'scheduled'
 
+    @api.model
+    def _get_need_inspection_domain(self):
+        """Return domain for vehicles to control dynamically"""
+        days = int(self.env["ir.config_parameter"].sudo().get_param(
+            "cpss_gpl.notification_test_days", 30
+        ))
+        today = fields.Date.context_today(self)
+        limit_date = today + relativedelta(days=days)
+        return [
+            ("date_next_inspection", ">=", today),
+            ("date_next_inspection", "<=", limit_date),
+        ]
+
+    @api.model
+    def action_vehicle_need_inspection(self):
+        """Custom action with dynamic domain"""
+        domain = self._get_need_inspection_domain()
+        return {
+            "name": "Véhicules à contrôler",
+            "type": "ir.actions.act_window",
+            "res_model": "gpl.vehicle",
+            "view_mode": "tree,form,activity",
+            "domain": domain,
+        }
+
     def _get_default_status(self):
         """Statut par défaut"""
         return self.env.ref('cpss_gpl_garage.vehicle_status_nouveau', raise_if_not_found=False)
-
-    # === ACTIONS PLANNING ===
-    # def action_reschedule_appointment(self):
-    #     """Ouvre l'assistant de reprogrammation"""
-    #     self.ensure_one()
-    #     return {
-    #         'name': _('Reprogrammer le rendez-vous'),
-    #         'type': 'ir.actions.act_window',
-    #         'res_model': 'gpl.reschedule.wizard',
-    #         'view_mode': 'form',
-    #         'target': 'new',
-    #         'context': {
-    #             'default_vehicle_id': self.id,
-    #         }
-    #     }
 
     def action_start_service(self):
         """Démarre le service"""

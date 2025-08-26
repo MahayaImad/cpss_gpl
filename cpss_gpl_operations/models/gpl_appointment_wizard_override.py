@@ -45,7 +45,7 @@ class VehicleAppointmentWizardOverride(models.TransientModel):
         """Affiche les champs selon le type de service"""
         for wizard in self:
             wizard.show_reservoir_fields = wizard.service_type in ['installation', 'testing']
-            wizard.show_repair_fields = wizard.service_type in ['repair', 'maintenance']
+            wizard.show_repair_fields = wizard.service_type in ['repair']
 
     def _update_existing_vehicle(self):
         """Surcharge pour créer l'opération si demandé"""
@@ -102,8 +102,6 @@ class VehicleAppointmentWizardOverride(models.TransientModel):
             return self._create_installation_from_appointment(common_data)
         elif self.service_type == 'repair':
             return self._create_repair_from_appointment(common_data)
-        elif self.service_type == 'maintenance':
-            return self._create_maintenance_from_appointment(common_data)
         elif self.service_type == 'inspection':
             return self._create_inspection_from_appointment(common_data)
         elif self.service_type == 'testing':
@@ -150,28 +148,6 @@ class VehicleAppointmentWizardOverride(models.TransientModel):
             'target': 'current',
         }
 
-    def _create_maintenance_from_appointment(self, common_data):
-        """Crée une maintenance depuis le rendez-vous"""
-        maintenance = self.env['gpl.repair.order'].create({
-            **common_data,
-            'repair_type': 'maintenance',
-            'priority': self.priority,
-            'symptoms': 'Maintenance préventive programmée',
-            'diagnosis': self.notes or '',
-            'date_scheduled': common_data['date_planned'],
-            'state': 'draft',
-        })
-
-        maintenance.action_ready()
-
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Maintenance GPL Planifiée'),
-            'res_model': 'gpl.repair.order',
-            'res_id': maintenance.id,
-            'view_mode': 'form',
-            'target': 'current',
-        }
 
     def _create_inspection_from_appointment(self, common_data):
         """Crée un contrôle depuis le rendez-vous"""

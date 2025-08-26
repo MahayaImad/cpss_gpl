@@ -39,6 +39,13 @@ class ResConfigSettings(models.TransientModel):
         help="Âge maximum autorisé pour un réservoir GPL"
     )
 
+    gpl_control_periodic = fields.Integer(
+        string="Contrôle périodique - triennal (mois)",
+        config_parameter='cpss_gpl.control_periodic',
+        default=36,
+        help="Contrôle périodique obligatoire de l'installation par l'ingénieur des mines"
+    )
+
     # === PARAMÈTRES WORKFLOW ===
     gpl_use_advanced_workflow = fields.Boolean(
         string="Workflow avancé",
@@ -85,12 +92,6 @@ class ResConfigSettings(models.TransientModel):
         help="Nombre de jours avant expiration pour envoyer l'alerte"
     )
 
-    gpl_notification_email = fields.Char(
-        string="Email notifications",
-        config_parameter='cpss_gpl.notification_email',
-        help="Email pour recevoir les notifications système"
-    )
-
     # === PARAMÈTRES RAPPORTS ===
     gpl_certificate_template = fields.Selection([
         ('standard', 'Standard CPSS'),
@@ -119,12 +120,12 @@ class ResConfigSettings(models.TransientModel):
             gpl_default_warranty_months=int(params.get_param('cpss_gpl.default_warranty_months', 24)),
             gpl_reservoir_test_frequency=int(params.get_param('cpss_gpl.reservoir_test_frequency', 5)),
             gpl_reservoir_max_age=int(params.get_param('cpss_gpl.reservoir_max_age', 15)),
+            gpl_control_periodic=int(params.get_param('cpss_gpl.gpl_control_periodic', 36)),
             gpl_require_appointment=params.get_param('cpss_gpl.require_appointment', True),
             gpl_simplified_mode=params.get_param('cpss_gpl.simplified_mode', True),
             gpl_default_warehouse_id=int(params.get_param('cpss_gpl.default_warehouse_id', 0)) or False,
             gpl_default_pricelist_id=int(params.get_param('cpss_gpl.default_pricelist_id', 0)) or False,
             gpl_notification_test_days=int(params.get_param('cpss_gpl.notification_test_days', 30)),
-            gpl_notification_email=params.get_param('cpss_gpl.notification_email', ''),
             gpl_certificate_template=params.get_param('cpss_gpl.certificate_template', 'standard'),
         )
         return res
@@ -139,6 +140,7 @@ class ResConfigSettings(models.TransientModel):
         params.set_param('cpss_gpl.company_license', self.gpl_company_license or '')
         params.set_param('cpss_gpl.default_warranty_months', self.gpl_default_warranty_months)
         params.set_param('cpss_gpl.reservoir_test_frequency', self.gpl_reservoir_test_frequency)
+        params.set_param('cpss_gpl.gpl_control_periodic', self.gpl_control_periodic)
         params.set_param('cpss_gpl.reservoir_max_age', self.gpl_reservoir_max_age)
         params.set_param('cpss_gpl.require_appointment', self.gpl_require_appointment)
         params.set_param('cpss_gpl.simplified_mode', self.gpl_simplified_mode)
@@ -147,7 +149,6 @@ class ResConfigSettings(models.TransientModel):
         params.set_param('cpss_gpl.default_pricelist_id',
                          self.gpl_default_pricelist_id.id if self.gpl_default_pricelist_id else 0)
         params.set_param('cpss_gpl.notification_test_days', self.gpl_notification_test_days)
-        params.set_param('cpss_gpl.notification_email', self.gpl_notification_email or '')
         params.set_param('cpss_gpl.certificate_template', self.gpl_certificate_template)
 
         # Sauvegarder automatiquement le workflow avancé (inverse du mode simplifié)
