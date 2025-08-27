@@ -58,7 +58,7 @@
                                 </th>
                                 <th class="text-center" style="width: 33%; background-color: #e9ecef;">
                                     BUREAU DE L'INDUSTRIE DE :
-                                    <br/><strong t-field="doc.company_id.city"/>
+                                    <br/><strong t-esc="env.company.city"/>
                                 </th>
                             </tr>
                             <tr style="height: 200px; vertical-align: top;">
@@ -113,8 +113,8 @@
                             <tr>
                                 <td width="50%" style="padding: 20px;">
                                     <p><strong>Établissement:</strong></p>
-                                    <p t-field="doc.company_id.name"/>
-                                    <p><strong>Agrément N°:</strong> <span t-field="doc.company_id.gpl_company_license"/></p>
+                                    <p t-esc="env.company.name"/>
+                                    <p><strong>Agrément N°:</strong> <span t-esc="env['ir.config_parameter'].sudo().get_param('cpss_gpl.company_license')"/></p>
                                     <p><strong>Date d'installation:</strong>
                                     <span t-field="doc.date_installation" t-options="{'widget': 'date'}"/></p>
                                 </td>
