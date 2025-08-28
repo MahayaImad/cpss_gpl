@@ -52,8 +52,6 @@ Caractéristiques principales :
         'views/gpl_reservoir_testing_views.xml',
         'views/gpl_operations_menus.xml',
 
-        # Reports
-        'reports/gpl_service_report.xml',
     ],
     'assets': {
         'web.assets_frontend': [

@@ -63,6 +63,10 @@
         # === FORMATS DE PAPIER ===
         'data/report_paperformat_data.xml',
 
+        # === Modifications des vues ===
+        'views/gpl_installation_views.xml',
+        'views/gpl_inspection_views.xml',
+
         # === RAPPORTS ===
         # Templates de base
         'reports/gpl_report_templates.xml',
@@ -71,20 +75,20 @@
         'reports/gpl_montage_certificate.xml',
         'reports/gpl_triennial_certificate.xml',
         'reports/gpl_authorization_report.xml',
+        'reports/gpl_installation_invoice.xml',
+        'reports/gpl_card.xml',
 
         # Rapports administratifs
         'reports/gpl_bordereau_envoi.xml',
         'reports/gpl_custom_invoice.xml',
 
         # Rapports opérationnels
-        'reports/gpl_inspection_report.xml',
-        'reports/gpl_repair_report.xml',
+        # 'reports/gpl_inspection_report.xml',
+        # 'reports/gpl_repair_report.xml',
 
         # Rapports analytiques
-        'reports/gpl_reservoir_report.xml',
+        #'reports/gpl_reservoir_report.xml',
 
-        # === MENUS ===
-        'views/gpl_reports_menus.xml',
     ],
 
     # Configuration

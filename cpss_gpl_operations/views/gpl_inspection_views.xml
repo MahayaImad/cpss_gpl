@@ -11,8 +11,6 @@
                             class="btn-primary" invisible="state != 'draft'"/>
                     <button name="action_done" string="Valider" type="object"
                             class="btn-success" invisible="state != 'in_progress'"/>
-                    <button name="action_print_certificate" string="Imprimer Certificat" type="object"
-                            class="btn-primary" invisible="state != 'done'"/>
                     <button name="action_cancel" string="Annuler" type="object"
                            invisible="state not in ['draft', 'planned', 'in_progress']"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,done"/>

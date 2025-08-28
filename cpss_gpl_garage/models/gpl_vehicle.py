@@ -19,7 +19,6 @@ class GplVehicle(models.Model):
     display_name = fields.Char('Nom complet', compute='_compute_display_name', store=True)
     license_plate = fields.Char('Plaque d\'immatriculation', required=True, tracking=True)
     vin = fields.Char('Numéro de châssis (VIN)', tracking=True)
-
     vehicle_type_code = fields.Char(
         string="Type de véhicule",
         compute="_compute_vehicle_type_code",

@@ -9,7 +9,7 @@ class GplRepairOrder(models.Model):
     _name = 'gpl.repair.order'
     _inherit = ['mail.thread', 'mail.activity.mixin', 'gpl.auto.document.mixin']
     _description = 'Ordre de Réparation GPL'
-    _order = 'priority desc, date_order desc'
+    _order = 'priority desc, date_start desc'
 
     name = fields.Char(
         string='Référence',
@@ -37,12 +37,6 @@ class GplRepairOrder(models.Model):
     )
 
     # Dates
-    date_order = fields.Datetime(
-        string='Date de création',
-        default=fields.Datetime.now,
-        required=True,
-        readonly=True
-    )
 
     date_start = fields.Datetime(
         string='Date de début',

@@ -3,150 +3,152 @@
     <!-- Action de rapport pour l'autorisation GPL -->
     <record id="action_report_gpl_authorization" model="ir.actions.report">
         <field name="name">Autorisation d'utilisation du GPL</field>
-        <field name="model">gpl.service.installation</field>
+        <field name="model">gpl.inspection</field>
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">cpss_gpl_reports.report_gpl_authorization</field>
         <field name="report_file">cpss_gpl_reports.report_gpl_authorization</field>
         <field name="print_report_name">'Autorisation_GPL_%s' % (object.name)</field>
-        <field name="binding_model_id" ref="cpss_gpl_operations.model_gpl_service_installation"/>
+        <field name="binding_model_id" ref="cpss_gpl_operations.model_gpl_inspection"/>
         <field name="binding_type">report</field>
         <field name="paperformat_id" ref="paperformat_gpl_certificate"/>
+
     </record>
 
     <!-- Template de l'autorisation -->
     <template id="report_gpl_authorization">
-        <t t-call="web.html_container">
+        <t t-call="web.basic_layout">
             <t t-foreach="docs" t-as="doc">
-                <t t-call="cpss_gpl_reports.gpl_external_layout">
-                    <t t-call="cpss_gpl_reports.gpl_report_assets"/>
-                    <div class="page">
-                        <!-- En-tête -->
-                        <div class="text-center">
-                            <h2 style="color: #007bff; font-weight: bold;">
-                                RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE
-                            </h2>
-                            <h3>MINISTÈRE DE L'INDUSTRIE ET DES MINES</h3>
-                            <h3>DIRECTION DES MINES</h3>
-                            <div style="margin: 20px 0;">
-                                <h1 style="border: 3px solid #007bff; padding: 10px; display: inline-block;">
-                                    AUTORISATION D'UTILISATION DU GPL
-                                </h1>
-                            </div>
-                            <p style="font-size: 12px;">
-                                (Décret N° 83/496 du 13/08/83)
-                            </p>
-                        </div>
+                <div class="page">
+                    <style>
+                            /* Styles pour les caractères accentués */
+                            @font-face {
+                                font-family: 'Roboto';
+                                src: url('/web/static/lib/roboto/fonts/Roboto-Regular.ttf') format('truetype');
+                                font-weight: normal;
+                                font-style: normal;
+                            }
+                            body {
+                                font-family: 'Roboto', sans-serif;
+                            }
+                            .no-margin {
+                                margin: 0 0 0 0;
+                                padding: 0;
+                            }
+                            .section-espace {
+                                margin: 25px 0;
+                            }
+                            .margin-top {
+                                margin: 70px 0 0 0;
+                            }
+                            .margin-left-right{
+                                margin: O 70px;
+                            }
+                            .table-box {
+                                border: 2px dotted #ddd;
+                                border-radius: 8px;
+                                padding: 8px;
+                            }
+                    </style>
+                    <!-- Header -->
+                    <div class="text-center">
+                        <p class="no-margin">République Algérienne Démocratique et Populaire</p>
+                        <p class="no-margin">------------------------------------</p>
+                        <p class="no-margin"><strong>MINISTERE DE L'INDUSTRIE</strong></p>
+                        <p class="no-margin">------------------------------------</p>
+                        <p class="no-margin">Direction de l'industrie et des Mines</p>
+                        <div class="section-espace"/>
+                        <h4 class="margin-top">AUTORISATION D'UTILISATION DU GPL</h4>
+                        <p>(Décret No. 83/496 du 13/08/83)</p>
+                    </div>
 
-                        <!-- Informations du véhicule et propriétaire -->
-                        <div style="margin: 30px 0; font-size: 16px;">
-                            <p>
-                                Véhicule Immatriculé : <strong style="font-size: 20px;" t-field="doc.vehicle_id.license_plate"/>
-                            </p>
-                            <p>
-                                Appartenant à : <strong t-field="doc.client_id.name"/>
-                            </p>
-                        </div>
 
-                        <!-- Tableau principal -->
-                        <table class="table table-bordered" style="margin-top: 30px;">
-                            <tr style="height: 50px;">
-                                <th class="text-center" style="width: 33%; background-color: #e9ecef;">
-                                    VÉHICULE
-                                </th>
-                                <th class="text-center" style="width: 33%; background-color: #e9ecef;">
-                                    RÉSERVOIR GPL
-                                </th>
-                                <th class="text-center" style="width: 33%; background-color: #e9ecef;">
-                                    BUREAU DE L'INDUSTRIE DE :
-                                    <br/><strong t-esc="env.company.city"/>
-                                </th>
-                            </tr>
-                            <tr style="height: 200px; vertical-align: top;">
-                                <td style="padding: 15px;">
-                                    <p><strong>MARQUE:</strong><br/>
-                                    <span t-field="doc.vehicle_id.model_id.brand_id.name"/></p>
-
-                                    <p><strong>TYPE:</strong><br/>
-                                    <span t-field="doc.vehicle_id.vehicle_type_code"/></p>
-
-                                    <p><strong>SÉRIE N°:</strong><br/>
-                                    <span t-field="doc.vehicle_id.vin_sn"/></p>
-
-                                    <p><strong>ANNÉE:</strong><br/>
-                                    <span t-field="doc.vehicle_id.model_year"/></p>
-                                </td>
-                                <td style="padding: 15px;">
-                                    <p><strong>N°:</strong><br/>
-                                    <span t-field="doc.reservoir_id.name"/></p>
-
-                                    <p><strong>FABRIQUÉ EN:</strong><br/>
-                                    <t t-if="doc.reservoir_id.manufacturing_date">
-                                        <span t-esc="doc.reservoir_id.manufacturing_date.year"/>
-                                    </t></p>
-
-                                    <p><strong>À ÉPROUVER</strong></p>
-
-                                    <p><strong>AVANT LE:</strong><br/>
-                                    <t t-if="doc.reservoir_id.next_test_date">
-                                        <span t-field="doc.reservoir_id.next_test_date" t-options="{'format': 'MM/yyyy'}"/>
-                                    </t></p>
-                                </td>
-                                <td style="padding: 15px;">
-                                    <div style="text-align: center; margin-top: 20px;">
-                                        <p><strong>CONTRÔLE TECHNIQUE</strong></p>
-                                        <p>Date: _______________</p>
-                                        <p>Signature et Cachet</p>
-                                        <div style="height: 80px; border: 1px dashed #666; margin-top: 10px;">
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        </table>
-
-                        <!-- Section installation -->
-                        <table class="table table-bordered" style="margin-top: 20px;">
-                            <tr>
-                                <th colspan="2" class="text-center" style="background-color: #e9ecef;">
-                                    INSTALLATION RÉALISÉE PAR
-                                </th>
-                            </tr>
-                            <tr>
-                                <td width="50%" style="padding: 20px;">
-                                    <p><strong>Établissement:</strong></p>
-                                    <p t-esc="env.company.name"/>
-                                    <p><strong>Agrément N°:</strong> <span t-esc="env['ir.config_parameter'].sudo().get_param('cpss_gpl.company_license')"/></p>
-                                    <p><strong>Date d'installation:</strong>
-                                    <span t-field="doc.date_installation" t-options="{'widget': 'date'}"/></p>
-                                </td>
-                                <td width="50%" style="padding: 20px;">
-                                    <div style="text-align: center;">
-                                        <p><strong>Signature et Cachet</strong></p>
-                                        <div style="height: 100px; border: 1px dashed #666; margin-top: 10px;">
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        </table>
-
-                        <!-- Note importante -->
-                        <div style="margin-top: 30px; padding: 20px; border: 2px solid #dc3545; background-color: #f8d7da;">
-                            <h4 style="color: #dc3545;">IMPORTANT</h4>
-                            <ul style="margin: 10px 0;">
-                                <li>Cette autorisation doit être conservée avec les documents du véhicule</li>
-                                <li>Le réservoir GPL doit être rééprouvé avant la date indiquée</li>
-                                <li>Toute modification du système GPL doit être déclarée</li>
-                                <li>Le contrôle technique GPL est obligatoire tous les 3 ans</li>
-                            </ul>
-                        </div>
-
-                        <!-- Référence -->
-                        <div style="margin-top: 20px; text-align: center; font-size: 12px; color: #666;">
-                            <p>
-                                Autorisation N° : <strong t-field="doc.name"/>
-                            </p>
+                    <!-- Vehicle and Owner Information -->
+                    <div class="row mt-3">
+                        <div class="col-12 margin-top">
+                            <p>Véhicule Immatriculé :    <strong t-field="doc.vehicle_id.license_plate"/></p>
+                            <p>Appartenant à :           <strong t-field="doc.vehicle_id.client_id.name"/></p>
                         </div>
                     </div>
-                </t>
+
+                    <!-- Main Information Table -->
+                    <div class="row mt-4">
+                        <div class="col-12 table-box">
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th class="text-center align-middle" style="width: 33%;">VEHICULE</th>
+                                    <th class="text-center align-middle" style="width: 33%;">RESERVOIR GPL</th>
+                                    <th class="text-center align-middle" style="width: 33%;">BUREAU DE L'INDUSTRIE DE :
+                                    <p><strong t-esc="env.company.city"/></p></th>
+                                </tr>
+                                <tr>
+                                    <td class="text-left align-middle">
+                                        <p>MARQUE: <strong t-field="doc.vehicle_id.model_id.brand_id.name"/></p>
+                                        <p>TYPE: <strong t-field="doc.vehicle_id.vehicle_type_code"/></p>
+                                        <p>SERIE N°: <strong t-field="doc.vehicle_id.vin"/></p>
+                                        <p>ANNEE: <strong t-field="doc.vehicle_id.year"/></p>
+                                    </td>
+                                    <td class="text-left align-middle">
+                                        <p>N°: <strong t-field="doc.vehicle_id.reservoir_lot_id.name"/></p>
+                                        <p>FABRIQUE EN:
+                                            <t t-if="doc.vehicle_id.reservoir_lot_id.manufacturing_date">
+                                                <strong t-esc="doc.vehicle_id.reservoir_lot_id.manufacturing_date.year" />
+                                            </t>
+                                        </p>
+                                        <p>A EPROUVER</p>
+                                        <p>AVANT LE:
+                                            <t t-if="doc.vehicle_id.reservoir_lot_id.next_test_date">
+                                                <strong t-field="doc.vehicle_id.reservoir_lot_id.next_test_date" t-options="{'format': 'MM/yyyy'}"/>
+                                            </t>
+                                        </p>
+                                    </td>
+                                    <td class="text-left align-middle">
+                                        <p>CONTROLE TECHNIQUE</p>
+                                        <p>DU: </p>
+                                        <p>L'EXPERT:</p>
+                                        <p>CACHET</p>
+                                        <p>SIGNATURE</p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3">
+                                        <span>VEHICULE A PRESENTER AU CONTROLE TECHNIQUE AVANT :</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Additional Instructions -->
+                    <div class="margin-top">
+                        <div class="row mt-4">
+                            <div class="col-2 margin-top"/>
+                            <div class="col-8 text-center">
+                                <p style="text-align: center;">
+                                    Toutes modification ou réparation intervenant sur une installation au GPL
+                                    équipant un véhicule automobile doit faire l'objet d'un agrément conformé-
+                                    ment aux préscriptions du décret No 83/496 relatif aux conditions d'utilisation
+                                    et des distribution du GPL - Carburant sur les véhicules automobiles.
+                                </p>
+                            </div>
+                            <div class="col-2"/>
+                        </div>
+                    </div>
+
+                    <!-- Special Instructions -->
+                    <div class="row mt-4">
+                        <div class="col-2"/>
+                        <div class="col-8 text-center">
+                            <h5>CONSIGNES PARTICULIERES</h5>
+                            <p style="text-align: center;">
+                                A l'issue de chaque chargement, il importe d'aérer suffisamment et efficacement
+                                aussi bien le coffre que l'habitacle.
+                                Durant cette opération, les passagers et le conducteur devront s'abstenir d'uti-
+                                liser ou de provoquer toute flamme ou étincelle pour quelque motif que ce soit.
+                            </p>
+                        </div>
+                        <div class="col-2"/>
+                    </div>
+                </div>
             </t>
         </t>
     </template>

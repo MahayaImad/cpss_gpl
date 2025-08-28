@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+
+    <record id="view_gpl_installation_form_inherit" model="ir.ui.view">
+        <field name="name">gpl.installation.form.inherit.print</field>
+        <field name="model">gpl.service.installation</field>
+        <field name="inherit_id" ref="cpss_gpl_operations.view_gpl_service_installation_form_simple"/>
+        <field name="arch" type="xml">
+
+            <!-- Target the statusbar field and insert the new button before it -->
+            <xpath expr="//header/field[@name='state']" position="before">
+                <button name="action_print_certificate"
+                        string="Imprimer Certificat"
+                        type="object"
+                        class="btn-primary"
+                        invisible="state != 'done'"/>
+
+                <button name="action_print_gpl_invoice"
+                        string="Imprimer Facture GPL"
+                        type="object"
+                        class="btn-info"
+                        invisible="state != 'done'"/>
+            </xpath>
+
+        </field>
+    </record>
+
+
+</odoo>

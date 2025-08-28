@@ -264,16 +264,6 @@ class GplInspection(models.Model):
             raise UserError(_("Un contrôle terminé ne peut pas être annulé."))
         self.state = 'cancel'
 
-    def action_print_certificate(self):
-        """Imprime le certificat de contrôle"""
-        self.ensure_one()
-        if self.state != 'done' or self.result != 'pass':
-            raise UserError(_("Le certificat ne peut être imprimé que pour un contrôle validé et terminé."))
-
-        return self.env.ref('cpss_gpl_operations.report_gpl_inspection_certificate').report_action(self)
-
-    # Ajouter cette méthode dans le modèle gpl.inspection
-
     @api.model
     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
         """Override pour forcer l'affichage de toutes les colonnes d'états dans kanban"""

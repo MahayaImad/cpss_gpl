@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Action de rapport pour la Carte d'autorisation d'utilisation du GPL -->
+    <record id="action_report_gpl_card" model="ir.actions.report">
+        <field name="name">Carte d'autorisation GPL</field>
+        <field name="model">gpl.inspection</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cpss_gpl_reports.report_gpl_card</field>
+        <field name="report_file">cpss_gpl_reports.report_gpl_card</field>
+        <field name="print_report_name">'Carte_%s' % (object.certificate_number or object.name)</field>
+        <field name="binding_model_id" ref="cpss_gpl_operations.model_gpl_inspection"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_gpl_card"/>
+    </record>
+
+    <template id="report_gpl_card">
+    <t t-call="web.basic_layout">
+        <t t-foreach="docs" t-as="o">
+
+            <!-- Styles spécifiques pour ce rapport -->
+                    <style>
+                        @font-face {
+                            font-family: 'Roboto';
+                            src: url('/web/static/lib/roboto/fonts/Roboto-Regular.ttf') format('truetype');
+                            font-weight: normal;
+                            font-style: normal;
+                        }
+                        body {
+                            font-family: 'Roboto', sans-serif;
+                        }
+                        .field-box {
+                            border: 2px dotted #ccc;
+                            padding: 6px 10px;
+                            margin-bottom: 15px;
+                            min-height: 30px;
+                        }
+                        .field-label {
+                            font-weight: bold;
+                            color: #333;
+                            margin-bottom: 5px;
+                            text-align: center;
+                            font-size: 18px;
+                        }
+                        .blank-label {
+                            font-weight: bold;
+                            color: #FFF;
+                            margin-bottom: 5px;
+                            text-align: center;
+                            font-size: 18px;
+                        }
+                        .certificate-title {
+                            font-size: 28px;
+                            font-weight: bold;
+                            color: #333;
+                            margin-top: 10px;
+                            text-transform: uppercase;
+                            text-align: center;
+                        }
+                        .certificate-header {
+                            text-align: center;
+                            margin-bottom: 55px;
+                            padding-bottom: 15px;
+                            border-bottom: 2px solid #4CAF50;
+                        }
+                        .company-info {
+                            text-align: center;
+                            font-size: 14px;
+                            line-height: 1.4;
+                        }
+                        .section-separator {
+                            border-top: 1px solid #ddd;
+                            margin: 15px 0;
+                            margin-bottom : 35px;
+                        }
+                        .section-espace {
+                            margin: 15px 0;
+                            margin-bottom : 25px;
+                        }
+                        .installation-notes {
+                            background-color: #f5f5f5;
+                            border: 1px solid #ddd;
+                            padding: 10px;
+                            margin: 15px 0;
+                            min-height: 100px;
+                        }
+                        /* Styles pour les group boxes */
+                        .group-box {
+                            border: 2px dotted #ddd;
+                            border-radius: 8px;
+                            margin: 15px 0;
+                            padding: 0;
+                            position: relative;
+                            background-color: #fafafa;
+                        }
+
+                        .group-box-header {
+                            background-color: #f0f0f0;
+                            border-bottom: 1px solid #ddd;
+                            padding: 8px 15px;
+                            font-weight: bold;
+                            color: #333;
+                            font-size: 16px;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                        }
+
+                        .group-box-content {
+                            padding: 18px;
+                        }
+
+                        /* Alternative style avec legend */
+                        .group-box-legend {
+                            border: 2px dotted #ddd;
+                            border-radius: 8px;
+                            margin: 15px;
+                            padding: 15px;
+                            position: relative;
+                            background-color: #fafafa;
+                        }
+
+                        .group-box-legend .legend-title {
+                            position: absolute;
+                            top: -12px;
+                            left: 15px;
+                            background-color: white;
+                            padding: 0 10px;
+                            font-weight: bold;
+                            color: #555;
+                            font-size: 18px;
+                        }
+                         .group-box-modern {
+                            border: 1px solid #e0e0e0;
+                            border-left: 4px solid #4CAF50;
+                            border-radius: 5px;
+                            margin: 20px 0;
+                            background-color: #fafafa;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        }
+
+                        .group-box-modern .header {
+                            background-color: #f5f5f5;
+                            border-bottom: 1px solid #e0e0e0;
+                            padding: 10px 15px;
+                            font-weight: bold;
+                            color: #4CAF50;
+                            font-size: 14px;
+                        }
+
+                        .group-box-modern .content {
+                            padding: 15px;
+                        }
+                    </style>
+
+            <!-- =============== RECTO =============== -->
+            <div class="page recto" style="font-size:12px; height:100%;">
+
+                <div style="text-align:center; font-weight:bold; font-size:13px;">
+                    الجمهورية الجزائرية الديمقراطية الشعبية <br/>
+                    REPUBLIQUE ALGERIENNE DEMOCRATIQUE ET POPULAIRE <br/>
+                    وزارة الصناعة والمناجم <br/>
+                    Ministère de l’Industrie et des Mines <br/>
+                    مديرية الصناعة و المناجم لولاية
+                    <span t-esc="env.company.state_id.name"/>
+                </div>
+                <hr/>
+
+                <div style="text-align:center; font-weight:bold; margin:5px 0;">
+                    بطاقة استعمال غاز البترول المميع <br/>
+                    AUTORISATION D’UTILISATION DU GPL
+                </div>
+
+                <p>
+                    N° d’immatriculation : <strong t-esc="o.vehicle_id.license_plate"/> <br/>
+                    Propriétaire : <strong t-esc="o.client_id.name"/>
+                </p>
+
+                <table style="width:100%; border:1px solid black; border-collapse:collapse; text-align:left; font-size:11px;">
+                    <tr>
+                        <td style="border:1px solid black; width:50%; vertical-align:top; padding:4px;">
+                            <b>Véhicule / المركبة</b><br/>
+                            Marque : <t t-esc="o.vehicle_id.model_id.brand_id.name"/><br/>
+                            Type : <t t-esc="o.vehicle_id.model_id.name"/><br/>
+                            Série : <t t-esc="o.vehicle_id.vin"/><br/>
+                            Année : <t t-esc="o.vehicle_id.year"/>
+                        </td>
+                        <td style="border:1px solid black; width:50%; vertical-align:top; padding:4px;">
+                            <b>Réservoir GPL / خزان غاز البترول المميع</b><br/>
+                            N° : <t t-esc="o.vehicle_id.reservoir_lot_id.name"/><br/>
+                            Fabriqué le : <t t-esc="o.vehicle_id.reservoir_lot_id.manufacturing_date"/><br/>
+                            Réépreuve avant : <t t-esc="o.vehicle_id.reservoir_lot_id.next_test_date"/>
+                        </td>
+                    </tr>
+                </table>
+
+                <div style="margin-top:20px;">
+                    Bureau de contrôle technique : <t t-esc="o.inspector_id or ''"/>
+                </div>
+
+                <table style="width:100%; margin-top:20px; font-size:11px; text-align:center;">
+                    <tr>
+                        <td>Signature</td>
+                        <td>Cachet</td>
+                        <td>Expert contrôle technique</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- =============== VERSO =============== -->
+            <div class="page verso" style="font-size:12px; height:100%;">
+
+                <div style="text-align:center; font-weight:bold; font-size:13px;">
+                    الجمهورية الجزائرية الديمقراطية الشعبية <br/>
+                    REPUBLIQUE ALGERIENNE DEMOCRATIQUE ET POPULAIRE <br/>
+                    وزارة الصناعة والمناجم <br/>
+                    Ministère de l’Industrie et des Mines <br/>
+                    مديرية الصناعة و المناجم لولاية
+                    <span t-esc="env.company.state_id.name"/>
+                </div>
+                <hr/>
+
+                <div style="text-align:center; font-weight:bold; margin:5px 0;">
+                    تعليمات / INSTRUCTIONS
+                </div>
+
+                <p style="text-align:justify; line-height:1.4;">
+                    Toute modification ou réparation intervenant sur une installation au GPL
+                    équipant un véhicule automobile doit faire l’objet d’un agrément
+                    conformément aux prescriptions du décret n°83-496 du 13 août 1983 relatif
+                    aux conditions d’utilisation et de distribution du GPL-carburant sur les véhicules automobiles.
+                </p>
+
+                <p style="text-align:center; margin-top:20px; font-weight:bold;">
+                    (Décret n°83-496 du 13 Août 1983)
+                </p>
+            </div>
+
+        </t>
+    </t>
+</template>
+
+</odoo>

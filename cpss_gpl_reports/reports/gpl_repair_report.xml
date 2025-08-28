@@ -63,9 +63,7 @@
                                     <p>
                                         <strong t-field="doc.vehicle_id.name"/><br/>
                                         Immatriculation: <strong t-field="doc.vehicle_id.license_plate"/><br/>
-                                        Châssis: <span t-field="doc.vehicle_id.vin_sn"/><br/>
-                                        Kilométrage: <span t-field="doc.vehicle_id.odometer"/> km<br/>
-                                        Installation GPL: <span t-field="doc.installation_id.name"/>
+                                        Châssis: <span t-field="doc.vehicle_id.vin"/><br/>
                                     </p>
                                 </div>
                             </div>
@@ -76,15 +74,18 @@
                             <div class="row">
                                 <div class="col-4">
                                     <strong>Date de réception:</strong><br/>
-                                    <span t-field="doc.date_order" t-options="{'widget': 'date'}"/>
+                                    <span t-field="doc.date_start" t-options="{'widget': 'date'}"/>
                                 </div>
                                 <div class="col-4">
                                     <strong>Date prévue:</strong><br/>
-                                    <span t-field="doc.date_scheduled" t-options="{'widget': 'date'}"/>
+                                    <span t-field="doc.date_planned" t-options="{'widget': 'date'}"/>
                                 </div>
                                 <div class="col-4">
                                     <strong>Technicien assigné:</strong><br/>
-                                    <span t-field="doc.technician_id.name"/>
+                                    <t t-foreach="doc.technician_ids" t-as="tech">
+                                        <span t-field="tech.name"/>
+                                    </t>
+
                                 </div>
                             </div>
                         </div>
@@ -151,7 +152,7 @@
                                     <tr t-foreach="doc.repair_line_ids" t-as="line">
                                         <td>
                                             <strong t-field="line.product_id.name"/><br/>
-                                            <small t-if="line.description" t-field="line.description"/>
+                                            <small t-if="line.product_id" t-field="line.product_id.name"/>
                                         </td>
                                         <td class="text-center">
                                             <span t-field="line.quantity"/>
@@ -161,7 +162,7 @@
                                             <span t-field="line.price_unit" widget="monetary"/>
                                         </td>
                                         <td class="text-right">
-                                            <span t-field="line.price_subtotal" widget="monetary"/>
+                                            <span t-field="line.subtotal" widget="monetary"/>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -169,13 +170,13 @@
                                     <tr>
                                         <th colspan="3" class="text-right">Total HT:</th>
                                         <th class="text-right">
-                                            <span t-field="doc.amount_untaxed" widget="monetary"/>
+                                            <span t-field="doc.amount_total" widget="monetary"/>
                                         </th>
                                     </tr>
                                     <tr>
                                         <th colspan="3" class="text-right">TVA:</th>
                                         <th class="text-right">
-                                            <span t-field="doc.amount_tax" widget="monetary"/>
+                                            <span t-field="doc.amount_total" widget="monetary"/>
                                         </th>
                                     </tr>
                                     <tr style="font-size: 18px;">
@@ -232,15 +233,6 @@
                             </div>
                         </div>
 
-                        <!-- Garantie -->
-                        <div style="margin-top: 20px; background-color: #e3f2fd; padding: 15px;" t-if="doc.warranty_date">
-                            <h5><i class="fa fa-shield"/> GARANTIE</h5>
-                            <p>
-                                Les travaux effectués sont garantis jusqu'au
-                                <strong t-field="doc.warranty_date" t-options="{'widget': 'date'}"/>
-                            </p>
-                        </div>
-
                         <!-- Signatures -->
                         <div class="row" style="margin-top: 50px;">
                             <div class="col-4 text-center">
@@ -252,7 +244,9 @@
                             <div class="col-4 text-center">
                                 <div style="border-top: 1px solid #333; padding-top: 5px;">
                                     <p><strong>Le Technicien</strong><br/>
-                                    <span t-field="doc.technician_id.name"/></p>
+                                    <t t-foreach="doc.technician_ids" t-as="tech">
+                                        <span t-field="tech.name"/>
+                                    </t></p>
                                 </div>
                             </div>
                             <div class="col-4 text-center">
@@ -261,17 +255,6 @@
                                     Direction Technique</p>
                                 </div>
                             </div>
-                        </div>
-
-                        <!-- Conditions -->
-                        <div style="margin-top: 30px; font-size: 10px; color: #666;">
-                            <p><strong>Conditions générales:</strong></p>
-                            <ul>
-                                <li>Le véhicule doit être récupéré dans les 48h suivant la fin des travaux</li>
-                                <li>Des frais de gardiennage peuvent s'appliquer au-delà de ce délai</li>
-                                <li>La garantie ne couvre que les pièces et travaux mentionnés dans cet ordre</li>
-                                <li>Toute modification non autorisée annule la garantie</li>
-                            </ul>
                         </div>
                     </div>
                 </t>

@@ -34,17 +34,14 @@
                             <table class="table">
                                 <tr>
                                     <td width="25%"><strong>Date d'inspection :</strong></td>
-                                    <td width="25%"><span t-field="doc.date_inspection"/></td>
+                                    <td width="25%"><span t-field="doc.date_start"/></td>
                                     <td width="25%"><strong>Inspecteur :</strong></td>
                                     <td width="25%"><span t-field="doc.inspector_id.name"/></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Type d'inspection :</strong></td>
                                     <td>
-                                        <span t-if="doc.inspection_type == 'triennial'">Contrôle Triennal</span>
-                                        <span t-elif="doc.inspection_type == 'initial'">Contrôle Initial</span>
-                                        <span t-elif="doc.inspection_type == 'periodic'">Contrôle Périodique</span>
-                                        <span t-else="">Contrôle Exceptionnel</span>
+                                        <span t-else="">Contrôle volontaire</span>
                                     </td>
                                     <td><strong>Certificat N° :</strong></td>
                                     <td><span t-field="doc.certificate_number"/></td>
@@ -72,13 +69,7 @@
                                     <td><strong>Immatriculation :</strong></td>
                                     <td><span t-field="doc.vehicle_id.license_plate"/></td>
                                     <td><strong>N° châssis :</strong></td>
-                                    <td><span t-field="doc.vehicle_id.vin_sn"/></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Kilométrage :</strong></td>
-                                    <td><span t-field="doc.vehicle_id.odometer"/> km</td>
-                                    <td><strong>Installation GPL :</strong></td>
-                                    <td><span t-field="doc.installation_id.name"/></td>
+                                    <td><span t-field="doc.vehicle_id.vin"/></td>
                                 </tr>
                             </table>
                         </div>
