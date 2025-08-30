@@ -8,8 +8,8 @@
         <field name="report_name">cpss_gpl_reports.report_gpl_montage_certificate</field>
         <field name="report_file">cpss_gpl_reports.report_gpl_montage_certificate</field>
         <field name="print_report_name">'Certificat_Montage_GPL_%s' % (object.name)</field>
-        <field name="binding_model_id" ref="cpss_gpl_operations.model_gpl_service_installation"/>
-        <field name="binding_type">report</field>
+       <!-- <field name="binding_model_id" ref="cpss_gpl_operations.model_gpl_service_installation"/>
+        <field name="binding_type">report</field>-->
         <field name="paperformat_id" ref="paperformat_gpl_certificate"/>
     </record>
 

@@ -44,7 +44,7 @@
                             <field name="technician_ids" widget="many2many_tags"
                                    options="{'color_field': 'color', 'no_create': True}"/>
                             <field name="date_end" readonly="1"/>
-                            <field name="amount_total" widget="monetary"/>
+                            <field name="total_cost_ttc" widget="monetary"/>
                         </group>
                     </group>
 
@@ -60,7 +60,7 @@
                                     <field name="product_id"
                                            options="{'no_create': True}"/>
                                     <field name="name"/>
-                                    <field name="product_tracking" invisible="1"/>
+                                    <field name="product_tracking" invisible="1" column_invisible="True"/>
                                     <field name="lot_id"
                                            invisible="product_tracking == 'none'"
                                            options="{'no_create': True}"
@@ -69,7 +69,9 @@
                                        readonly="product_tracking == 'serial'"
                                        help="Quantité fixe à 1 pour les réservoirs"/>
                                     <field name="price_unit" widget="monetary"/>
+                                    <field name="tax_rate"/>
                                     <field name="subtotal" widget="monetary" readonly="1"/>
+                                    <field name="subtotal_ttc" widget="monetary" readonly="1"/>
                                 </tree>
                             </field>
                         </page>
@@ -108,7 +110,7 @@
                 <field name="date_end"/>
                 <field name="technician_ids"/>
                 <field name="priority" widget="priority"/>
-                <field name="amount_total" widget="monetary" sum="Total"/>
+                <field name="total_cost_ttc" widget="monetary" sum="Total"/>
                 <field name="state" widget="badge"
                        decoration-success="state == 'done'"
                        decoration-info="state == 'in_progress'"
@@ -137,7 +139,7 @@
                 <field name="date_start"/>
                 <field name="repair_type"/>
                 <!--<field name="diagnosis"/>-->
-                <field name="amount_total"/>
+                <field name="total_cost_ttc"/>
                 <field name="technician_ids"/>
 
                 <!-- Progressbar avec priorités -->
@@ -220,9 +222,9 @@
 
                                 <!-- Footer -->
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <div t-if="record.amount_total.raw_value">
+                                    <div t-if="record.total_cost_ttc.raw_value">
                                         <strong class="text-success">
-                                            <field name="amount_total" widget="monetary"/>
+                                            <field name="total_cost_ttc" widget="monetary"/>
                                         </strong>
                                     </div>
                                     <div t-if="record.date_start.raw_value">

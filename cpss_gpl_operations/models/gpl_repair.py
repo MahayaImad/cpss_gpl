@@ -115,6 +115,12 @@ class GplRepairOrder(models.Model):
         store=True
     )
 
+    total_cost_ttc = fields.Float(
+        string='Coût total TTC',
+        compute='_compute_total_cost_ttc',
+        store=True
+    )
+
     # Réservoir si concerné
     reservoir_lot_id = fields.Many2one(
         'stock.lot',
@@ -152,6 +158,11 @@ class GplRepairOrder(models.Model):
     def _compute_amount_total(self):
         for repair in self:
             repair.amount_total = sum(repair.repair_line_ids.mapped('subtotal'))
+
+    @api.depends('repair_line_ids.subtotal_ttc')
+    def _compute_total_cost_ttc(self):
+        for record in self:
+            record.total_cost_ttc = sum(record.repair_line_ids.mapped('subtotal_ttc'))
 
     def action_confirm(self):
         """Confirme l'ordre de réparation"""
@@ -389,6 +400,55 @@ class GplRepairLine(models.Model):
         compute='_compute_subtotal',
         store=True
     )
+
+    tax_rate = fields.Float(
+        string='TVA (%)',
+        compute='_compute_tax_rate',
+        store=True,
+        help="Taux de TVA pour cette ligne"
+    )
+
+    # Prix unitaire TTC
+    price_unit_ttc = fields.Float(
+        string='Prix unitaire TTC',
+        compute='_compute_price_ttc',
+        store=True
+    )
+
+    # Sous-total TTC
+    subtotal_ttc = fields.Float(
+        string='Sous-total TTC',
+        compute='_compute_subtotal_ttc',
+        store=True
+    )
+
+    @api.depends('price_unit', 'tax_rate')
+    def _compute_price_ttc(self):
+        for line in self:
+            line.price_unit_ttc = line.price_unit * (1 + line.tax_rate / 100)
+
+    @api.depends('subtotal', 'tax_rate')
+    def _compute_subtotal_ttc(self):
+        for line in self:
+            line.subtotal_ttc = line.subtotal * (1 + line.tax_rate / 100)
+
+    @api.depends('product_id', 'product_id.taxes_id')
+    def _compute_tax_rate(self):
+        for line in self:
+            if line.product_id and line.product_id.taxes_id:
+                # Prendre le premier taux de taxe du produit
+                tax = line.product_id.taxes_id[0]
+                line.tax_rate = tax.amount
+            else:
+                line.tax_rate = 0.0
+
+    @api.onchange('product_id')
+    def _onchange_product_id(self):
+        """Met à jour le tax_rate quand le produit change"""
+        if self.product_id and self.product_id.taxes_id:
+            self.tax_rate = self.product_id.taxes_id[0].amount
+        else:
+            self.tax_rate = 0.0
 
     # === NOUVEAU CHAMP LOT ===
     lot_id = fields.Many2one(

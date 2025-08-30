@@ -183,6 +183,35 @@ class GplReservoirTesting(models.Model):
         for record in self:
             record.client_id = record.vehicle_id.client_id if record.vehicle_id else False
 
+    @api.onchange('vehicle_id')
+    def _onchange_vehicle_id(self):
+        """Met à jour les informations du réservoir quand le véhicule change"""
+        for record in self:
+            if record.vehicle_id:
+                record.reservoir_lot_id = record.vehicle_id.reservoir_lot_id
+                record.reservoir_serial = record.reservoir_lot_id.name
+                record.fabrication_date = record.reservoir_lot_id.manufacturing_date
+            else:
+                record.reservoir_lot_id = False
+                record.reservoir_serial = False
+                record.fabrication_date = False
+
+    @api.onchange('reservoir_lot_id')
+    def _onchange_reservoir_lot_id(self):
+        for record in self:
+            if record.reservoir_lot_id:
+                record.reservoir_serial = record.reservoir_lot_id.name
+                record.fabrication_date = record.reservoir_lot_id.manufacturing_date
+                if record.reservoir_lot_id.vehicle_id:
+                    record.vehicle_id = record.reservoir_lot_id.vehicle_id
+                else: record.vehicle_id = False
+            else:
+                record.reservoir_lot_id = False
+                record.reservoir_serial = False
+                record.fabrication_date = False
+                record.vehicle_id = False
+
+
     @api.depends('initial_pressure', 'final_pressure')
     def _compute_pressure_drop(self):
         for record in self:
@@ -292,6 +321,8 @@ class GplReservoirTesting(models.Model):
             self.certificate_date = fields.Date.today()
 
         self.state = 'done'
+        self.result = 'pass'
+
 
         # Mettre à jour le réservoir
         if self.reservoir_lot_id:
@@ -308,6 +339,7 @@ class GplReservoirTesting(models.Model):
             raise UserError(_("Le test doit être en cours pour être terminé."))
 
         self.state = 'done'
+        self.result = 'fail'
 
         # Mettre à jour le réservoir
         if self.reservoir_lot_id:

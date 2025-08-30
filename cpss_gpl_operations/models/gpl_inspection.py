@@ -264,6 +264,23 @@ class GplInspection(models.Model):
             raise UserError(_("Un contrôle terminé ne peut pas être annulé."))
         self.state = 'cancel'
 
+    def action_set_all_checks_pass(self):
+        """Marque tous les contrôles comme conformes"""
+        self.ensure_one()
+        if self.state != 'in_progress':
+            raise UserError(_("Cette action n'est disponible que pour un contrôle en cours."))
+
+        self.write({
+            'check_reservoir': 'pass',
+            'check_piping': 'pass',
+            'check_injectors': 'pass',
+            'check_electronics': 'pass',
+            'check_pressure': 'pass',
+            'check_mounting': 'pass',
+            'check_ventilation': 'pass',
+            'check_marking': 'pass',
+        })
+
     @api.model
     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
         """Override pour forcer l'affichage de toutes les colonnes d'états dans kanban"""

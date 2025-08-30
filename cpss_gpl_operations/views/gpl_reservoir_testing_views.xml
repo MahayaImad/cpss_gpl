@@ -33,12 +33,13 @@
                 <sheet>
                     <!-- En-tête avec résultat -->
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_print_certificate" type="object" class="oe_stat_button" icon="fa-certificate"
+                        <!--<button name="action_print_certificate" type="object" class="oe_stat_button"
+                                icon="fa-certificate"
                                 invisible="state != 'done' or result != 'pass'">
                             <div class="o_field_widget o_stat_info">
                                 <span class="o_stat_text">Certificat</span>
                             </div>
-                        </button>
+                        </button> -->
 
                         <button class="oe_stat_button" icon="fa-percent" invisible="state != 'done'">
                             <field name="conformity_percentage" class="o_stat_value" widget="integer"/>
@@ -96,134 +97,117 @@
                         <!-- Page 1: Tests et Vérifications -->
                         <page string="Tests et Vérifications" name="tests">
 
-                            <!-- Section A: Inspection Visuelle -->
-                            <group string="A. INSPECTION VISUELLE">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <field name="visual_inspection_ok"
-                                               decoration-success="visual_inspection_ok == True"
-                                               decoration-danger="visual_inspection_ok == False"
-                                               readonly="state == 'done'"/>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <button name="action_mark_all_visual_ok" string="✓ Marquer tout conforme"
-                                                type="object" class="btn-sm btn-success"
-                                                invisible="state == 'done'"/>
-                                    </div>
-                                </div>
+                            <group readonly="state != 'in_progress'">
+                                <!-- Section A: Inspection Visuelle -->
+                                <group string="A. INSPECTION VISUELLE">
+                                    <field name="visual_inspection_ok"
+                                           decoration-success="visual_inspection_ok == True"
+                                           decoration-danger="visual_inspection_ok == False"
+                                           readonly="state == 'done'" invisible="1"/>
 
-                                <group>
-                                    <group>
-                                        <field name="reservoir_external_ok" string="État externe"
-                                               readonly="state == 'done'"/>
-                                        <field name="reservoir_marking_ok" string="Marquage conforme"
-                                               readonly="state == 'done'"/>
-                                    </group>
-                                    <group>
-                                        <field name="reservoir_fixation_ok" string="Fixation correcte"
-                                               readonly="state == 'done'"/>
-                                        <field name="reservoir_support_ok" string="Support adapté"
-                                               readonly="state == 'done'"/>
-                                    </group>
+                                    <field name="reservoir_external_ok" string="État externe"
+                                           readonly="state == 'done'"/>
+                                    <field name="reservoir_marking_ok" string="Marquage conforme"
+                                           readonly="state == 'done'"/>
+                                    <field name="reservoir_fixation_ok" string="Fixation correcte"
+                                           readonly="state == 'done'"/>
+                                    <field name="reservoir_support_ok" string="Support adapté"
+                                           readonly="state == 'done'"/>
+
+                                    <field name="visual_notes" string="Observations"
+                                           placeholder="Notes sur l'inspection visuelle..."
+                                           readonly="state == 'done'"/>
+
+                                    <button name="action_mark_all_visual_ok" string="✓ Marquer tout conforme"
+                                            type="object" class="btn-sm btn-success"
+                                            invisible="state == 'done'"/>
+
                                 </group>
 
-                                <field name="visual_notes" string="Observations"
-                                       placeholder="Notes sur l'inspection visuelle..."
-                                       readonly="state == 'done'"/>
+                                <!-- Section B: Test de Pression -->
+                                <group string="B. TEST DE PRESSION">
+
+                                    <field name="pressure_test_ok"
+                                           decoration-success="pressure_test_ok == True"
+                                           decoration-danger="pressure_test_ok == False"
+                                           readonly="state == 'done'" invisible="1"/>
+
+                                        <group string="Paramètres">
+                                            <field name="test_pressure" readonly="state == 'done'"/>
+                                            <field name="test_duration" readonly="state == 'done'"/>
+                                            <field name="ambient_temperature" readonly="state == 'done'"/>
+                                        </group>
+                                        <group string="Mesures">
+                                            <field name="initial_pressure" readonly="state == 'done'"/>
+                                            <field name="final_pressure" readonly="state == 'done'"/>
+                                            <field name="pressure_drop" readonly="1"/>
+                                        </group>
+
+
+                                    <field name="pressure_notes" string="Observations"
+                                           placeholder="Notes sur le test de pression..."
+                                           readonly="state == 'done'"/>
+
+                                    <group>
+                                        <button name="action_mark_all_pressure_ok" string="✓ Marquer Test réussi"
+                                            type="object" class="btn-sm btn-success"
+                                            invisible="state == 'done'"/>
+
+                                    </group>
+
+                                </group>
+
                             </group>
 
                             <separator/>
 
-                            <!-- Section B: Test de Pression -->
-                            <group string="B. TEST DE PRESSION">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <field name="pressure_test_ok"
-                                               decoration-success="pressure_test_ok == True"
-                                               decoration-danger="pressure_test_ok == False"
-                                               readonly="state == 'done'"/>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <button name="action_mark_all_pressure_ok" string="✓ Test réussi"
-                                                type="object" class="btn-sm btn-success"
-                                                invisible="state == 'done'"/>
-                                    </div>
-                                </div>
+                            <group readonly="state != 'in_progress'">
+                                <field name="state"/>
+                                 <!-- Section C: Test d'Étanchéité -->
+                                <group string="C. TEST D'ÉTANCHÉITÉ">
 
-                                <group>
-                                    <group string="Paramètres">
-                                        <field name="test_pressure" readonly="state == 'done'"/>
-                                        <field name="test_duration" readonly="state == 'done'"/>
-                                        <field name="ambient_temperature" readonly="state == 'done'"/>
-                                    </group>
-                                    <group string="Mesures">
-                                        <field name="initial_pressure" readonly="state == 'done'"/>
-                                        <field name="final_pressure" readonly="state == 'done'"/>
-                                        <field name="pressure_drop" readonly="1"/>
-                                    </group>
+                                    <field name="tightness_test_ok"
+                                           decoration-success="tightness_test_ok == True"
+                                           decoration-danger="tightness_test_ok == False"
+                                           readonly="state == 'done'" invisible="1"/>
+
+                                    <field name="valve_tightness_ok" string="Vanne" readonly="state == 'done'"/>
+                                    <field name="fitting_tightness_ok" string="Raccords"
+                                           readonly="state == 'done'"/>
+                                    <field name="weld_tightness_ok" string="Soudures" readonly="state == 'done'"/>
+                                    <field name="humidity" readonly="state == 'done'"/>
+
+                                    <field name="tightness_notes" string="Observations"
+                                           placeholder="Notes sur les tests d'étanchéité..."
+                                           readonly="state == 'done'"/>
+
+                                    <button name="action_mark_all_tightness_ok" string="✓ Marquer tout étanche"
+                                            type="object" class="btn-sm btn-success"
+                                            invisible="state == 'done'"/>
+
                                 </group>
 
-                                <field name="pressure_notes" string="Observations"
-                                       placeholder="Notes sur le test de pression..."
-                                       readonly="state == 'done'"/>
+                                <!-- Section D: Systèmes de Sécurité -->
+                                <group string="D. SYSTÈMES DE SÉCURITÉ">
+
+                                    <field name="safety_systems_ok"
+                                           decoration-success="safety_systems_ok == True"
+                                           decoration-danger="safety_systems_ok == False"
+                                           readonly="state == 'done'" invisible="1"/>
+
+                                    <field name="safety_notes" string="Observations"
+                                           placeholder="Notes sur les systèmes de sécurité..."
+                                           readonly="state == 'done'"/>
+
+                                    <button name="action_mark_all_safety_ok" string="✓ Sécurité conforme"
+                                            type="object" class="btn-sm btn-success"
+                                            invisible="state == 'done'"/>
+                                </group>
+
                             </group>
 
                             <separator/>
 
-                            <!-- Section C: Test d'Étanchéité -->
-                            <group string="C. TEST D'ÉTANCHÉITÉ">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <field name="tightness_test_ok"
-                                               decoration-success="tightness_test_ok == True"
-                                               decoration-danger="tightness_test_ok == False"
-                                               readonly="state == 'done'"/>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <button name="action_mark_all_tightness_ok" string="✓ Marquer tout étanche"
-                                                type="object" class="btn-sm btn-success"
-                                                invisible="state == 'done'"/>
-                                    </div>
-                                </div>
-
-                                <group>
-                                    <group>
-                                        <field name="valve_tightness_ok" string="Vanne" readonly="state == 'done'"/>
-                                        <field name="fitting_tightness_ok" string="Raccords" readonly="state == 'done'"/>
-                                    </group>
-                                    <group>
-                                        <field name="weld_tightness_ok" string="Soudures" readonly="state == 'done'"/>
-                                        <field name="humidity" readonly="state == 'done'"/>
-                                    </group>
-                                </group>
-
-                                <field name="tightness_notes" string="Observations"
-                                       placeholder="Notes sur les tests d'étanchéité..."
-                                       readonly="state == 'done'"/>
-                            </group>
-
-                            <separator/>
-
-                            <!-- Section D: Systèmes de Sécurité -->
-                            <group string="D. SYSTÈMES DE SÉCURITÉ">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <field name="safety_systems_ok"
-                                               decoration-success="safety_systems_ok == True"
-                                               decoration-danger="safety_systems_ok == False"
-                                               readonly="state == 'done'"/>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <button name="action_mark_all_safety_ok" string="✓ Sécurité conforme"
-                                                type="object" class="btn-sm btn-success"
-                                                invisible="state == 'done'"/>
-                                    </div>
-                                </div>
-
-                                <field name="safety_notes" string="Observations"
-                                       placeholder="Notes sur les systèmes de sécurité..."
-                                       readonly="state == 'done'"/>
-                            </group>
                         </page>
 
                         <!-- Page 2: Résultats et Actions -->
@@ -311,7 +295,7 @@
                 <field name="safety_systems_ok" widget="boolean" optional="hide"/>
 
                 <!-- Résultat final -->
-                <field name="conformity_percentage" widget="percentage" optional="show"/>
+                <field name="conformity_percentage" widget="float" optional="show"/>
                 <field name="result"
                        decoration-success="result == 'pass'"
                        decoration-danger="result == 'fail'"
@@ -353,7 +337,7 @@
 
                 <!-- Progressbar -->
                 <progressbar field="state"
-                            colors='{"draft": "muted", "planned": "info", "in_progress": "warning", "done": "success", "cancel": "danger"}' />
+                             colors='{"draft": "muted", "planned": "info", "in_progress": "warning", "done": "success", "cancel": "danger"}'/>
 
                 <templates>
                     <t t-name="kanban-box">
@@ -364,7 +348,8 @@
 
                             <!-- Menu dropdown -->
                             <div class="o_dropdown_kanban dropdown position-absolute top-0 end-0">
-                                <a class="dropdown-toggle o-no-caret btn" role="button" data-bs-toggle="dropdown" href="#" title="Menu">
+                                <a class="dropdown-toggle o-no-caret btn" role="button" data-bs-toggle="dropdown"
+                                   href="#" title="Menu">
                                     <span class="fa fa-ellipsis-v"/>
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end" role="menu">
@@ -434,7 +419,7 @@
                                                  t-attf-style="width: #{record.conformity_percentage.raw_value}%"/>
                                         </div>
                                         <small class="text-muted">
-                                            Conformité: <field name="conformity_percentage" widget="percentage"/>
+                                            Conformité: <field name="conformity_percentage"/> %
                                         </small>
                                     </div>
 

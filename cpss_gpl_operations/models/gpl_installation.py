@@ -113,6 +113,12 @@ class GplServiceInstallation(models.Model):
         store=True
     )
 
+    total_amount_ttc = fields.Float(
+        string='Montant total TTC',
+        compute='_compute_total_amount_ttc',
+        store=True
+    )
+
     # Notes
     notes = fields.Text(string='Notes')
 
@@ -142,6 +148,11 @@ class GplServiceInstallation(models.Model):
             installation.reservoir_lot_ids = [(6, 0, reservoir_lots.ids)]
             installation.reservoir_lot_id = reservoir_lots[0] if reservoir_lots else False
             installation.reservoir_count = len(reservoir_lots)
+
+    @api.depends('installation_line_ids.subtotal_ttc')
+    def _compute_total_amount_ttc(self):
+        for record in self:
+            record.total_amount_ttc = sum(record.installation_line_ids.mapped('subtotal_ttc'))
 
     def _update_vehicle_reservoir_links(self):
         """Met à jour les liens entre véhicule et réservoirs"""
@@ -387,6 +398,27 @@ class GplInstallationLine(models.Model):
         store=True
     )
 
+    tax_rate = fields.Float(
+        string='TVA (%)',
+        compute='_compute_tax_rate',
+        store=True,
+        help="Taux de TVA pour cette ligne"
+    )
+
+    # Prix unitaire TTC
+    price_unit_ttc = fields.Float(
+        string='Prix unitaire TTC',
+        compute='_compute_price_ttc',
+        store=True
+    )
+
+    # Sous-total TTC
+    subtotal_ttc = fields.Float(
+        string='Sous-total TTC',
+        compute='_compute_subtotal_ttc',
+        store=True
+    )
+
     product_type = fields.Selection([
         ('product', 'Produit'),
         ('service', 'Service'),
@@ -429,6 +461,34 @@ class GplInstallationLine(models.Model):
         """Met à jour la description avec le numéro de lot"""
         if self.lot_id and self.product_id:
             self.name = f"{self.product_id.name} - {self.lot_id.name}"
+
+    @api.depends('price_unit', 'tax_rate')
+    def _compute_price_ttc(self):
+        for line in self:
+            line.price_unit_ttc = line.price_unit * (1 + line.tax_rate / 100)
+
+    @api.depends('subtotal', 'tax_rate')
+    def _compute_subtotal_ttc(self):
+        for line in self:
+            line.subtotal_ttc = line.subtotal * (1 + line.tax_rate / 100)
+
+    @api.depends('product_id', 'product_id.taxes_id')
+    def _compute_tax_rate(self):
+        for line in self:
+            if line.product_id and line.product_id.taxes_id:
+                # Prendre le premier taux de taxe du produit
+                tax = line.product_id.taxes_id[0]
+                line.tax_rate = tax.amount
+            else:
+                line.tax_rate = 0.0
+
+    @api.onchange('product_id')
+    def _onchange_product_id(self):
+        """Met à jour le tax_rate quand le produit change"""
+        if self.product_id and self.product_id.taxes_id:
+            self.tax_rate = self.product_id.taxes_id[0].amount
+        else:
+            self.tax_rate = 0.0
 
     @api.depends('product_id')
     def _compute_product_type(self):

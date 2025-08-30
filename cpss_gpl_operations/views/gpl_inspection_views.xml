@@ -9,8 +9,14 @@
                 <header>
                     <button name="action_start" string="Démarrer" type="object"
                             class="btn-primary" invisible="state != 'draft'"/>
-                    <button name="action_done" string="Valider" type="object"
+                    <button name="action_set_all_checks_pass" string="✓ Marquer tous les contrôles conformes" type="object"
                             class="btn-success" invisible="state != 'in_progress'"/>
+                    <!--<button name="action_done" string="Terminer" type="object"
+                            class="btn-success" invisible="state != 'in_progress'"/>-->
+                    <button name="action_done" string="Valider - CONFORME" type="object"
+                            class="btn-success" invisible="state != 'in_progress' or result != 'pass'"/>
+                    <button name="action_done" string="Terminer - NON CONFORME" type="object"
+                            class="btn-danger" invisible="state != 'in_progress' or result != 'fail'"/>
                     <button name="action_cancel" string="Annuler" type="object"
                            invisible="state not in ['draft', 'planned', 'in_progress']"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,done"/>
@@ -45,13 +51,17 @@
                         </group>
                     </group>
 
-                    <separator string="Points de contrôle"/>
-                    <group col="4">
-                        <field name="check_reservoir" widget="radio"/>
-                        <field name="check_piping" widget="radio"/>
-                        <field name="check_injectors" widget="radio"/>
-                        <field name="check_electronics" widget="radio"/>
-                        <field name="check_pressure" widget="radio"/>
+                    <separator string="Points de contrôle" invisible="state not in ['in_progress', 'done']"/>
+                    <group invisible="state not in ['in_progress', 'done']" >
+                        <group>
+                            <field name="check_reservoir" widget="radio" readonly="state != 'in_progress'"/>
+                            <field name="check_piping" widget="radio" readonly="state != 'in_progress'"/>
+                            <field name="check_injectors" widget="radio" readonly="state != 'in_progress'"/>
+                        </group>
+                        <group>
+                            <field name="check_electronics" widget="radio" readonly="state != 'in_progress'"/>
+                            <field name="check_pressure" widget="radio" readonly="state != 'in_progress'"/>
+                        </group>
                     </group>
 
                     <notebook>

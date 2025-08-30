@@ -65,7 +65,7 @@
                                    domain="[('product_id.is_gpl_reservoir', '=', True)]"
                                    options="{'no_create': True}"/>
                             <field name="date_end" readonly="1"/>
-                            <field name="total_amount" widget="monetary"/>
+                            <field name="total_amount_ttc" widget="monetary"/>
                         </group>
                     </group>
 
@@ -74,7 +74,7 @@
                             <field name="installation_line_ids">
                                 <tree editable="bottom">
                                     <field name="product_id" options="{'no_create': True}"/>
-                                    <field name="product_tracking" invisible="1"/>
+                                    <field name="product_tracking" invisible="1" column_invisible="True"/>
                                     <field name="lot_id"
                                            invisible="product_tracking == 'none'"
                                            required="product_tracking in ['lot', 'serial']"/>
@@ -82,7 +82,9 @@
                                        readonly="product_tracking == 'serial'"
                                        help="Quantité fixe à 1 pour les réservoirs"/>
                                     <field name="price_unit" widget="monetary"/>
+                                    <field name="tax_rate"/>
                                     <field name="subtotal" widget="monetary" readonly="1"/>
+                                    <field name="subtotal_ttc" widget="monetary" readonly="1"/>
                                 </tree>
                             </field>
                         </page>
@@ -113,7 +115,7 @@
                 <field name="date_start"/>
                 <field name="technician_ids" widget="many2many_tags"/>
                 <field name="reservoir_lot_id" optional="show"/>
-                <field name="total_amount" widget="monetary" sum="Total"/>
+                <field name="total_amount_ttc" widget="monetary" sum="Total"/>
                 <field name="state" widget="badge"
                        decoration-success="state == 'done'"
                        decoration-info="state == 'in_progress'"
@@ -148,14 +150,14 @@
                 <field name="date_start"/>
                 <field name="technician_ids"/>
                 <field name="reservoir_lot_id"/>
-                <field name="total_amount"/>
+                <field name="total_amount_ttc"/>
                 <field name="activity_ids"/>
                 <field name="activity_state"/>
 
                 <!-- Progressbar -->
                 <progressbar field="state"
                             colors='{"draft": "muted", "planned": "info", "in_progress": "warning", "done": "success", "cancel": "danger"}'
-                            sum_field="total_amount"/>
+                            sum_field="total_amount_ttc"/>
 
                 <templates>
                     <t t-name="kanban-box">
@@ -233,9 +235,9 @@
 
                                 <!-- Footer avec montant et techniciens -->
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <div t-if="record.total_amount.raw_value">
+                                    <div t-if="record.total_amount_ttc.raw_value">
                                         <strong class="text-success">
-                                            <field name="total_amount" widget="monetary"/>
+                                            <field name="total_amount_ttc" widget="monetary"/>
                                         </strong>
                                     </div>
                                     <div t-if="record.technician_ids.raw_value">

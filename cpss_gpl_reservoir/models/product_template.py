@@ -58,24 +58,6 @@ class ProductTemplate(models.Model):
         ('other', 'Autre')
     ], string="Forme", help="Forme du réservoir")
 
-    # === CERTIFICATIONS ===
-    gpl_certification_r67 = fields.Boolean(
-        string="Certification R67",
-        default=False,
-        help="Certification R67-01"
-    )
-
-    gpl_certification_r110 = fields.Boolean(
-        string="Certification R110",
-        default=False,
-        help="Certification R110"
-    )
-
-    gpl_certification_other = fields.Char(
-        string="Autres certifications",
-        help="Autres certifications (EC79, UNECE, etc.)"
-    )
-
     # === COMPATIBILITÉ ===
     gpl_vehicle_brands = fields.Many2many(
         'fleet.vehicle.model.brand',
