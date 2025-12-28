@@ -56,11 +56,13 @@
 
                     <notebook>
                         <page string="Installations">
-                            <field name="installation_ids" readonly="state == 'sent'"
+                            <field name="installation_ids"
+                                   readonly="state == 'sent'"
+                                   nolabel="1"
                                    context="{'create': False, 'edit': False}"
                                    options="{'no_create': True, 'no_create_edit': True, 'no_open': True}"
                                    domain="[('state', '=', 'done'), ('bordereau_id', 'in', [False, id])]">
-                                <tree delete="false">
+                                <tree delete="false" create="false" edit="false">
                                     <field name="name"/>
                                     <field name="vehicle_id"/>
                                     <field name="client_id"/>
@@ -74,6 +76,12 @@
                                             invisible="parent.state == 'sent'"/>
                                 </tree>
                             </field>
+                            <div class="text-center mt-2" invisible="state == 'sent'">
+                                <button name="action_add_installations"
+                                        type="object"
+                                        string="➕ Ajouter des installations"
+                                        class="btn-primary"/>
+                            </div>
                         </page>
                         <page string="Notes">
                             <field name="notes" placeholder="Notes sur l'envoi..."/>
