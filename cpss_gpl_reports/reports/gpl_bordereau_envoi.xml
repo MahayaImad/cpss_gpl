@@ -25,7 +25,7 @@
                             <h2 style="color: #007bff; font-weight: bold;">
                                 BORDEREAU D'ENVOI
                             </h2>
-                            <h3>DOSSIERS D'INSTALLATION GPL</h3>
+                            <h3>DOSSIERS DE CONTRÔLE GPL</h3>
                             <p>
                                 Référence: <strong t-field="doc.name"/><br/>
                                 Date: <span t-field="doc.date_envoi" t-options="{'widget': 'date'}"/>
@@ -61,34 +61,38 @@
                             <thead>
                                 <tr>
                                     <th width="5%">N°</th>
-                                    <th width="20%">Référence</th>
-                                    <th width="25%">Client</th>
-                                    <th width="20%">Immatriculation</th>
-                                    <th width="20%">N° Réservoir</th>
-                                    <th width="10%">Type</th>
+                                    <th width="15%">Référence</th>
+                                    <th width="20%">Client</th>
+                                    <th width="15%">Immatriculation</th>
+                                    <th width="15%">Date Contrôle</th>
+                                    <th width="15%">Type Contrôle</th>
+                                    <th width="15%">Résultat</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <t t-set="counter" t-value="1"/>
-                                <tr t-foreach="doc.installation_ids" t-as="installation">
+                                <tr t-foreach="doc.inspection_ids" t-as="inspection">
                                     <td class="text-center"><span t-esc="counter"/></td>
-                                    <td><span t-field="installation.name"/></td>
-                                    <td><span t-field="installation.client_id.name"/></td>
-                                    <td><span t-field="installation.vehicle_id.license_plate"/></td>
-                                    <td>
-                                        <span t-if="installation.reservoir_lot_id" t-field="installation.reservoir_lot_id.name"/>
+                                    <td><span t-field="inspection.name"/></td>
+                                    <td><span t-field="inspection.client_id.name"/></td>
+                                    <td><span t-field="inspection.vehicle_id.license_plate"/></td>
+                                    <td><span t-field="inspection.date_start" t-options="{'widget': 'date'}"/></td>
+                                    <td class="text-center">
+                                        <span t-if="inspection.inspection_type == 'periodic'">Triennal</span>
+                                        <span t-elif="inspection.inspection_type == 'initial'">Initial</span>
+                                        <span t-else="">Volontaire</span>
                                     </td>
                                     <td class="text-center">
-                                        <span t-if="installation.state == 'done'">Installation</span>
-                                        <span t-else="">En cours</span>
+                                        <span t-if="inspection.result == 'pass'" style="color: green; font-weight: bold;">✓ Validé</span>
+                                        <span t-else="">-</span>
                                     </td>
                                     <t t-set="counter" t-value="counter + 1"/>
                                 </tr>
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    <th colspan="5" class="text-right">TOTAL DOSSIERS:</th>
-                                    <th class="text-center"><span t-esc="len(doc.installation_ids)"/></th>
+                                    <th colspan="6" class="text-right">TOTAL DOSSIERS:</th>
+                                    <th class="text-center"><span t-esc="len(doc.inspection_ids)"/></th>
                                 </tr>
                             </tfoot>
                         </table>
@@ -133,7 +137,7 @@
                                 Bordereau généré le <span t-esc="datetime.datetime.now().strftime('%d/%m/%Y à %H:%M')"/>
                             </p>
                             <p style="margin-top: 10px;">
-                                <em>Ce bordereau accompagne les dossiers d'installation GPL transmis pour validation officielle.</em>
+                                <em>Ce bordereau accompagne les dossiers de contrôle GPL transmis pour validation des cartes.</em>
                             </p>
                         </div>
                     </div>

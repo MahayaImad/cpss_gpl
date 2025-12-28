@@ -4,7 +4,7 @@ from odoo.exceptions import UserError
 
 class GplBordereau(models.Model):
     _name = 'gpl.bordereau'
-    _description = 'Bordereau d\'envoi installations GPL'
+    _description = 'Bordereau d\'envoi contrôles GPL'
     _order = 'date_creation desc'
 
     name = fields.Char(
@@ -27,15 +27,15 @@ class GplBordereau(models.Model):
         help="Date d'envoi à la direction de l'industrie"
     )
 
-    installation_ids = fields.One2many(
-        'gpl.service.installation',  # Modèle cible
+    inspection_ids = fields.One2many(
+        'gpl.inspection',  # Modèle cible
         'bordereau_id',  # Champ dans le modèle cible qui pointe vers ce bordereau
-        string='Installations'
+        string='Contrôles'
     )
 
-    installation_count = fields.Integer(
-        string='Nombre d\'installations',
-        compute='_compute_installation_count',
+    inspection_count = fields.Integer(
+        string='Nombre de contrôles',
+        compute='_compute_inspection_count',
         store=True
     )
 
@@ -60,15 +60,15 @@ class GplBordereau(models.Model):
                 vals['name'] = self.env['ir.sequence'].next_by_code('gpl.bordereau') or 'BOR-NEW'
         return super().create(vals_list)
 
-    @api.depends('installation_ids')
-    def _compute_installation_count(self):
+    @api.depends('inspection_ids')
+    def _compute_inspection_count(self):
         for record in self:
-            record.installation_count = len(record.installation_ids)
+            record.inspection_count = len(record.inspection_ids)
 
     def action_send(self):
         """Marque le bordereau comme envoyé"""
         self.ensure_one()
-        if not self.installation_ids:
+        if not self.inspection_ids:
             raise UserError(_("Impossible d'envoyer un bordereau vide."))
 
         self.write({
@@ -81,17 +81,17 @@ class GplBordereau(models.Model):
         self.ensure_one()
         return self.env.ref('cpss_gpl_reports.action_report_gpl_bordereau_envoi').report_action(self)
 
-    def action_add_installations(self):
-        """Ouvre la liste des installations disponibles"""
+    def action_add_inspections(self):
+        """Ouvre la liste des contrôles disponibles"""
         return {
             'type': 'ir.actions.act_window',
-            'name': 'Sélectionner des installations',
-            'res_model': 'gpl.service.installation',
+            'name': 'Sélectionner des contrôles',
+            'res_model': 'gpl.inspection',
             'view_mode': 'tree',
             'target': 'new',
-            'domain': [('state', '=', 'done'), ('bordereau_id', '=', False)],
+            'domain': [('state', '=', 'done'), ('result', '=', 'pass'), ('bordereau_id', '=', False)],
             'context': {
                 'bordereau_id_to_assign': self.id,
             },
-            'view_id': self.env.ref('cpss_gpl_operations.view_gpl_installation_bordereau_selection').id,
+            'view_id': self.env.ref('cpss_gpl_operations.view_gpl_inspection_bordereau_selection').id,
         }
