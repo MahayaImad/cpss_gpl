@@ -125,6 +125,12 @@ class StockLot(models.Model):
     #      'Le numéro de certification doit être unique !'),
     # ]
 
+    @api.onchange('manufacturing_date')
+    def _onchange_manufacturing_date(self):
+        """Auto-populate last_test_date with manufacturing_date if not set"""
+        if self.manufacturing_date and not self.last_test_date and self.is_gpl_reservoir:
+            self.last_test_date = self.manufacturing_date
+
     @api.depends('fabricant_id')
     def _compute_fabricant_name(self):
         for lot in self:
