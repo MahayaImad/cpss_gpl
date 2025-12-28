@@ -125,6 +125,7 @@ class GplServiceInstallation(models.Model):
     bordereau_id = fields.Many2one(
         'gpl.bordereau',
         string='Bordereau',
+        ondelete='set null',  # ✅ CORRECTION: évite la suppression en cascade de l'installation
         help="Bordereau d'envoi à la direction"
     )
 
