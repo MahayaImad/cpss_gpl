@@ -50,6 +50,7 @@ Caractéristiques principales :
         'views/gpl_repair_views.xml',
         'views/gpl_inspection_views.xml',
         'views/gpl_reservoir_testing_views.xml',
+        'views/gpl_bordereau_views.xml',
         'views/gpl_operations_menus.xml',
 
     ],

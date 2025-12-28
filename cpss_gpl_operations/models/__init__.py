@@ -5,3 +5,4 @@ from . import gpl_inspection
 from . import gpl_reservoir_testing
 from . import gpl_vehicle_override
 from . import gpl_appointment_wizard_override
+from . import gpl_bordereau

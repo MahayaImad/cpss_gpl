@@ -88,5 +88,14 @@
             <field name="company_id" eval="False"/>
         </record>
 
+        <!-- Séquence pour les bordereaux -->
+        <record id="seq_gpl_bordereau" model="ir.sequence">
+            <field name="name">Bordereau GPL</field>
+            <field name="code">gpl.bordereau</field>
+            <field name="prefix">BOR-%(year)s-</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
     </data>
 </odoo>

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue tree des bordereaux -->
+    <record id="view_gpl_bordereau_tree" model="ir.ui.view">
+        <field name="name">gpl.bordereau.tree</field>
+        <field name="model">gpl.bordereau</field>
+        <field name="arch" type="xml">
+            <tree string="Bordereaux d'envoi" decoration-success="state=='sent'">
+                <field name="name"/>
+                <field name="date_creation"/>
+                <field name="date_envoi"/>
+                <field name="installation_count"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'sent'"
+                       decoration-info="state == 'draft'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Vue formulaire des bordereaux -->
+    <record id="view_gpl_bordereau_form" model="ir.ui.view">
+        <field name="name">gpl.bordereau.form</field>
+        <field name="model">gpl.bordereau</field>
+        <field name="arch" type="xml">
+            <form string="Bordereau d'envoi">
+                <header>
+                    <button name="action_send" string="Marquer comme envoyé" type="object"
+                            class="btn-success" invisible="state != 'draft'"/>
+                    <button name="action_print_bordereau" string="Imprimer bordereau" type="object"
+                            class="btn-primary"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,sent"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_add_installations" type="object" class="oe_stat_button" icon="fa-plus"
+                                invisible="state == 'sent'">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Ajouter</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Informations">
+                            <field name="date_creation" readonly="1"/>
+                            <field name="date_envoi" readonly="state == 'sent'"/>
+                            <field name="installation_count" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Installations">
+                            <field name="installation_ids" readonly="state == 'sent'"
+                                   context="{'create': False, 'edit': False}"
+                                   options="{'no_create': True, 'no_create_edit': True, 'no_open': True}"
+                                   domain="[('state', '=', 'done'), ('bordereau_id', 'in', [False, id])]">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="vehicle_id"/>
+                                    <field name="client_id"/>
+                                    <field name="date_start"/>
+                                    <field name="reservoir_lot_id"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes" placeholder="Notes sur l'envoi..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action menu pour les bordereaux -->
+    <record id="action_gpl_bordereau" model="ir.actions.act_window">
+        <field name="name">Bordereaux d'envoi</field>
+        <field name="res_model">gpl.bordereau</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créer un nouveau bordereau d'envoi
+            </p>
+        </field>
+    </record>
+
+    <!-- Vue spéciale pour sélection bordereau -->
+    <record id="view_gpl_installation_bordereau_selection" model="ir.ui.view">
+        <field name="name">gpl.installation.bordereau.selection</field>
+        <field name="model">gpl.service.installation</field>
+        <field name="arch" type="xml">
+            <tree string="Sélectionner des installations" multi_edit="1">
+                <header>
+                    <button name="action_assign_to_bordereau" string="Ajouter au bordereau"
+                            type="object" class="btn-primary"/>
+                </header>
+                <field name="name"/>
+                <field name="vehicle_id"/>
+                <field name="client_id"/>
+                <field name="date_start"/>
+                <field name="reservoir_lot_id"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+
+    <record id="action_gpl_installation_not_sent" model="ir.actions.act_window">
+        <field name="name">Installations non envoyées</field>
+        <field name="res_model">gpl.service.installation</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('state', '=', 'done'), ('bordereau_id', '=', False)]</field>
+        <field name="context">{'search_default_not_sent': 1}</field>
+    </record>
+</odoo>

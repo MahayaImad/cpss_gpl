@@ -36,4 +36,23 @@
               action="action_gpl_reservoir_testing"
               sequence="20"/>
 
+    <!-- Menu principal Bordereaux -->
+    <menuitem id="menu_gpl_bordereau_main"
+              name="📋 Bordereaux"
+              parent="cpss_gpl_garage.menu_gpl_garage_root"
+              sequence="60"/>
+
+    <!-- Sous-menus -->
+    <menuitem id="menu_gpl_bordereau"
+              name="Bordereaux d'envoi"
+              parent="menu_gpl_bordereau_main"
+              action="action_gpl_bordereau"
+              sequence="10"/>
+
+    <menuitem id="menu_gpl_installation_not_sent"
+              name="Installations à envoyer"
+              parent="menu_gpl_bordereau_main"
+              action="action_gpl_installation_not_sent"
+              sequence="20"/>
+
 </odoo>

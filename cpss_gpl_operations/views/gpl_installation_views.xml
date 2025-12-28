@@ -116,6 +116,8 @@
                 <field name="technician_ids" widget="many2many_tags"/>
                 <field name="reservoir_lot_id" optional="show"/>
                 <field name="total_amount_ttc" widget="monetary" sum="Total"/>
+                <field name="bordereau_reference" optional="show"/>
+                <field name="is_sent_to_direction" optional="hide"/>
                 <field name="state" widget="badge"
                        decoration-success="state == 'done'"
                        decoration-info="state == 'in_progress'"
