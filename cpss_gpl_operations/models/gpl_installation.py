@@ -328,6 +328,18 @@ class GplServiceInstallation(models.Model):
                 'tag': 'reload',
             }
 
+    def action_remove_from_bordereau(self):
+        """Retire l'installation du bordereau (met bordereau_id à False)"""
+        self.ensure_one()
+        if self.bordereau_id and self.bordereau_id.state == 'sent':
+            raise UserError(_("Impossible de retirer une installation d'un bordereau déjà envoyé."))
+
+        self.write({'bordereau_id': False})
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
+        }
+
     @api.model
     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
         """Override pour forcer l'affichage de toutes les colonnes d'états dans kanban"""

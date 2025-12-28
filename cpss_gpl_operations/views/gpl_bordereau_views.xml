@@ -60,13 +60,18 @@
                                    context="{'create': False, 'edit': False}"
                                    options="{'no_create': True, 'no_create_edit': True, 'no_open': True}"
                                    domain="[('state', '=', 'done'), ('bordereau_id', 'in', [False, id])]">
-                                <tree>
+                                <tree delete="false">
                                     <field name="name"/>
                                     <field name="vehicle_id"/>
                                     <field name="client_id"/>
                                     <field name="date_start"/>
                                     <field name="reservoir_lot_id"/>
                                     <field name="state"/>
+                                    <button name="action_remove_from_bordereau"
+                                            type="object"
+                                            string="Retirer du bordereau"
+                                            icon="fa-times"
+                                            invisible="parent.state == 'sent'"/>
                                 </tree>
                             </field>
                         </page>
