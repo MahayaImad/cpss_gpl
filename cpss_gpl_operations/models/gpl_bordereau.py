@@ -46,6 +46,13 @@ class GplBordereau(models.Model):
 
     notes = fields.Text(string='Notes')
 
+    company_id = fields.Many2one(
+        'res.company',
+        string='Société',
+        default=lambda self: self.env.company,
+        required=True
+    )
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -72,7 +79,7 @@ class GplBordereau(models.Model):
     def action_print_bordereau(self):
         """Imprime le bordereau d'envoi"""
         self.ensure_one()
-        return self.env.ref('cpss_gpl_reports.action_report_gpl_bordereau_envoi').report_action(self.installation_ids)
+        return self.env.ref('cpss_gpl_reports.action_report_gpl_bordereau_envoi').report_action(self)
 
     def action_add_installations(self):
         """Ouvre la liste des installations disponibles"""

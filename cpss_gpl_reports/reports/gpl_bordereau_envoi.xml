@@ -3,100 +3,102 @@
     <!-- Action de rapport pour le bordereau d'envoi -->
     <record id="action_report_gpl_bordereau_envoi" model="ir.actions.report">
         <field name="name">Bordereau d'Envoi GPL</field>
-        <field name="model">gpl.service.installation</field>
+        <field name="model">gpl.bordereau</field>
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">cpss_gpl_reports.report_gpl_bordereau_envoi</field>
         <field name="report_file">cpss_gpl_reports.report_gpl_bordereau_envoi</field>
-        <field name="print_report_name">'Bordereau_Envoi_GPL_%s' % (datetime.datetime.now().strftime('%Y%m%d_%H%M'))</field>
+        <field name="print_report_name">'Bordereau_Envoi_GPL_%s' % (object.name or datetime.datetime.now().strftime('%Y%m%d_%H%M'))</field>
         <field name="paperformat_id" ref="paperformat_gpl_bordereau"/>
-        <field name="binding_model_id" ref="cpss_gpl_operations.model_gpl_service_installation"/>
+        <field name="binding_model_id" ref="cpss_gpl_operations.model_gpl_bordereau"/>
         <field name="binding_type">report</field>
     </record>
 
     <!-- Template du bordereau d'envoi -->
     <template id="report_gpl_bordereau_envoi">
         <t t-call="web.html_container">
-            <t t-call="cpss_gpl_reports.gpl_external_layout">
-                <t t-call="cpss_gpl_reports.gpl_report_assets"/>
-                <div class="page">
-                    <!-- En-tête du bordereau -->
-                    <div class="text-center">
-                        <h2 style="color: #007bff; font-weight: bold;">
-                            BORDEREAU D'ENVOI
-                        </h2>
-                        <h3>DOSSIERS D'INSTALLATION GPL</h3>
-                        <p>
-                            Date: <span t-esc="datetime.datetime.now().strftime('%d/%m/%Y')"/>
-                        </p>
-                    </div>
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="cpss_gpl_reports.gpl_external_layout">
+                    <t t-call="cpss_gpl_reports.gpl_report_assets"/>
+                    <div class="page">
+                        <!-- En-tête du bordereau -->
+                        <div class="text-center">
+                            <h2 style="color: #007bff; font-weight: bold;">
+                                BORDEREAU D'ENVOI
+                            </h2>
+                            <h3>DOSSIERS D'INSTALLATION GPL</h3>
+                            <p>
+                                Référence: <strong t-field="doc.name"/><br/>
+                                Date: <span t-field="doc.date_envoi" t-options="{'widget': 'date'}"/>
+                            </p>
+                        </div>
 
-                    <!-- Destinataire -->
-                    <div style="margin: 30px 0; padding: 20px; border: 1px solid #ddd;">
-                        <h4>DESTINATAIRE:</h4>
-                        <p>
-                            <strong>DIRECTION DES MINES</strong><br/>
-                            Service Homologation GPL<br/>
-                            <span t-field="docs[0].company_id.state_id.name"/> -
-                            <span t-field="docs[0].company_id.country_id.name"/>
-                        </p>
-                    </div>
+                        <!-- Destinataire -->
+                        <div style="margin: 30px 0; padding: 20px; border: 1px solid #ddd;">
+                            <h4>DESTINATAIRE:</h4>
+                            <p>
+                                <strong>DIRECTION DES MINES</strong><br/>
+                                Service Homologation GPL<br/>
+                                <span t-field="doc.company_id.state_id.name"/> -
+                                <span t-field="doc.company_id.country_id.name"/>
+                            </p>
+                        </div>
 
-                    <!-- Expéditeur -->
-                    <div style="margin: 30px 0; padding: 20px; border: 1px solid #ddd;">
-                        <h4>EXPÉDITEUR:</h4>
-                        <p>
-                            <strong t-field="docs[0].company_id.name"/><br/>
-                            Agrément N° <span t-field="docs[0].company_id.gpl_company_license"/><br/>
-                            <span t-field="docs[0].company_id.street"/><br/>
-                            <span t-field="docs[0].company_id.city"/> -
-                            <span t-field="docs[0].company_id.country_id.name"/>
-                        </p>
-                    </div>
+                        <!-- Expéditeur -->
+                        <div style="margin: 30px 0; padding: 20px; border: 1px solid #ddd;">
+                            <h4>EXPÉDITEUR:</h4>
+                            <p>
+                                <strong t-field="doc.company_id.name"/><br/>
+                                Agrément N° <span t-field="doc.company_id.gpl_company_license"/><br/>
+                                <span t-field="doc.company_id.street"/><br/>
+                                <span t-field="doc.company_id.city"/> -
+                                <span t-field="doc.company_id.country_id.name"/>
+                            </p>
+                        </div>
 
-                    <!-- Liste des dossiers -->
-                    <h4 style="margin-top: 30px;">LISTE DES DOSSIERS TRANSMIS:</h4>
-                    <table class="gpl-table">
-                        <thead>
-                            <tr>
-                                <th width="5%">N°</th>
-                                <th width="20%">Référence</th>
-                                <th width="25%">Client</th>
-                                <th width="20%">Immatriculation</th>
-                                <th width="20%">N° Réservoir</th>
-                                <th width="10%">Type</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <t t-set="counter" t-value="1"/>
-                            <tr t-foreach="docs" t-as="installation">
-                                <td class="text-center"><span t-esc="counter"/></td>
-                                <td><span t-field="installation.name"/></td>
-                                <td><span t-field="installation.client_id.name"/></td>
-                                <td><span t-field="installation.vehicle_id.license_plate"/></td>
-                                <td>
-                                    <span t-if="installation.reservoir_id" t-field="installation.reservoir_id.name"/>
-                                </td>
-                                <td class="text-center">
-                                    <span t-if="installation.state == 'done'">Installation</span>
-                                    <span t-else="">En cours</span>
-                                </td>
-                                <t t-set="counter" t-value="counter + 1"/>
-                            </tr>
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <th colspan="5" class="text-right">TOTAL DOSSIERS:</th>
-                                <th class="text-center"><span t-esc="len(docs)"/></th>
-                            </tr>
-                        </tfoot>
-                    </table>
+                        <!-- Liste des dossiers -->
+                        <h4 style="margin-top: 30px;">LISTE DES DOSSIERS TRANSMIS:</h4>
+                        <table class="gpl-table">
+                            <thead>
+                                <tr>
+                                    <th width="5%">N°</th>
+                                    <th width="20%">Référence</th>
+                                    <th width="25%">Client</th>
+                                    <th width="20%">Immatriculation</th>
+                                    <th width="20%">N° Réservoir</th>
+                                    <th width="10%">Type</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-set="counter" t-value="1"/>
+                                <tr t-foreach="doc.installation_ids" t-as="installation">
+                                    <td class="text-center"><span t-esc="counter"/></td>
+                                    <td><span t-field="installation.name"/></td>
+                                    <td><span t-field="installation.client_id.name"/></td>
+                                    <td><span t-field="installation.vehicle_id.license_plate"/></td>
+                                    <td>
+                                        <span t-if="installation.reservoir_lot_id" t-field="installation.reservoir_lot_id.name"/>
+                                    </td>
+                                    <td class="text-center">
+                                        <span t-if="installation.state == 'done'">Installation</span>
+                                        <span t-else="">En cours</span>
+                                    </td>
+                                    <t t-set="counter" t-value="counter + 1"/>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="5" class="text-right">TOTAL DOSSIERS:</th>
+                                    <th class="text-center"><span t-esc="len(doc.installation_ids)"/></th>
+                                </tr>
+                            </tfoot>
+                        </table>
 
-                    <!-- Observations -->
-                    <div style="margin-top: 30px; padding: 20px; border: 1px solid #ddd; min-height: 100px;">
-                        <h4>OBSERVATIONS:</h4>
-                        <p style="min-height: 60px;">
-                            <t t-if="docs[0].notes">
-                                <span t-field="docs[0].notes"/>
+                        <!-- Observations -->
+                        <div style="margin-top: 30px; padding: 20px; border: 1px solid #ddd; min-height: 100px;">
+                            <h4>OBSERVATIONS:</h4>
+                            <p style="min-height: 60px;">
+                                <t t-if="doc.notes">
+                                    <span t-field="doc.notes"/>
                             </t>
                         </p>
                     </div>
@@ -121,20 +123,21 @@
                         </div>
                     </div>
 
-                    <!-- Référence du bordereau -->
-                    <div style="margin-top: 40px; text-align: center; font-size: 12px; color: #666;">
-                        <p>
-                            <strong>Référence bordereau:</strong>
-                            <span t-esc="'BOR-' + datetime.datetime.now().strftime('%Y%m%d-%H%M')"/>
-                        </p>
-                        <p>
-                            Bordereau généré le <span t-esc="datetime.datetime.now().strftime('%d/%m/%Y à %H:%M')"/>
-                        </p>
-                        <p style="margin-top: 10px;">
-                            <em>Ce bordereau accompagne les dossiers d'installation GPL transmis pour validation officielle.</em>
-                        </p>
+                        <!-- Référence du bordereau -->
+                        <div style="margin-top: 40px; text-align: center; font-size: 12px; color: #666;">
+                            <p>
+                                <strong>Référence bordereau:</strong>
+                                <span t-field="doc.name"/>
+                            </p>
+                            <p>
+                                Bordereau généré le <span t-esc="datetime.datetime.now().strftime('%d/%m/%Y à %H:%M')"/>
+                            </p>
+                            <p style="margin-top: 10px;">
+                                <em>Ce bordereau accompagne les dossiers d'installation GPL transmis pour validation officielle.</em>
+                            </p>
+                        </div>
                     </div>
-                </div>
+                </t>
             </t>
         </t>
     </template>
