@@ -62,11 +62,12 @@
                                 <tr>
                                     <th width="5%">N°</th>
                                     <th width="15%">Référence</th>
-                                    <th width="20%">Client</th>
-                                    <th width="15%">Immatriculation</th>
-                                    <th width="15%">Date Contrôle</th>
-                                    <th width="15%">Type Contrôle</th>
-                                    <th width="15%">Résultat</th>
+                                    <th width="18%">Client</th>
+                                    <th width="12%">Immatriculation</th>
+                                    <th width="15%">N° Réservoir</th>
+                                    <th width="12%">Date Contrôle</th>
+                                    <th width="12%">Type Contrôle</th>
+                                    <th width="11%">Résultat</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -76,6 +77,10 @@
                                     <td><span t-field="inspection.name"/></td>
                                     <td><span t-field="inspection.client_id.name"/></td>
                                     <td><span t-field="inspection.vehicle_id.license_plate"/></td>
+                                    <td>
+                                        <span t-if="inspection.vehicle_id.reservoir_lot_id" t-field="inspection.vehicle_id.reservoir_lot_id.name"/>
+                                        <span t-else="">-</span>
+                                    </td>
                                     <td><span t-field="inspection.date_start" t-options="{'widget': 'date'}"/></td>
                                     <td class="text-center">
                                         <span t-if="inspection.inspection_type == 'periodic'">Triennal</span>
@@ -91,7 +96,7 @@
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    <th colspan="6" class="text-right">TOTAL DOSSIERS:</th>
+                                    <th colspan="7" class="text-right">TOTAL DOSSIERS:</th>
                                     <th class="text-center"><span t-esc="len(doc.inspection_ids)"/></th>
                                 </tr>
                             </tfoot>
