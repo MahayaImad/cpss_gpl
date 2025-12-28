@@ -39,6 +39,13 @@ class GplBordereau(models.Model):
         store=True
     )
 
+    # Alias temporaire pour migration (deprecated)
+    installation_count = fields.Integer(
+        string='[Deprecated] Nombre d\'installations',
+        compute='_compute_inspection_count',
+        store=False
+    )
+
     state = fields.Selection([
         ('draft', 'Brouillon'),
         ('sent', 'Envoyé'),
