@@ -49,10 +49,10 @@
               action="action_gpl_bordereau"
               sequence="10"/>
 
-    <menuitem id="menu_gpl_installation_not_sent"
-              name="Installations à envoyer"
+    <menuitem id="menu_gpl_inspection_not_sent"
+              name="Contrôles à envoyer"
               parent="menu_gpl_bordereau_main"
-              action="action_gpl_installation_not_sent"
+              action="action_gpl_inspection_not_sent"
               sequence="20"/>
 
 </odoo>
