@@ -4,7 +4,6 @@ from odoo.exceptions import UserError
 
 class GplBordereau(models.Model):
     _name = 'gpl.bordereau'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Bordereau d\'envoi contrôles GPL'
     _order = 'date_creation desc'
 
@@ -38,6 +37,13 @@ class GplBordereau(models.Model):
         string='Nombre de contrôles',
         compute='_compute_inspection_count',
         store=True
+    )
+
+    # Alias temporaire pour migration (deprecated)
+    installation_count = fields.Integer(
+        string='[Deprecated] Nombre d\'installations',
+        compute='_compute_inspection_count',
+        store=False
     )
 
     state = fields.Selection([

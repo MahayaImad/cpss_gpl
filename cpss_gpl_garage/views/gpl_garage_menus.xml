@@ -6,11 +6,23 @@
               sequence="50"
               web_icon="cpss_gpl_garage,static/description/icon.png"/>
 
+    <!-- === RENDEZ-VOUS === -->
+    <menuitem id="menu_gpl_garage_appointments"
+              name="📋 Rendez-vous"
+              parent="menu_gpl_garage_root"
+              sequence="10"/>
+
+    <menuitem id="menu_gpl_garage_appointments_all"
+              name="Tous les rendez-vous"
+              parent="menu_gpl_garage_appointments"
+              action="action_gpl_appointment"
+              sequence="10"/>
+
     <!-- === PLANNING === -->
     <menuitem id="menu_gpl_garage_planning"
               name="📅 Planning"
               parent="menu_gpl_garage_root"
-              sequence="10"/>
+              sequence="15"/>
 
     <menuitem id="menu_gpl_garage_calendar_month"
               name="Planning Mensuel"

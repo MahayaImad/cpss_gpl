@@ -21,8 +21,11 @@
                     <t t-call="cpss_gpl_reports.gpl_report_assets"/>
                     <div class="page">
                         <!-- En-tête du bordereau -->
-                        <div class="text-center" style="margin: 30px 0; padding: 40px;">
-                            <h2>BORDEREAU D'ENVOI</h2>
+                        <div class="text-center">
+                            <h2 style="color: #007bff; font-weight: bold;">
+                                BORDEREAU D'ENVOI
+                            </h2>
+                            <h3>DOSSIERS DE CONTRÔLE GPL</h3>
                             <p>
                                 Référence: <strong t-field="doc.name"/><br/>
                                 Date: <span t-field="doc.date_envoi" t-options="{'widget': 'date'}"/>
@@ -30,44 +33,70 @@
                         </div>
 
                         <!-- Destinataire -->
-                        <div>
+                        <div style="margin: 30px 0; padding: 20px; border: 1px solid #ddd;">
+                            <h4>DESTINATAIRE:</h4>
                             <p>
-                                <strong>DESTINATAIRE: DIRECTION DES MINES - <span t-field="env.company.state_id.name"/></strong>
+                                <strong>DIRECTION DES MINES</strong><br/>
+                                Service Homologation GPL<br/>
+                                <span t-field="doc.company_id.state_id.name"/> -
+                                <span t-field="doc.company_id.country_id.name"/>
+                            </p>
+                        </div>
+
+                        <!-- Expéditeur -->
+                        <div style="margin: 30px 0; padding: 20px; border: 1px solid #ddd;">
+                            <h4>EXPÉDITEUR:</h4>
+                            <p>
+                                <strong t-field="doc.company_id.name"/><br/>
+                                Agrément N° <span t-field="doc.company_id.gpl_company_license"/><br/>
+                                <span t-field="doc.company_id.street"/><br/>
+                                <span t-field="doc.company_id.city"/> -
+                                <span t-field="doc.company_id.country_id.name"/>
                             </p>
                         </div>
 
                         <!-- Liste des dossiers -->
                         <h4 style="margin-top: 30px;">LISTE DES DOSSIERS TRANSMIS:</h4>
-                        <table class="gpl-bor-table">
+                        <table class="gpl-table">
                             <thead>
                                 <tr>
                                     <th width="5%">N°</th>
-                                    <th width="25%">Nom et Prénom</th>
-                                    <th width="20%">Immatriculation</th>
-                                    <th width="15%">N° Reservoir</th>
-                                    <th width="15%">Date Contrôle</th>
-                                    <th width="25%">Type Contrôle</th>
+                                    <th width="15%">Référence</th>
+                                    <th width="18%">Client</th>
+                                    <th width="12%">Immatriculation</th>
+                                    <th width="15%">N° Réservoir</th>
+                                    <th width="12%">Date Contrôle</th>
+                                    <th width="12%">Type Contrôle</th>
+                                    <th width="11%">Résultat</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <t t-set="counter" t-value="1"/>
                                 <tr t-foreach="doc.inspection_ids" t-as="inspection">
                                     <td class="text-center"><span t-esc="counter"/></td>
+                                    <td><span t-field="inspection.name"/></td>
                                     <td><span t-field="inspection.client_id.name"/></td>
                                     <td><span t-field="inspection.vehicle_id.license_plate"/></td>
-                                    <td><span t-if="inspection.vehicle_id.reservoir_lot_id" t-field="inspection.vehicle_id.reservoir_lot_id.name"/></td>
+                                    <td>
+                                        <span t-if="inspection.vehicle_id.reservoir_lot_id" t-field="inspection.vehicle_id.reservoir_lot_id.name"/>
+                                        <span t-else="">-</span>
+                                    </td>
                                     <td><span t-field="inspection.date_start" t-options="{'widget': 'date'}"/></td>
                                     <td class="text-center">
-                                        <span t-if="inspection.inspection_type == 'periodic'">Contrôle Triennal</span>
-                                        <span t-elif="inspection.inspection_type == 'initial'">Contrôle Initial</span>
+                                        <span t-if="inspection.inspection_type == 'periodic'">Triennal</span>
+                                        <span t-elif="inspection.inspection_type == 'initial'">Initial</span>
                                         <span t-else="">Volontaire</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span t-if="inspection.result == 'pass'" style="color: green; font-weight: bold;">✓ Validé</span>
+                                        <span t-else="">-</span>
                                     </td>
                                     <t t-set="counter" t-value="counter + 1"/>
                                 </tr>
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    <th colspan="5" class="text-right">TOTAL DOSSIERS:</th>
+                                    <th colspan="7" class="text-right">TOTAL DOSSIERS:</th>
                                     <th class="text-center"><span t-esc="len(doc.inspection_ids)"/></th>
                                 </tr>
                             </tfoot>
@@ -79,9 +108,9 @@
                             <p style="min-height: 60px;">
                                 <t t-if="doc.notes">
                                     <span t-field="doc.notes"/>
-                                </t>
-                            </p>
-                        </div>
+                            </t>
+                        </p>
+                    </div>
 
                         <!-- Signatures -->
                         <div class="gpl-signatures">
@@ -104,20 +133,18 @@
                                 </div>
                             </div>
 
-
-                            <!-- Référence du bordereau -->
-                            <div class="gpl-footer-ref">
-                                <p>
-                                    <strong>Référence bordereau:</strong>
-                                    <span t-field="doc.name"/>
-                                </p>
-                                <p>
-                                    Bordereau généré le <span t-esc="datetime.datetime.now().strftime('%d/%m/%Y à %H:%M')"/>
-                                </p>
-                                <p style="margin-top: 10px;">
-                                    <em>Ce bordereau accompagne les dossiers de contrôle GPL transmis pour validation des cartes.</em>
-                                </p>
-                            </div>
+                        <!-- Référence du bordereau -->
+                        <div style="margin-top: 40px; text-align: center; font-size: 12px; color: #666;">
+                            <p>
+                                <strong>Référence bordereau:</strong>
+                                <span t-field="doc.name"/>
+                            </p>
+                            <p>
+                                Bordereau généré le <span t-esc="datetime.datetime.now().strftime('%d/%m/%Y à %H:%M')"/>
+                            </p>
+                            <p style="margin-top: 10px;">
+                                <em>Ce bordereau accompagne les dossiers de contrôle GPL transmis pour validation des cartes.</em>
+                            </p>
                         </div>
                     </div>
                 </t>

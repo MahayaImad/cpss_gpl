@@ -23,20 +23,26 @@ class ResPartner(models.Model):
         for partner in self:
             partner.is_gpl_client = bool(partner.gpl_vehicle_ids)
 
-    @api.depends('gpl_vehicle_ids.appointment_date')
     def _compute_gpl_stats(self):
+        """Compute appointment stats from gpl.appointment model"""
         for partner in self:
-            vehicles = partner.gpl_vehicle_ids
-            if vehicles:
-                # Dernier RDV
-                past_appointments = vehicles.filtered(
-                    lambda v: v.appointment_date and v.appointment_date < fields.Datetime.now()
+            if partner.gpl_vehicle_ids:
+                # Get all appointments for this partner's vehicles
+                appointments = self.env['gpl.appointment'].search([
+                    ('vehicle_id', 'in', partner.gpl_vehicle_ids.ids)
+                ])
+
+                # Dernier RDV (last completed or past appointment)
+                past_appointments = appointments.filtered(
+                    lambda a: a.appointment_date and a.appointment_date < fields.Datetime.now()
                 ).sorted('appointment_date', reverse=True)
                 partner.last_gpl_appointment = past_appointments[0].appointment_date if past_appointments else False
 
-                # Prochain RDV
-                future_appointments = vehicles.filtered(
-                    lambda v: v.appointment_date and v.appointment_date >= fields.Datetime.now()
+                # Prochain RDV (next scheduled/confirmed appointment)
+                future_appointments = appointments.filtered(
+                    lambda a: a.appointment_date
+                    and a.appointment_date >= fields.Datetime.now()
+                    and a.state in ['scheduled', 'confirmed', 'in_progress']
                 ).sorted('appointment_date')
                 partner.next_gpl_appointment = future_appointments[0].appointment_date if future_appointments else False
             else:

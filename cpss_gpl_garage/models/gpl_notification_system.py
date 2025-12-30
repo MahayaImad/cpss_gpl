@@ -47,24 +47,26 @@ class GplNotificationSystem(models.Model):
             tomorrow = today + timedelta(days=1)
 
             # RDV d'aujourd'hui
-            today_appointments = self.env['gpl.vehicle'].search([
+            today_appointments = self.env['gpl.appointment'].search([
                 ('assigned_technician_ids', 'in', technician.id),
+                ('state', 'in', ['scheduled', 'confirmed', 'in_progress']),
                 ('appointment_date', '>=', today),
                 ('appointment_date', '<', tomorrow)
             ])
 
             # RDV de demain
-            tomorrow_appointments = self.env['gpl.vehicle'].search([
+            tomorrow_appointments = self.env['gpl.appointment'].search([
                 ('assigned_technician_ids', 'in', technician.id),
+                ('state', 'in', ['scheduled', 'confirmed']),
                 ('appointment_date', '>=', tomorrow),
                 ('appointment_date', '<', tomorrow + timedelta(days=1))
             ])
 
             # RDV en retard
-            overdue_appointments = self.env['gpl.vehicle'].search([
+            overdue_appointments = self.env['gpl.appointment'].search([
                 ('assigned_technician_ids', 'in', technician.id),
-                ('appointment_date', '<', today),
-                ('next_service_type', '!=', False)  # RDV non traité
+                ('state', 'in', ['scheduled', 'confirmed']),
+                ('appointment_date', '<', today)
             ])
 
 
@@ -106,24 +108,24 @@ class GplNotificationSystem(models.Model):
                             padding: 15px; margin: 10px 0; border-radius: 5px;">
                     <h3 style="color: #155724; margin-top: 0;">📅 RDV AUJOURD'HUI</h3>
             """
-            for vehicle in today:
+            for appointment in today:
                 service_type = "Service GPL"
-                if getattr(vehicle, "next_service_type", False):
+                if getattr(appointment, "service_type", False):
                     try:
-                        if hasattr(vehicle._fields.get("next_service_type"), "selection"):
-                            service_dict = dict(vehicle._fields["next_service_type"].selection)
-                            service_type = service_dict.get(vehicle.next_service_type, vehicle.next_service_type)
+                        if hasattr(appointment._fields.get("service_type"), "selection"):
+                            service_dict = dict(appointment._fields["service_type"].selection)
+                            service_type = service_dict.get(appointment.service_type, appointment.service_type)
                         else:
-                            service_type = vehicle.next_service_type
+                            service_type = appointment.service_type
                     except Exception:
                         service_type = "Service GPL"
 
                 html_content += f"""
                     <div style="background-color: white; padding: 10px;
                                 margin: 5px 0; border-radius: 3px;">
-                        <strong>🚗 {vehicle.license_plate or 'N/A'}</strong><br/>
-                        👤 Client: {vehicle.client_id.name if vehicle.client_id else 'N/A'}<br/>
-                        ⏰ {vehicle.appointment_date.strftime('%H:%M') if vehicle.appointment_date else 'N/A'}<br/>
+                        <strong>🚗 {appointment.license_plate or 'N/A'}</strong><br/>
+                        👤 Client: {appointment.client_id.name if appointment.client_id else 'N/A'}<br/>
+                        ⏰ {appointment.appointment_date.strftime('%H:%M') if appointment.appointment_date else 'N/A'}<br/>
                         🔧 {service_type}
                     </div>
                 """
@@ -146,24 +148,24 @@ class GplNotificationSystem(models.Model):
                             padding: 15px; margin: 10px 0; border-radius: 5px;">
                     <h3 style="color: #856404; margin-top: 0;">📋 PRÉPARATION DEMAIN</h3>
             """
-            for vehicle in tomorrow:
+            for appointment in tomorrow:
                 service_type = "Service GPL"
-                if getattr(vehicle, "next_service_type", False):
+                if getattr(appointment, "service_type", False):
                     try:
-                        if hasattr(vehicle._fields.get("next_service_type"), "selection"):
-                            service_dict = dict(vehicle._fields["next_service_type"].selection)
-                            service_type = service_dict.get(vehicle.next_service_type, vehicle.next_service_type)
+                        if hasattr(appointment._fields.get("service_type"), "selection"):
+                            service_dict = dict(appointment._fields["service_type"].selection)
+                            service_type = service_dict.get(appointment.service_type, appointment.service_type)
                         else:
-                            service_type = vehicle.next_service_type
+                            service_type = appointment.service_type
                     except Exception:
                         service_type = "Service GPL"
 
                 html_content += f"""
                     <div style="background-color: white; padding: 10px;
                                 margin: 5px 0; border-radius: 3px;">
-                        <strong>🚗 {vehicle.license_plate or 'N/A'}</strong><br/>
-                        👤 Client: {vehicle.client_id.name if vehicle.client_id else 'N/A'}<br/>
-                        ⏰ {vehicle.appointment_date.strftime('%H:%M') if vehicle.appointment_date else 'N/A'}<br/>
+                        <strong>🚗 {appointment.license_plate or 'N/A'}</strong><br/>
+                        👤 Client: {appointment.client_id.name if appointment.client_id else 'N/A'}<br/>
+                        ⏰ {appointment.appointment_date.strftime('%H:%M') if appointment.appointment_date else 'N/A'}<br/>
                         🔧 {service_type}
                     </div>
                 """
@@ -178,17 +180,17 @@ class GplNotificationSystem(models.Model):
                             padding: 15px; margin: 10px 0; border-radius: 5px;">
                     <h3 style="color: #721c24; margin-top: 0;">⚠️ RETARDS À TRAITER</h3>
             """
-            for vehicle in overdue:
+            for appointment in overdue:
                 days_late = (
-                    (datetime.now().date() - vehicle.appointment_date.date()).days
-                    if vehicle.appointment_date else 0
+                    (datetime.now().date() - appointment.appointment_date.date()).days
+                    if appointment.appointment_date else 0
                 )
                 html_content += f"""
                     <div style="background-color: white; padding: 10px;
                                 margin: 5px 0; border-radius: 3px;">
-                        <strong>🚗 {vehicle.license_plate or 'N/A'}</strong><br/>
-                        👤 Client: {vehicle.client_id.name if vehicle.client_id else 'N/A'}<br/>
-                        ⏰ Prévu: {vehicle.appointment_date.strftime('%d/%m/%Y %H:%M') if vehicle.appointment_date else 'N/A'}<br/>
+                        <strong>🚗 {appointment.license_plate or 'N/A'}</strong><br/>
+                        👤 Client: {appointment.client_id.name if appointment.client_id else 'N/A'}<br/>
+                        ⏰ Prévu: {appointment.appointment_date.strftime('%d/%m/%Y %H:%M') if appointment.appointment_date else 'N/A'}<br/>
                         🔴 Retard: {days_late} jour(s)
                     </div>
                 """
@@ -278,13 +280,14 @@ class GplNotificationSystem(models.Model):
 
         # Statistiques du jour
         stats = {
-            'total_appointments_today': self.env['gpl.vehicle'].search_count([
+            'total_appointments_today': self.env['gpl.appointment'].search_count([
+                ('state', 'in', ['scheduled', 'confirmed', 'in_progress']),
                 ('appointment_date', '>=', today),
                 ('appointment_date', '<', today + timedelta(days=1))
             ]),
-            'overdue_appointments': self.env['gpl.vehicle'].search_count([
-                ('appointment_date', '<', today),
-                ('next_service_type', '!=', False)
+            'overdue_appointments': self.env['gpl.appointment'].search_count([
+                ('state', 'in', ['scheduled', 'confirmed']),
+                ('appointment_date', '<', today)
             ]),
             'total_technicians_active': self.env['hr.employee'].search_count([
                 ('department_id.name', 'ilike', 'atelier'),
@@ -335,9 +338,9 @@ class GplNotificationSystem(models.Model):
 
         # Vérifier les retards critiques (plus de 3 jours)
         try:
-            critical_overdue = self.env['gpl.vehicle'].search_count([
-                ('appointment_date', '<', datetime.now().date() - timedelta(days=3)),
-                ('next_service_type', '!=', False)
+            critical_overdue = self.env['gpl.appointment'].search_count([
+                ('state', 'in', ['scheduled', 'confirmed']),
+                ('appointment_date', '<', datetime.now().date() - timedelta(days=3))
             ])
 
             if critical_overdue > 0:

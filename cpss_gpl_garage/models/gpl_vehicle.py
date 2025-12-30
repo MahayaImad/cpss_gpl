@@ -11,7 +11,7 @@ class GplVehicle(models.Model):
     _name = 'gpl.vehicle'
     _description = 'Véhicule GPL Garage'
     _inherit = ['mail.thread', 'mail.activity.mixin']
-    _order = 'appointment_date asc, name'
+    _order = 'id desc'
     _rec_name = 'display_name'
 
     # === INFORMATIONS DE BASE ===
@@ -41,22 +41,45 @@ class GplVehicle(models.Model):
     client_email = fields.Char(related='client_id.email', readonly=True)
 
     # === PLANNING ET RENDEZ-VOUS ===
-    appointment_date = fields.Datetime('Date rendez-vous', tracking=True)
-    estimated_duration = fields.Float('Durée estimée (heures)', default=2.0)
+    appointment_ids = fields.One2many(
+        'gpl.appointment',
+        'vehicle_id',
+        string='Rendez-vous'
+    )
+
+    current_appointment_id = fields.Many2one(
+        'gpl.appointment',
+        string='RDV actuel',
+        compute='_compute_current_appointment',
+        store=False
+    )
+
+    # Computed fields for backward compatibility with calendar views
+    appointment_date = fields.Datetime(
+        'Date rendez-vous',
+        compute='_compute_appointment_fields',
+        store=False
+    )
+
+    estimated_duration = fields.Float(
+        'Durée estimée (heures)',
+        compute='_compute_appointment_fields',
+        store=False
+    )
+
     next_service_type = fields.Selection([
         ('installation', 'Installation GPL'),
         ('repair', 'Réparation'),
         ('inspection', 'Contrôle/Inspection'),
         ('testing', 'Réépreuve réservoir'),
-    ], string='Type de service', tracking=True)
+    ], string='Type de service', compute='_compute_appointment_fields', store=False)
 
     # === ASSIGNATION TECHNICIENS ===
     assigned_technician_ids = fields.Many2many(
         'hr.employee',
-        'gpl_vehicle_technician_rel',
-        'vehicle_id', 'employee_id',
         string='Techniciens assignés',
-        domain=[('department_id.name', 'ilike', 'atelier')]
+        compute='_compute_appointment_fields',
+        store=False
     )
 
     # === STATUT ET WORKFLOW ===
@@ -129,10 +152,41 @@ class GplVehicle(models.Model):
 
             vehicle.display_name = ' '.join(parts) if parts else 'Nouveau véhicule'
 
+    @api.depends('appointment_ids', 'appointment_ids.state', 'appointment_ids.appointment_date')
+    def _compute_current_appointment(self):
+        """Find the current active appointment for this vehicle"""
+        for vehicle in self:
+            # Get the next scheduled or confirmed appointment
+            current = self.env['gpl.appointment'].search([
+                ('vehicle_id', '=', vehicle.id),
+                ('state', 'in', ['scheduled', 'confirmed', 'in_progress']),
+            ], order='appointment_date asc', limit=1)
+            vehicle.current_appointment_id = current
+
+    @api.depends('current_appointment_id', 'current_appointment_id.appointment_date',
+                 'current_appointment_id.service_type', 'current_appointment_id.estimated_duration',
+                 'current_appointment_id.assigned_technician_ids')
+    def _compute_appointment_fields(self):
+        """Compute appointment fields from current appointment for backward compatibility"""
+        for vehicle in self:
+            if vehicle.current_appointment_id:
+                vehicle.appointment_date = vehicle.current_appointment_id.appointment_date
+                vehicle.next_service_type = vehicle.current_appointment_id.service_type
+                vehicle.estimated_duration = vehicle.current_appointment_id.estimated_duration
+                vehicle.assigned_technician_ids = vehicle.current_appointment_id.assigned_technician_ids
+            else:
+                vehicle.appointment_date = False
+                vehicle.next_service_type = False
+                vehicle.estimated_duration = 2.0
+                vehicle.assigned_technician_ids = False
+
     @api.depends('assigned_technician_ids')
     def _compute_technician_names(self):
         for vehicle in self:
-            vehicle.technician_names = ', '.join(vehicle.assigned_technician_ids.mapped('name'))
+            if vehicle.assigned_technician_ids:
+                vehicle.technician_names = ', '.join(vehicle.assigned_technician_ids.mapped('name'))
+            else:
+                vehicle.technician_names = ''
 
     @api.depends('appointment_date')
     def _compute_appointment_flags(self):
@@ -215,56 +269,43 @@ class GplVehicle(models.Model):
         return self.env.ref('cpss_gpl_garage.vehicle_status_nouveau', raise_if_not_found=False)
 
     def action_start_service(self):
-        """Démarre le service"""
+        """Démarre le service - délègue au rendez-vous actuel"""
         self.ensure_one()
+
+        if not self.current_appointment_id:
+            raise UserError(_("Aucun rendez-vous actif pour ce véhicule."))
+
+        # Update vehicle status
         in_progress_status = self.env.ref('cpss_gpl_garage.vehicle_status_en_cours', raise_if_not_found=False)
         if in_progress_status:
             self.status_id = in_progress_status
 
-        # Log de démarrage
-        self.message_post(
-            body=f"Service démarré : {dict(self._fields['next_service_type'].selection)[self.next_service_type]}",
-            message_type='comment'
-        )
-
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'reload',
-        }
+        # Delegate to appointment
+        return self.current_appointment_id.action_start()
 
     def action_reschedule_appointment(self):
-        """Reprogrammer le service"""
+        """Reprogrammer le service - délègue au rendez-vous actuel"""
         self.ensure_one()
-        vehicle_status_nouveau = self.env.ref('cpss_gpl_garage.vehicle_status_nouveau', raise_if_not_found=False)
-        if vehicle_status_nouveau:
-            self.status_id = vehicle_status_nouveau
 
-        # Log de démarrage
-        self.message_post(
-            body=f"Service reprogrammer : {dict(self._fields['next_service_type'].selection)[self.next_service_type]}",
-            message_type='comment'
-        )
+        if not self.current_appointment_id:
+            raise UserError(_("Aucun rendez-vous actif pour ce véhicule."))
 
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'reload',
-        }
+        return self.current_appointment_id.action_reschedule()
 
     def action_complete_appointment(self):
-        """Termine le rendez-vous"""
+        """Termine le rendez-vous - délègue au rendez-vous actuel"""
         self.ensure_one()
+
+        if not self.current_appointment_id:
+            raise UserError(_("Aucun rendez-vous actif pour ce véhicule."))
+
+        # Update vehicle status
         completed_status = self.env.ref('cpss_gpl_garage.vehicle_status_termine', raise_if_not_found=False)
+        if completed_status:
+            self.status_id = completed_status
 
-        self.write({
-            'status_id': completed_status.id if completed_status else False,
-            'appointment_date': False,
-            'next_service_type': False,
-        })
-
-        self.message_post(
-            body="Rendez-vous terminé avec succès",
-            message_type='comment'
-        )
+        # Delegate to appointment
+        self.current_appointment_id.action_complete()
 
         return {
             'type': 'ir.actions.client',
@@ -272,24 +313,19 @@ class GplVehicle(models.Model):
         }
 
     def action_annuler(self):
+        """Annuler le rendez-vous - délègue au rendez-vous actuel"""
         self.ensure_one()
+
+        if not self.current_appointment_id:
+            raise UserError(_("Aucun rendez-vous actif pour ce véhicule."))
+
+        # Update vehicle status
         annule_status = self.env.ref('cpss_gpl_garage.vehicle_status_annule', raise_if_not_found=False)
+        if annule_status:
+            self.status_id = annule_status
 
-        self.write({
-            'status_id': annule_status.id if annule_status else False,
-            'appointment_date': False,
-            'next_service_type': False,
-        })
-
-        self.message_post(
-            body="Service annulé",
-            message_type='comment'
-        )
-
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'reload',
-        }
+        # Delegate to appointment
+        return self.current_appointment_id.action_cancel()
 
     # === CONTRAINTES ===
     @api.constrains('license_plate')
@@ -303,12 +339,6 @@ class GplVehicle(models.Model):
                 ])
                 if existing:
                     raise ValidationError(_("Cette plaque d'immatriculation existe déjà!"))
-
-    @api.constrains('appointment_date')
-    def _check_appointment_date(self):
-        for vehicle in self:
-            if vehicle.appointment_date and vehicle.appointment_date < fields.Datetime.now():
-                raise ValidationError(_("La date de rendez-vous ne peut pas être dans le passé."))
 
     @api.model
     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
