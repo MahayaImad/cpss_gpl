@@ -75,34 +75,33 @@ class VehicleAppointmentWizard(models.TransientModel):
 
     def _create_new_vehicle(self):
         """Créer un nouveau véhicule avec RDV"""
-        context = {
-            'default_appointment_date': self.appointment_date,
-            'default_next_service_type': self.service_type,
-            'default_estimated_duration': self.estimated_duration,
-            'default_assigned_technician_ids': [(6, 0, self.technician_ids.ids)],
-        }
-
-        if self.notes:
-            context['default_notes'] = self.notes
-
+        # Create vehicle first without appointment data
         return {
             'name': _('Nouveau véhicule GPL'),
             'type': 'ir.actions.act_window',
             'res_model': 'gpl.vehicle',
             'view_mode': 'form',
             'target': 'current',
-            'context': context
+            'context': {
+                '_create_appointment_after': {
+                    'appointment_date': self.appointment_date.isoformat() if self.appointment_date else False,
+                    'service_type': self.service_type,
+                    'estimated_duration': self.estimated_duration,
+                    'technician_ids': self.technician_ids.ids,
+                    'notes': self.notes or '',
+                }
+            }
         }
 
     def _update_existing_vehicle(self):
-        """Mettre à jour un véhicule existant"""
+        """Créer un rendez-vous pour un véhicule existant"""
         if not self.vehicle_id:
             raise UserError(_("Veuillez sélectionner un véhicule."))
 
-        # Vérifier les conflits de RDV
-        conflicting_appointments = self.env['gpl.vehicle'].search([
-            ('id', '!=', self.vehicle_id.id),
-            ('appointment_date', '!=', False),
+        # Vérifier les conflits de RDV dans les appointments
+        conflicting_appointments = self.env['gpl.appointment'].search([
+            ('vehicle_id', '!=', self.vehicle_id.id),
+            ('state', 'in', ['scheduled', 'confirmed', 'in_progress']),
             ('appointment_date', '>=', self.appointment_date),
             ('appointment_date', '<', self.appointment_date + fields.Datetime.to_datetime('1970-01-01 02:00:00'))
         ])
@@ -115,35 +114,36 @@ class VehicleAppointmentWizard(models.TransientModel):
                 "Veuillez choisir un autre créneau."
             ) % conflicting_names)
 
-        # Mettre à jour le véhicule
-        values = {
+        # Créer le rendez-vous
+        appointment = self.env['gpl.appointment'].create({
+            'vehicle_id': self.vehicle_id.id,
             'appointment_date': self.appointment_date,
-            'next_service_type': self.service_type,
+            'service_type': self.service_type,
             'estimated_duration': self.estimated_duration,
             'assigned_technician_ids': [(6, 0, self.technician_ids.ids)],
-        }
+            'notes': self.notes or '',
+            'state': 'scheduled',
+        })
 
-        if self.notes:
-            values['notes'] = self.notes
-
-        self.vehicle_id.write(values)
-
-        # Message de suivi
+        # Message de suivi sur le véhicule
         message = _(
             "Nouveau rendez-vous créé:\n"
+            "• Référence: %s\n"
             "• Date: %s\n"
             "• Service: %s\n"
             "• Durée: %.1f heures"
         ) % (
-                      self.appointment_date.strftime('%d/%m/%Y %H:%M'),
-                      dict(self._fields['service_type'].selection)[self.service_type],
-                      self.estimated_duration
-                  )
+            appointment.name,
+            self.appointment_date.strftime('%d/%m/%Y %H:%M'),
+            dict(self._fields['service_type'].selection)[self.service_type],
+            self.estimated_duration
+        )
 
         if self.technician_ids:
             message += _("\n• Techniciens: %s") % ', '.join(self.technician_ids.mapped('name'))
 
         self.vehicle_id.message_post(body=message)
+        appointment.message_post(body=_("Rendez-vous créé via l'assistant"))
 
         # Notification de succès
         return {
@@ -151,7 +151,9 @@ class VehicleAppointmentWizard(models.TransientModel):
             'tag': 'display_notification',
             'params': {
                 'title': _('Rendez-vous créé'),
-                'message': _('Le rendez-vous pour %s a été programmé avec succès.') % self.vehicle_id.display_name,
+                'message': _('Le rendez-vous %s pour %s a été programmé avec succès.') % (
+                    appointment.name, self.vehicle_id.display_name
+                ),
                 'type': 'success',
             }
         }
