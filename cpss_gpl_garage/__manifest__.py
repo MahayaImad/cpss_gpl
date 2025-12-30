@@ -69,6 +69,9 @@
         'views/gpl_vehicle_views.xml',
         'views/stock_lot_views.xml',
 
+        # Rendez-vous
+        'views/gpl_appointment_views.xml',
+
         # Clients (extension res_partner)
         'views/res_partner_views.xml',
 
