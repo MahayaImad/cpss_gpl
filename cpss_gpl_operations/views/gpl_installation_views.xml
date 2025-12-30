@@ -116,8 +116,6 @@
                 <field name="technician_ids" widget="many2many_tags"/>
                 <field name="reservoir_lot_id" optional="show"/>
                 <field name="total_amount_ttc" widget="monetary" sum="Total"/>
-                <field name="bordereau_reference" optional="show"/>
-                <field name="is_sent_to_direction" optional="hide"/>
                 <field name="state" widget="badge"
                        decoration-success="state == 'done'"
                        decoration-info="state == 'in_progress'"
@@ -196,7 +194,7 @@
                                         </strong>
                                         <br/>
                                         <small class="text-muted">
-                                            <i class="fa fa-calendar me-1"/>
+                                            <i class="fa fa-calendar me-1" title="calendar"/>
                                             <field name="date_start"/>
                                         </small>
                                     </div>
@@ -206,7 +204,7 @@
                                 <div class="d-flex flex-column mb-2">
                                     <!-- Véhicule -->
                                     <div class="mb-1" t-if="record.vehicle_id.raw_value">
-                                        <i class="fa fa-car text-primary me-2"/>
+                                        <i class="fa fa-car text-primary me-2" title="car"/>
                                         <strong><field name="vehicle_id"/></strong>
                                     </div>
 
@@ -244,7 +242,7 @@
                                     </div>
                                     <div t-if="record.technician_ids.raw_value">
                                         <span class="badge bg-light text-dark">
-                                            <i class="fa fa-users me-1"/>
+                                            <i class="fa fa-users me-1" title="technicien"/>
                                             <field name="technician_ids" widget="many2many_tags"/>
                                         </span>
                                     </div>

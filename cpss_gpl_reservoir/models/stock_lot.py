@@ -238,6 +238,14 @@ class StockLot(models.Model):
 
         return lots
 
+    @api.onchange('manufacturing_date')
+    def _onchange_manufacturing_date(self):
+        """Auto-populate last_test_date with manufacturing_date if not set"""
+
+        if self.manufacturing_date and not self.last_test_date and self.is_gpl_reservoir:
+            self.last_test_date = self.manufacturing_date
+
+
     def action_schedule_test(self):
         """Programme un test pour ce réservoir"""
         self.ensure_one()

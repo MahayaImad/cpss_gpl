@@ -122,29 +122,6 @@ class GplServiceInstallation(models.Model):
     # Notes
     notes = fields.Text(string='Notes')
 
-    bordereau_id = fields.Many2one(
-        'gpl.bordereau',
-        string='Bordereau',
-        help="Bordereau d'envoi à la direction"
-    )
-
-    bordereau_reference = fields.Char(
-        string='Réf. Bordereau',
-        related='bordereau_id.name',
-        store=True
-    )
-
-    is_sent_to_direction = fields.Boolean(
-        string='Envoyé à la direction',
-        compute='_compute_is_sent_to_direction',
-        store=True
-    )
-
-    @api.depends('bordereau_id', 'bordereau_id.state')
-    def _compute_is_sent_to_direction(self):
-        for record in self:
-            record.is_sent_to_direction = record.bordereau_id and record.bordereau_id.state == 'sent'
-
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -316,16 +293,6 @@ class GplServiceInstallation(models.Model):
         if posted_invoices:
             if self.auto_workflow_state != 'done':
                 self.auto_workflow_state = 'invoiced'
-
-    def action_assign_to_bordereau(self):
-        """Assigne les installations sélectionnées au bordereau"""
-        bordereau_id = self.env.context.get('bordereau_id_to_assign')
-        if bordereau_id:
-            self.write({'bordereau_id': bordereau_id})
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'reload',
-            }
 
     @api.model
     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):

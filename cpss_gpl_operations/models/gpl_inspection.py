@@ -178,6 +178,31 @@ class GplInspection(models.Model):
     # Notes
     notes = fields.Text(string='Notes internes')
 
+    # Bordereau d'envoi
+    bordereau_id = fields.Many2one(
+        'gpl.bordereau',
+        string='Bordereau d\'envoi',
+        ondelete='set null',
+        help="Bordereau d'envoi à la Direction des Mines pour validation"
+    )
+
+    bordereau_reference = fields.Char(
+        string='Réf. Bordereau',
+        related='bordereau_id.name',
+        store=True
+    )
+
+    is_sent_to_direction = fields.Boolean(
+        string='Envoyé à la direction',
+        compute='_compute_is_sent_to_direction',
+        store=True
+    )
+
+    @api.depends('bordereau_id', 'bordereau_id.state')
+    def _compute_is_sent_to_direction(self):
+        for record in self:
+            record.is_sent_to_direction = record.bordereau_id and record.bordereau_id.state == 'sent'
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -280,6 +305,28 @@ class GplInspection(models.Model):
             'check_ventilation': 'pass',
             'check_marking': 'pass',
         })
+
+    def action_assign_to_bordereau(self):
+        """Assigne les inspections sélectionnées au bordereau"""
+        bordereau_id = self.env.context.get('bordereau_id_to_assign')
+        if bordereau_id:
+            self.write({'bordereau_id': bordereau_id})
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'reload',
+            }
+
+    def action_remove_from_bordereau(self):
+        """Retire l'inspection du bordereau (met bordereau_id à False)"""
+        self.ensure_one()
+        if self.bordereau_id and self.bordereau_id.state == 'sent':
+            raise UserError(_("Impossible de retirer une inspection d'un bordereau déjà envoyé."))
+
+        self.write({'bordereau_id': False})
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
+        }
 
     @api.model
     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):

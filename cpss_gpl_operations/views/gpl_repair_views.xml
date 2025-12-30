@@ -190,7 +190,7 @@
                                     <span t-attf-class="badge
                                         #{record.priority.raw_value == '2' ? 'bg-danger' : ''}
                                         #{record.priority.raw_value == '1' ? 'bg-warning text-dark' : 'bg-secondary'}">
-                                        <i class="fa fa-exclamation-triangle me-1"/>
+                                        <i class="fa fa-exclamation-triangle me-1" title="priorite"/>
                                         <span t-if="record.priority.raw_value == '2'">TRÈS URGENT</span>
                                         <span t-elif="record.priority.raw_value == '1'">URGENT</span>
                                     </span>
@@ -200,7 +200,7 @@
                                 <div class="d-flex flex-column mb-2">
                                     <!-- Véhicule -->
                                     <div class="mb-1" t-if="record.vehicle_id.raw_value">
-                                        <i class="fa fa-car text-primary me-2"/>
+                                        <i class="fa fa-car text-primary me-2" title="car"/>
                                         <strong><field name="vehicle_id"/></strong>
                                     </div>
 
@@ -229,7 +229,7 @@
                                     </div>
                                     <div t-if="record.date_start.raw_value">
                                         <small class="text-muted">
-                                            <i class="fa fa-calendar me-1"/>
+                                            <i class="fa fa-calendar me-1" title="footer"/>
                                             <field name="date_start"/>
                                         </small>
                                     </div>

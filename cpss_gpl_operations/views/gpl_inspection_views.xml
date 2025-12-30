@@ -35,7 +35,7 @@
 
                     <group>
                         <group string="Informations générales">
-                            <field name="vehicle_id" options="{'no_create': True}"/>
+                            <field name="vehicle_id"/>
                             <field name="client_id"/>
                             <field name="inspection_type"/>
                             <field name="date_start"/>
@@ -179,7 +179,7 @@
                                         #{record.result.raw_value == 'fail' ? 'bg-danger' : 'bg-warning'}">
                                         <i t-attf-class="fa
                                             #{record.result.raw_value == 'pass' ? 'fa-check' :''}
-                                            #{record.result.raw_value == 'fail' ? 'fa-times' : 'fa-clock-o'} me-1"/>
+                                            #{record.result.raw_value == 'fail' ? 'fa-times' : 'fa-clock-o'} me-1" title="result"/>
                                         <span t-if="record.result.raw_value == 'pass'">CONFORME</span>
                                         <span t-elif="record.result.raw_value == 'fail'">NON CONFORME</span>
                                         <span t-else="">EN ATTENTE</span>
@@ -190,7 +190,7 @@
                                 <div class="d-flex flex-column mb-1">
                                     <!-- Véhicule -->
                                     <div class="mb-1" t-if="record.vehicle_id.raw_value">
-                                        <i class="fa fa-car text-primary me-2"/>
+                                        <i class="fa fa-car text-primary me-2" title="car"/>
                                         <strong><field name="vehicle_id"/></strong>
                                     </div>
 
@@ -211,7 +211,7 @@
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div t-if="record.date_start.raw_value">
                                         <small class="text-muted">
-                                            <i class="fa fa-calendar me-1"/>
+                                            <i class="fa fa-calendar me-1" title="footer"/>
                                             <field name="date_start"/>
                                         </small>
                                     </div>
