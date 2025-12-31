@@ -47,7 +47,7 @@
         }
                     </style>
                     <!-- En-tête avec titre -->
-                    <div class="alert alert-primary">
+                    <div class="alert alert-primary" role="status">
                         <div class="row">
                             <div class="col-10">
                                 <h3><i class="fa fa-flask" title=" "/> Dashboard Réservoirs GPL</h3>

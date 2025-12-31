@@ -10,7 +10,7 @@
             <field name="arch" type="xml">
 
                 <!-- Ajouter information GPL dans l'en-tête -->
-                <xpath expr="//div[@class='oe_button_box']" position="after">
+                <xpath expr="//div[hasclass('oe_button_box')]" position="after">
                     <field name="is_gpl_kit" invisible="1" />
                     <div class="alert alert-info" role="alert"
                          invisible = "not is_gpl_kit">
