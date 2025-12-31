@@ -30,7 +30,7 @@ class GplVehicle(models.Model):
     # === INFORMATIONS TECHNIQUES ===
     model_id = fields.Many2one('fleet.vehicle.model', 'Modèle', required=True, tracking=True)
     brand_id = fields.Many2one(related='model_id.brand_id', store=True, readonly=True)
-    year = fields.Integer('Année', tracking=True)
+    year = fields.Char('Année', size=4, tracking=True, help="Année de mise en circulation (ex: 2024)")
     color = fields.Char('Couleur', tracking=True)
 
     # === CLIENT ET CONTACT ===
@@ -339,6 +339,20 @@ class GplVehicle(models.Model):
                 ])
                 if existing:
                     raise ValidationError(_("Cette plaque d'immatriculation existe déjà!"))
+
+    @api.constrains('year')
+    def _check_year(self):
+        """Valider que l'année est au format correct"""
+        for vehicle in self:
+            if vehicle.year:
+                # Vérifier que c'est 4 chiffres
+                if not vehicle.year.isdigit() or len(vehicle.year) != 4:
+                    raise ValidationError(_("L'année doit être composée de 4 chiffres (ex: 2024)"))
+
+                # Vérifier que c'est une année raisonnable
+                year_int = int(vehicle.year)
+                if year_int < 1900 or year_int > 2100:
+                    raise ValidationError(_("L'année doit être entre 1900 et 2100"))
 
     @api.model
     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
