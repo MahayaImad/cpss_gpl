@@ -72,7 +72,7 @@
                                 <button name="action_reset_vehicle_type_code"
                                         type="object"
                                         string="↺"
-                                        title="Réinitialiser selon VIN"
+                                        title="Réinitialiser selon numero de serie"
                                         class="btn btn-sm btn-link"
                                         invisible="vin == False"/>
                             </div>

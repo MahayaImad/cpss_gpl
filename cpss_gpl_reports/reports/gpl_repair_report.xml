@@ -63,7 +63,7 @@
                                     <p>
                                         <strong t-field="doc.vehicle_id.name"/><br/>
                                         Immatriculation: <strong t-field="doc.vehicle_id.license_plate"/><br/>
-                                        Châssis: <span t-field="doc.vehicle_id.vin"/><br/>
+                                        Numero de serie: <span t-field="doc.vehicle_id.vin"/><br/>
                                     </p>
                                 </div>
                             </div>

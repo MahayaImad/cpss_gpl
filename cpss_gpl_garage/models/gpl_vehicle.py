@@ -18,13 +18,13 @@ class GplVehicle(models.Model):
     name = fields.Char('Nom véhicule', compute='_compute_name', store=True)
     display_name = fields.Char('Nom complet', compute='_compute_display_name', store=True)
     license_plate = fields.Char('Plaque d\'immatriculation', required=True, tracking=True)
-    vin = fields.Char('Numéro de châssis (VIN)', tracking=True)
+    vin = fields.Char('Numero de serie', tracking=True)
     vehicle_type_code = fields.Char(
         string="Type de véhicule",
         compute="_compute_vehicle_type_code",
         store=True,
         readonly=False,
-        help="Code de type du véhicule (par défaut: caractères 3 à 8 du VIN)"
+        help="Code de type du véhicule (par défaut: caractères 3 à 8 du numero de serie)"
     )
 
     # === INFORMATIONS TECHNIQUES ===
@@ -218,7 +218,7 @@ class GplVehicle(models.Model):
 
     @api.depends('vin')
     def _compute_vehicle_type_code(self):
-        """Extrait les caractères 3 à 8 du VIN quand le champ est vide"""
+        """Extrait les caractères 3 à 8 du numero de serie quand le champ est vide"""
         for vehicle in self:
             # Ne pas écraser une valeur déjà définie manuellement
             if not vehicle.vehicle_type_code and vehicle.vin and len(vehicle.vin) >= 8:
@@ -226,14 +226,14 @@ class GplVehicle(models.Model):
             elif not vehicle.vehicle_type_code:
                 vehicle.vehicle_type_code = False
 
-    # Méthode pour réinitialiser le code type selon le VIN
+    # Méthode pour réinitialiser le code type selon le numero de serie
     def action_reset_vehicle_type_code(self):
-        """Réinitialise le code type basé sur le VIN"""
+        """Réinitialise le code type basé sur le numero de serie"""
         for vehicle in self:
             if vehicle.vin and len(vehicle.vin) >= 8:
                 vehicle.vehicle_type_code = vehicle.vin[3:8]
 
-    # Méthode onchange pour suggérer le type lors de la saisie du VIN
+    # Méthode onchange pour suggérer le type lors de la saisie du numero de serie
     @api.onchange('vin')
     def _onchange_vin(self):
         if self.vin and len(self.vin) >= 8 and not self.vehicle_type_code:
