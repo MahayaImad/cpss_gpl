@@ -66,16 +66,7 @@
                             <field name="model_id" required="1"/>
                             <field name="brand_id" readonly="1"/>
                             <field name="vin"/>
-                            <label for="vehicle_type_code"/>
-                            <div class="o_row">
-                                <field name="vehicle_type_code" placeholder="Type du véhicule"/>
-                                <button name="action_reset_vehicle_type_code"
-                                        type="object"
-                                        string="↺"
-                                        title="Réinitialiser selon numero de serie"
-                                        class="btn btn-sm btn-link"
-                                        invisible="vin == False"/>
-                            </div>
+                            <field name="vehicle_type_code" placeholder="Type du véhicule"/>
                             <field name="year"/>
                             <field name="color"/>
                             <field name="active" invisible="1"/>
