@@ -94,7 +94,7 @@
                 </xpath>
 
                 <!-- Ajouter badges GPL -->
-                <xpath expr="//div[hasclass('oe_kanban_details')]" position="inside">
+                <xpath expr="//div[@class='oe_kanban_details']" position="inside">
                     <div class="o_kanban_record_bottom mb-2">
                         <span t-if="record.is_gpl_reservoir.raw_value" class="badge badge-primary">
                             <i class="fa fa-flask"/> Réservoir
