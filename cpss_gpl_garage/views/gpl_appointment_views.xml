@@ -170,7 +170,7 @@
                                     <t t-if="widget.editable"><a role="menuitem" type="edit" class="dropdown-item">Modifier</a></t>
                                     <t t-if="widget.deletable"><a role="menuitem" type="delete" class="dropdown-item">Supprimer</a></t>
                                     <a name="action_view_operation" type="object" class="dropdown-item"
-                                       t-if="record.operation_reference.raw_value">Voir l'opération</a>
+                                       t-if="record.operation_reference and record.operation_reference.raw_value">Voir l'opération</a>
                                 </div>
                             </div>
 
@@ -194,7 +194,7 @@
                                         <i class="fa fa-wrench me-1" title="Service"/>
                                         <field name="service_type"/>
                                     </div>
-                                    <div t-if="record.assigned_technician_ids.raw_value.length">
+                                    <div t-if="record.assigned_technician_ids and record.assigned_technician_ids.raw_value and record.assigned_technician_ids.raw_value.length">
                                         <i class="fa fa-user me-1" title="Techniciens"/>
                                         <field name="assigned_technician_ids" widget="many2many_tags"/>
                                     </div>
@@ -205,9 +205,9 @@
                                         <field name="name"/>
                                     </div>
                                     <div class="oe_kanban_bottom_right">
-                                        <span t-if="record.appointment_status.raw_value == 'overdue'"
+                                        <span t-if="record.appointment_status and record.appointment_status.raw_value == 'overdue'"
                                               class="badge badge-danger">En retard</span>
-                                        <span t-if="record.appointment_status.raw_value == 'today'"
+                                        <span t-if="record.appointment_status and record.appointment_status.raw_value == 'today'"
                                               class="badge badge-warning">Aujourd'hui</span>
                                     </div>
                                 </div>
