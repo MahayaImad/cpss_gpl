@@ -256,24 +256,7 @@
                 <separator/>
                 <!-- Filtres rapides -->
                 <filter string="📅 Avec RDV" name="has_appointment"
-                        domain="[('appointment_date', '!=', False)]"/>
-                <filter string="📅 Aujourd'hui" name="today"
-                        domain="[('appointment_date', '&gt;=', context_today().strftime('%Y-%m-%d 00:00:00')),
-                                ('appointment_date', '&lt;=', context_today().strftime('%Y-%m-%d 23:59:59'))]"/>
-                <filter string="📅 Cette semaine" name="this_week"
-                        domain="[('appointment_date', '&gt;=', (context_today() - datetime.timedelta(days=context_today().weekday())).strftime('%Y-%m-%d 00:00:00')),
-                                ('appointment_date', '&lt;=', (context_today() + datetime.timedelta(days=6-context_today().weekday())).strftime('%Y-%m-%d 23:59:59'))]"/>
-
-                <separator/>
-                <!-- Filtres par service -->
-                <filter string="🔧 Installations" name="installation"
-                        domain="[('next_service_type', '=', 'installation')]"/>
-                <filter string="🔨 Réparations" name="repair"
-                        domain="[('next_service_type', '=', 'repair')]"/>
-                <filter string="✅ Contrôles" name="inspection"
-                        domain="[('next_service_type', '=', 'inspection')]"/>
-                <filter string="🧪 Réépreuves" name="testing"
-                        domain="[('next_service_type', '=', 'testing')]"/>
+                        domain="[('current_appointment_id', '!=', False)]"/>
 
                 <separator/>
                 <!-- Filtres par statut -->
@@ -292,9 +275,7 @@
                 <group expand="0" string="Grouper par">
                     <filter string="Statut" name="group_status" context="{'group_by': 'status_id'}"/>
                     <filter string="Client" name="group_client" context="{'group_by': 'client_id'}"/>
-                    <filter string="Type de service" name="group_service" context="{'group_by': 'next_service_type'}"/>
                     <filter string="Modèle" name="group_model" context="{'group_by': 'model_id'}"/>
-                    <filter string="Date RDV" name="group_date" context="{'group_by': 'appointment_date:day'}"/>
                 </group>
             </search>
         </field>
@@ -329,7 +310,7 @@
             'group_by': ['status_id'],
             'force_all_groups': True,
             'kanban_states_visibility': 'visible',
-            'search_default_today': 1,
+            'search_default_has_appointment': 1,
         }</field>
         <field name="domain">[]</field>
         <field name="help" type="html">
@@ -346,7 +327,7 @@
         <field name="name">Planning Atelier</field>
         <field name="res_model">gpl.vehicle</field>
         <field name="view_mode">kanban,tree,form,activity</field>
-        <field name="domain">[('appointment_date', '!=', False)]</field>
+        <field name="domain">[('current_appointment_id', '!=', False)]</field>
         <field name="context">{'search_default_has_appointment': 1}</field>
     </record>
 

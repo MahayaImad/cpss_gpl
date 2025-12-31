@@ -51,7 +51,7 @@ class GplVehicle(models.Model):
         'gpl.appointment',
         string='RDV actuel',
         compute='_compute_current_appointment',
-        store=False
+        store=True
     )
 
     # Computed fields for backward compatibility with calendar views
