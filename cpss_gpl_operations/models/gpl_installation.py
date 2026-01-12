@@ -442,16 +442,47 @@ class GplInstallationLine(models.Model):
 
     @api.onchange('product_id')
     def _onchange_product_id(self):
+        """Met à jour les champs quand le produit change et détecte automatiquement le lot pour les réservoirs"""
         if self.product_id:
             self.name = self.product_id.name
             self.price_unit = self.product_id.list_price
+
+            # Mettre à jour le tax_rate
+            if self.product_id.taxes_id:
+                self.tax_rate = self.product_id.taxes_id[0].amount
+            else:
+                self.tax_rate = 0.0
 
             # FORCER quantité = 1 pour produits sériels
             if self.product_id.tracking == 'serial':
                 self.quantity = 1.0
 
-            # Réinitialiser le lot si le produit change
-            self.lot_id = False
+                # DÉTECTION AUTOMATIQUE DU LOT POUR LES RÉSERVOIRS GPL
+                # Si c'est un réservoir GPL, chercher un lot disponible automatiquement
+                if hasattr(self.product_id, 'is_gpl_reservoir') and self.product_id.is_gpl_reservoir:
+                    # Rechercher un lot disponible avec les critères suivants:
+                    # - Produit correspondant
+                    # - État = 'stock' (en stock, pas installé)
+                    # - Statut réservoir = 'valid' (valide, pas expiré)
+                    # - Quantité > 0
+                    available_lot = self.env['stock.lot'].search([
+                        ('product_id', '=', self.product_id.id),
+                        ('state', '=', 'stock'),
+                        ('reservoir_status', '=', 'valid'),
+                        ('product_qty', '>', 0)
+                    ], limit=1)
+
+                    if available_lot:
+                        self.lot_id = available_lot
+                    else:
+                        # Aucun lot disponible trouvé, réinitialiser
+                        self.lot_id = False
+                else:
+                    # Pour les autres produits sériels (non-réservoirs), réinitialiser le lot
+                    self.lot_id = False
+            else:
+                # Pour les produits non-sériels, réinitialiser le lot
+                self.lot_id = False
 
     @api.onchange('lot_id')
     def _onchange_lot_id(self):
@@ -478,14 +509,6 @@ class GplInstallationLine(models.Model):
                 line.tax_rate = tax.amount
             else:
                 line.tax_rate = 0.0
-
-    @api.onchange('product_id')
-    def _onchange_product_id(self):
-        """Met à jour le tax_rate quand le produit change"""
-        if self.product_id and self.product_id.taxes_id:
-            self.tax_rate = self.product_id.taxes_id[0].amount
-        else:
-            self.tax_rate = 0.0
 
     @api.depends('product_id')
     def _compute_product_type(self):
