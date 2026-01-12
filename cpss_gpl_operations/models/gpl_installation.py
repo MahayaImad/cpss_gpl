@@ -444,8 +444,8 @@ class GplInstallationLine(models.Model):
     lot_id = fields.Many2one(
         'stock.lot',
         string='Lot/Série',
-        domain="[('product_id', '=', product_id), ('product_qty', '>', 0)]",
-        help="Sélectionnez le lot/série pour ce produit. Pour les réservoirs GPL, seuls les lots en stock et valides sont affichés."
+        domain="[]",  # Domaine vide par défaut, sera rempli dynamiquement par @api.onchange
+        help="Sélectionnez le lot/série pour ce produit. Pour les kits GPL, affiche les lots des réservoirs contenus dans le kit."
     )
 
     # Champ pour savoir si le produit est géré par lot
