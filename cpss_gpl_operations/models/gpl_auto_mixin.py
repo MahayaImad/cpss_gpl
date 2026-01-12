@@ -189,11 +189,11 @@ class GplAutoDocumentMixin(models.AbstractModel):
                 vals_to_update = {}
 
                 try:
-                    # Assigner qty_done
+                    # Assigner qty_done - utiliser la quantité du move parent
                     if hasattr(move_line, 'qty_done') and move_line.qty_done == 0:
-                        vals_to_update['qty_done'] = move_line.product_uom_qty
+                        vals_to_update['qty_done'] = move.product_uom_qty
                     elif not hasattr(move_line, 'qty_done'):
-                        vals_to_update['qty_done'] = move_line.product_uom_qty
+                        vals_to_update['qty_done'] = move.product_uom_qty
 
                     # Assigner le lot si trouvé et que le produit correspond
                     if lot_to_assign and move_line.product_id.id == move.product_id.id:
@@ -310,9 +310,9 @@ class GplAutoDocumentMixin(models.AbstractModel):
                         vals_to_update = {}
 
                         if hasattr(move_line, 'qty_done') and move_line.qty_done == 0:
-                            vals_to_update['qty_done'] = move_line.product_uom_qty
+                            vals_to_update['qty_done'] = move.product_uom_qty
                         elif not hasattr(move_line, 'qty_done'):
-                            vals_to_update['qty_done'] = move_line.product_uom_qty
+                            vals_to_update['qty_done'] = move.product_uom_qty
 
                         if lot_to_assign and not move_line.lot_id:
                             vals_to_update['lot_id'] = lot_to_assign.id
