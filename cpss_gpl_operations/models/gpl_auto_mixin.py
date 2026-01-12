@@ -149,12 +149,9 @@ class GplAutoDocumentMixin(models.AbstractModel):
 
             # Assigner aux move_lines existants
             for move_line in move.move_line_ids:
-                if hasattr(move_line, 'qty_done'):
-                    if move_line.qty_done == 0:
-                        move_line.qty_done = move_line.product_uom_qty
-                else:
-                    # Fallback pour versions Odoo différentes
-                    move_line.product_uom_qty = move_line.reserved_uom_qty or move_line.product_uom_qty
+                # Dans Odoo 17, qty_done existe toujours
+                if move_line.qty_done == 0:
+                    move_line.qty_done = move_line.product_uom_qty
 
         # Valider le picking
         if hasattr(picking, 'button_validate'):
