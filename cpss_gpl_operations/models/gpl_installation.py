@@ -483,35 +483,56 @@ class GplInstallationLine(models.Model):
             # DOMAINE DYNAMIQUE POUR LES LOTS
             # Si c'est un kit GPL, chercher les réservoirs dans sa nomenclature
             if hasattr(self.product_id, 'is_gpl_kit') and self.product_id.is_gpl_kit:
+                _logger.info(f"Produit {self.product_id.name} détecté comme kit GPL")
+
                 # Trouver la nomenclature du kit
                 bom = self.env['mrp.bom'].search([
+                    '|',
+                    ('product_id', '=', self.product_id.id),
                     ('product_tmpl_id', '=', self.product_id.product_tmpl_id.id),
                     ('active', '=', True)
                 ], limit=1)
 
-                if not bom:
-                    bom = self.env['mrp.bom'].search([
-                        ('product_id', '=', self.product_id.id),
-                        ('active', '=', True)
-                    ], limit=1)
-
                 if bom:
+                    _logger.info(f"Nomenclature trouvée: {bom.display_name}")
+
                     # Trouver tous les réservoirs GPL dans la nomenclature
                     reservoir_products = bom.bom_line_ids.filtered(
-                        lambda l: l.product_id.is_gpl_reservoir
+                        lambda l: hasattr(l.product_id, 'is_gpl_reservoir') and l.product_id.is_gpl_reservoir
                     ).mapped('product_id')
 
+                    _logger.info(f"Réservoirs trouvés dans la nomenclature: {len(reservoir_products)}")
+
                     if reservoir_products:
-                        # Créer un domaine pour afficher les lots de tous les réservoirs du kit
-                        domain = [
-                            ('product_id', 'in', reservoir_products.ids),
-                            ('state', '=', 'stock'),
-                            ('reservoir_status', '=', 'valid'),
-                            ('product_qty', '>', 0)
-                        ]
-                        return {'domain': {'lot_id': domain}}
+                        # Chercher les lots disponibles (sans filtre strict au début)
+                        all_lots = self.env['stock.lot'].search([
+                            ('product_id', 'in', reservoir_products.ids)
+                        ])
+                        _logger.info(f"Total lots trouvés pour ces réservoirs: {len(all_lots)}")
+
+                        # Filtre avec conditions plus souples
+                        available_lots = all_lots.filtered(
+                            lambda l: l.product_qty > 0 and
+                                     (not hasattr(l, 'state') or l.state == 'stock') and
+                                     (not hasattr(l, 'reservoir_status') or l.reservoir_status == 'valid')
+                        )
+                        _logger.info(f"Lots disponibles après filtrage: {len(available_lots)}")
+
+                        if available_lots:
+                            # Créer un domaine pour afficher les lots disponibles
+                            domain = [('id', 'in', available_lots.ids)]
+                            _logger.info(f"Domaine retourné: {domain}")
+                            return {'domain': {'lot_id': domain}}
+                        else:
+                            # Pas de lots disponibles, mais montrer quand même tous les lots pour debug
+                            if all_lots:
+                                _logger.warning(f"Aucun lot disponible mais {len(all_lots)} lots existent")
+                                return {'domain': {'lot_id': [('id', 'in', all_lots.ids)]}}
+                else:
+                    _logger.warning(f"Aucune nomenclature trouvée pour le kit {self.product_id.name}")
 
                 # Si pas de nomenclature ou pas de réservoirs, domaine vide
+                _logger.warning("Retour domaine vide pour le kit")
                 return {'domain': {'lot_id': [('id', '=', False)]}}
 
             # Si c'est un réservoir GPL direct, filtrer par état et statut de validité
