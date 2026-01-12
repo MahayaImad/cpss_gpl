@@ -455,6 +455,13 @@ class GplInstallationLine(models.Model):
         readonly=True
     )
 
+    # Champ pour savoir si c'est un kit GPL
+    product_is_gpl_kit = fields.Boolean(
+        related='product_id.is_gpl_kit',
+        string='Est un kit GPL',
+        readonly=True
+    )
+
     @api.depends('quantity', 'price_unit')
     def _compute_subtotal(self):
         for line in self:
