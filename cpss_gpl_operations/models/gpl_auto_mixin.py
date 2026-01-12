@@ -149,9 +149,17 @@ class GplAutoDocumentMixin(models.AbstractModel):
 
             # Assigner aux move_lines existants
             for move_line in move.move_line_ids:
-                # Dans Odoo 17, qty_done existe toujours
-                if move_line.qty_done == 0:
-                    move_line.qty_done = move_line.product_uom_qty
+                # Utiliser write() qui est plus robuste que l'assignation directe
+                # Vérifier d'abord si qty_done existe et est à 0
+                try:
+                    if hasattr(move_line, 'qty_done') and move_line.qty_done == 0:
+                        move_line.write({'qty_done': move_line.product_uom_qty})
+                    elif not hasattr(move_line, 'qty_done'):
+                        # Si qty_done n'existe pas, créer l'attribut via write
+                        move_line.write({'qty_done': move_line.product_uom_qty})
+                except Exception as e:
+                    _logger.warning(f"Impossible d'assigner qty_done pour move_line {move_line.id}: {str(e)}")
+                    continue
 
         # Valider le picking
         if hasattr(picking, 'button_validate'):
@@ -176,16 +184,13 @@ class GplAutoDocumentMixin(models.AbstractModel):
                     'move_id': move.id,
                     'product_id': move.product_id.id,
                     'product_uom_id': move.product_uom.id,
-                    'qty_done': move.product_uom_qty,
                     'location_id': move.location_id.id,
                     'location_dest_id': move.location_dest_id.id,
                     'picking_id': picking.id,
                 }
 
-                if hasattr(self.env['stock.move.line']._fields, 'qty_done'):
-                    move_line_vals['qty_done'] = move.product_uom_qty
-                else:
-                    move_line_vals['product_uom_qty'] = move.product_uom_qty
+                # Dans Odoo 17, qty_done est le champ standard
+                move_line_vals['qty_done'] = move.product_uom_qty
 
                 # Ajouter le lot seulement si nécessaire
                 if lot_to_assign:
@@ -202,10 +207,23 @@ class GplAutoDocumentMixin(models.AbstractModel):
                         break
 
                 for move_line in move.move_line_ids:
-                    if move_line.qty_done == 0:
-                        move_line.qty_done = move_line.product_uom_qty
+                    try:
+                        # Utiliser write() pour être plus robuste
+                        vals_to_update = {}
+
+                        if hasattr(move_line, 'qty_done') and move_line.qty_done == 0:
+                            vals_to_update['qty_done'] = move_line.product_uom_qty
+                        elif not hasattr(move_line, 'qty_done'):
+                            vals_to_update['qty_done'] = move_line.product_uom_qty
+
                         if lot_to_assign and not move_line.lot_id:
-                            move_line.lot_id = lot_to_assign.id
+                            vals_to_update['lot_id'] = lot_to_assign.id
+
+                        if vals_to_update:
+                            move_line.write(vals_to_update)
+                    except Exception as e:
+                        _logger.warning(f"Impossible de mettre à jour move_line {move_line.id}: {str(e)}")
+                        continue
 
 
         # Valider le picking
