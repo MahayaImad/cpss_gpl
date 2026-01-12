@@ -1,5 +1,8 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class GplServiceInstallation(models.Model):
@@ -337,23 +340,40 @@ class GplServiceInstallation(models.Model):
         self._update_vehicle_reservoir_links()
 
     def _finalize_automatic_workflow(self):
-        """Finalise le workflow si possible"""
+        """Finalise le workflow si possible en validant automatiquement les pickings prêts"""
         if not self.sale_order_id:
             return
 
         so = self.sale_order_id
 
-        # Vérifier si livré
+        # Chercher les pickings de livraison sortants
         outgoing_pickings = so.picking_ids.filtered(lambda p: p.picking_type_code == 'outgoing')
-        if outgoing_pickings and all(p.state == 'done' for p in outgoing_pickings):
+
+        if not outgoing_pickings:
+            return
+
+        # Vérifier s'il y a des pickings prêts (assigned) ou en attente mais non validés
+        pickings_to_validate = outgoing_pickings.filtered(
+            lambda p: p.state in ['assigned', 'confirmed', 'waiting'] and p.state != 'done'
+        )
+
+        # Si des pickings sont prêts mais non validés, les valider automatiquement
+        if pickings_to_validate:
+            _logger.info(f"Tentative de validation automatique de {len(pickings_to_validate)} picking(s)")
+            self._process_automatic_delivery()
+
+        # Vérifier si tous les pickings sont livrés
+        if all(p.state == 'done' for p in outgoing_pickings):
             if self.auto_workflow_state not in ['delivered', 'invoiced', 'done']:
                 self.auto_workflow_state = 'delivered'
+                _logger.info(f"Installation {self.name}: État mis à jour -> 'delivered'")
 
         # Vérifier si facturé
         posted_invoices = so.invoice_ids.filtered(lambda i: i.state == 'posted')
         if posted_invoices:
             if self.auto_workflow_state != 'done':
                 self.auto_workflow_state = 'invoiced'
+                _logger.info(f"Installation {self.name}: État mis à jour -> 'invoiced'")
 
     @api.model
     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
