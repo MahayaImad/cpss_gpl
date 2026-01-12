@@ -425,7 +425,7 @@ class GplInstallationLine(models.Model):
         'stock.lot',
         string='Lot/Série',
         domain="[('product_id', '=', product_id), ('product_qty', '>', 0)]",
-        help="Lot spécifique pour les produits gérés par lot"
+        help="Sélectionnez le lot/série pour ce produit. Pour les réservoirs GPL, seuls les lots en stock et valides sont affichés."
     )
 
     # Champ pour savoir si le produit est géré par lot
@@ -442,7 +442,7 @@ class GplInstallationLine(models.Model):
 
     @api.onchange('product_id')
     def _onchange_product_id(self):
-        """Met à jour les champs quand le produit change et détecte automatiquement le lot pour les réservoirs"""
+        """Met à jour les champs et le domaine des lots disponibles quand le produit change"""
         if self.product_id:
             self.name = self.product_id.name
             self.price_unit = self.product_id.list_price
@@ -457,32 +457,30 @@ class GplInstallationLine(models.Model):
             if self.product_id.tracking == 'serial':
                 self.quantity = 1.0
 
-                # DÉTECTION AUTOMATIQUE DU LOT POUR LES RÉSERVOIRS GPL
-                # Si c'est un réservoir GPL, chercher un lot disponible automatiquement
-                if hasattr(self.product_id, 'is_gpl_reservoir') and self.product_id.is_gpl_reservoir:
-                    # Rechercher un lot disponible avec les critères suivants:
-                    # - Produit correspondant
-                    # - État = 'stock' (en stock, pas installé)
-                    # - Statut réservoir = 'valid' (valide, pas expiré)
-                    # - Quantité > 0
-                    available_lot = self.env['stock.lot'].search([
-                        ('product_id', '=', self.product_id.id),
-                        ('state', '=', 'stock'),
-                        ('reservoir_status', '=', 'valid'),
-                        ('product_qty', '>', 0)
-                    ], limit=1)
+            # Réinitialiser le lot si le produit change
+            self.lot_id = False
 
-                    if available_lot:
-                        self.lot_id = available_lot
-                    else:
-                        # Aucun lot disponible trouvé, réinitialiser
-                        self.lot_id = False
-                else:
-                    # Pour les autres produits sériels (non-réservoirs), réinitialiser le lot
-                    self.lot_id = False
+            # DOMAINE DYNAMIQUE POUR LES LOTS
+            # Si c'est un réservoir GPL, filtrer par état et statut de validité
+            if hasattr(self.product_id, 'is_gpl_reservoir') and self.product_id.is_gpl_reservoir:
+                # Pour les réservoirs GPL, afficher seulement les lots:
+                # - En stock (state='stock')
+                # - Valides (reservoir_status='valid')
+                # - Avec quantité disponible > 0
+                domain = [
+                    ('product_id', '=', self.product_id.id),
+                    ('state', '=', 'stock'),
+                    ('reservoir_status', '=', 'valid'),
+                    ('product_qty', '>', 0)
+                ]
+                return {'domain': {'lot_id': domain}}
             else:
-                # Pour les produits non-sériels, réinitialiser le lot
-                self.lot_id = False
+                # Pour les autres produits, domaine standard
+                domain = [
+                    ('product_id', '=', self.product_id.id),
+                    ('product_qty', '>', 0)
+                ]
+                return {'domain': {'lot_id': domain}}
 
     @api.onchange('lot_id')
     def _onchange_lot_id(self):
