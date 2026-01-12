@@ -253,8 +253,8 @@ class GplAutoDocumentMixin(models.AbstractModel):
                     'picking_id': picking.id,
                 }
 
-                # Dans Odoo 17, qty_done est le champ standard
-                move_line_vals['qty_done'] = move.product_uom_qty
+                # Dans Odoo 17 Community Edition, le champ s'appelle 'quantity'
+                move_line_vals['quantity'] = move.product_uom_qty
 
                 # Ajouter le lot seulement si nécessaire
                 if lot_to_assign:
