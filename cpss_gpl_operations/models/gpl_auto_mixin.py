@@ -142,21 +142,48 @@ class GplAutoDocumentMixin(models.AbstractModel):
             # Trouver le lot correspondant depuis les lignes originales
             lot_to_assign = None
             for line in self._get_order_lines():
+                # Cas 1: Le produit de la ligne correspond directement au move
                 if (line.product_id.id == move.product_id.id and
                     hasattr(line, 'lot_id') and line.lot_id):
                     lot_to_assign = line.lot_id
                     break
 
+                # Cas 2: Le produit de la ligne est un kit GPL contenant le produit du move
+                if (hasattr(line.product_id, 'is_gpl_kit') and line.product_id.is_gpl_kit and
+                    hasattr(line, 'lot_id') and line.lot_id):
+                    # Vérifier si le produit du move est un composant de ce kit
+                    bom = self.env['mrp.bom'].search([
+                        '|',
+                        ('product_id', '=', line.product_id.id),
+                        ('product_tmpl_id', '=', line.product_id.product_tmpl_id.id),
+                        ('active', '=', True)
+                    ], limit=1)
+
+                    if bom:
+                        # Vérifier si move.product_id est dans les composants du kit
+                        if any(bom_line.product_id.id == move.product_id.id
+                               for bom_line in bom.bom_line_ids):
+                            lot_to_assign = line.lot_id
+                            break
+
             # Assigner aux move_lines existants
             for move_line in move.move_line_ids:
                 # Utiliser write() qui est plus robuste que l'assignation directe
-                # Vérifier d'abord si qty_done existe et est à 0
+                vals_to_update = {}
+
                 try:
+                    # Assigner qty_done
                     if hasattr(move_line, 'qty_done') and move_line.qty_done == 0:
-                        move_line.write({'qty_done': move_line.product_uom_qty})
+                        vals_to_update['qty_done'] = move_line.product_uom_qty
                     elif not hasattr(move_line, 'qty_done'):
-                        # Si qty_done n'existe pas, créer l'attribut via write
-                        move_line.write({'qty_done': move_line.product_uom_qty})
+                        vals_to_update['qty_done'] = move_line.product_uom_qty
+
+                    # Assigner le lot si trouvé et que le produit correspond
+                    if lot_to_assign and move_line.product_id.id == move.product_id.id:
+                        vals_to_update['lot_id'] = lot_to_assign.id
+
+                    if vals_to_update:
+                        move_line.write(vals_to_update)
                 except Exception as e:
                     _logger.warning(f"Impossible d'assigner qty_done pour move_line {move_line.id}: {str(e)}")
                     continue
@@ -174,10 +201,29 @@ class GplAutoDocumentMixin(models.AbstractModel):
                 # Trouver le lot correspondant
                 lot_to_assign = None
                 for line in self._get_order_lines():
+                    # Cas 1: Le produit de la ligne correspond directement au move
                     if (line.product_id.id == move.product_id.id and
                         hasattr(line, 'lot_id') and line.lot_id):
                         lot_to_assign = line.lot_id
                         break
+
+                    # Cas 2: Le produit de la ligne est un kit GPL contenant le produit du move
+                    if (hasattr(line.product_id, 'is_gpl_kit') and line.product_id.is_gpl_kit and
+                        hasattr(line, 'lot_id') and line.lot_id):
+                        # Vérifier si le produit du move est un composant de ce kit
+                        bom = self.env['mrp.bom'].search([
+                            '|',
+                            ('product_id', '=', line.product_id.id),
+                            ('product_tmpl_id', '=', line.product_id.product_tmpl_id.id),
+                            ('active', '=', True)
+                        ], limit=1)
+
+                        if bom:
+                            # Vérifier si move.product_id est dans les composants du kit
+                            if any(bom_line.product_id.id == move.product_id.id
+                                   for bom_line in bom.bom_line_ids):
+                                lot_to_assign = line.lot_id
+                                break
 
                 # Créer le move_line
                 move_line_vals = {
@@ -201,10 +247,29 @@ class GplAutoDocumentMixin(models.AbstractModel):
                 # Assigner aux move_lines existants
                 lot_to_assign = None
                 for line in self._get_order_lines():
+                    # Cas 1: Le produit de la ligne correspond directement au move
                     if (line.product_id.id == move.product_id.id and
                         hasattr(line, 'lot_id') and line.lot_id):
                         lot_to_assign = line.lot_id
                         break
+
+                    # Cas 2: Le produit de la ligne est un kit GPL contenant le produit du move
+                    if (hasattr(line.product_id, 'is_gpl_kit') and line.product_id.is_gpl_kit and
+                        hasattr(line, 'lot_id') and line.lot_id):
+                        # Vérifier si le produit du move est un composant de ce kit
+                        bom = self.env['mrp.bom'].search([
+                            '|',
+                            ('product_id', '=', line.product_id.id),
+                            ('product_tmpl_id', '=', line.product_id.product_tmpl_id.id),
+                            ('active', '=', True)
+                        ], limit=1)
+
+                        if bom:
+                            # Vérifier si move.product_id est dans les composants du kit
+                            if any(bom_line.product_id.id == move.product_id.id
+                                   for bom_line in bom.bom_line_ids):
+                                lot_to_assign = line.lot_id
+                                break
 
                 for move_line in move.move_line_ids:
                     try:

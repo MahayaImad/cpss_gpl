@@ -100,14 +100,6 @@ class GplServiceInstallation(models.Model):
         string='Produits utilisés'
     )
 
-    # Kit GPL à installer
-    gpl_kit_id = fields.Many2one(
-        'product.product',
-        string='Kit GPL',
-        domain="[('is_gpl_kit', '=', True)]",
-        help="Sélectionnez un kit GPL pour exploser automatiquement sa nomenclature et créer les lignes d'installation"
-    )
-
     # État
     state = fields.Selection([
         ('draft', 'Brouillon'),
@@ -164,60 +156,6 @@ class GplServiceInstallation(models.Model):
     def _compute_total_amount_ttc(self):
         for record in self:
             record.total_amount_ttc = sum(record.installation_line_ids.mapped('subtotal_ttc'))
-
-    @api.onchange('gpl_kit_id')
-    def _onchange_gpl_kit_id(self):
-        """Exploser la nomenclature du kit GPL et créer les lignes d'installation"""
-        if not self.gpl_kit_id:
-            return
-
-        # Trouver la nomenclature active du kit
-        bom = self.env['mrp.bom'].search([
-            ('product_id', '=', self.gpl_kit_id.id),
-            ('active', '=', True)
-        ], limit=1)
-
-        # Si pas de BOM sur product_id, chercher sur product_tmpl_id
-        if not bom:
-            bom = self.env['mrp.bom'].search([
-                ('product_tmpl_id', '=', self.gpl_kit_id.product_tmpl_id.id),
-                ('product_id', '=', False),
-                ('active', '=', True)
-            ], limit=1)
-
-        if not bom:
-            return {
-                'warning': {
-                    'title': _('Aucune nomenclature'),
-                    'message': _('Ce kit GPL n\'a pas de nomenclature définie.')
-                }
-            }
-
-        # Préparer les lignes d'installation
-        lines_vals = []
-        for bom_line in bom.bom_line_ids:
-            line_vals = {
-                'product_id': bom_line.product_id.id,
-                'quantity': bom_line.product_qty,
-                'name': bom_line.product_id.name,
-                'price_unit': bom_line.product_id.list_price,
-            }
-
-            # Pour les réservoirs GPL, on laisse lot_id vide
-            # L'utilisateur choisira dans la liste déroulante filtrée
-            # (le domaine dynamique s'appliquera automatiquement)
-
-            lines_vals.append((0, 0, line_vals))
-
-        # Créer les lignes d'installation
-        self.installation_line_ids = lines_vals
-
-        return {
-            'warning': {
-                'title': _('Kit explosé'),
-                'message': _('Le kit a été explosé. Veuillez sélectionner les numéros de série pour les réservoirs.')
-            }
-        }
 
     def _update_vehicle_reservoir_links(self):
         """Met à jour les liens entre véhicule et réservoirs"""
@@ -543,8 +481,41 @@ class GplInstallationLine(models.Model):
             self.lot_id = False
 
             # DOMAINE DYNAMIQUE POUR LES LOTS
-            # Si c'est un réservoir GPL, filtrer par état et statut de validité
-            if hasattr(self.product_id, 'is_gpl_reservoir') and self.product_id.is_gpl_reservoir:
+            # Si c'est un kit GPL, chercher les réservoirs dans sa nomenclature
+            if hasattr(self.product_id, 'is_gpl_kit') and self.product_id.is_gpl_kit:
+                # Trouver la nomenclature du kit
+                bom = self.env['mrp.bom'].search([
+                    ('product_tmpl_id', '=', self.product_id.product_tmpl_id.id),
+                    ('active', '=', True)
+                ], limit=1)
+
+                if not bom:
+                    bom = self.env['mrp.bom'].search([
+                        ('product_id', '=', self.product_id.id),
+                        ('active', '=', True)
+                    ], limit=1)
+
+                if bom:
+                    # Trouver tous les réservoirs GPL dans la nomenclature
+                    reservoir_products = bom.bom_line_ids.filtered(
+                        lambda l: l.product_id.is_gpl_reservoir
+                    ).mapped('product_id')
+
+                    if reservoir_products:
+                        # Créer un domaine pour afficher les lots de tous les réservoirs du kit
+                        domain = [
+                            ('product_id', 'in', reservoir_products.ids),
+                            ('state', '=', 'stock'),
+                            ('reservoir_status', '=', 'valid'),
+                            ('product_qty', '>', 0)
+                        ]
+                        return {'domain': {'lot_id': domain}}
+
+                # Si pas de nomenclature ou pas de réservoirs, domaine vide
+                return {'domain': {'lot_id': [('id', '=', False)]}}
+
+            # Si c'est un réservoir GPL direct, filtrer par état et statut de validité
+            elif hasattr(self.product_id, 'is_gpl_reservoir') and self.product_id.is_gpl_reservoir:
                 # Pour les réservoirs GPL, afficher seulement les lots:
                 # - En stock (state='stock')
                 # - Valides (reservoir_status='valid')
