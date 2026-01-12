@@ -185,26 +185,15 @@ class GplAutoDocumentMixin(models.AbstractModel):
 
             # Assigner aux move_lines existants
             for move_line in move.move_line_ids:
-                # Utiliser write() qui est plus robuste que l'assignation directe
-                vals_to_update = {}
-
                 try:
-                    # Assigner qty_done - utiliser la quantité du move parent
-                    if hasattr(move_line, 'qty_done') and move_line.qty_done == 0:
-                        vals_to_update['qty_done'] = move.product_uom_qty
-                    elif not hasattr(move_line, 'qty_done'):
-                        vals_to_update['qty_done'] = move.product_uom_qty
-
-                    # Assigner le lot si trouvé et que le produit correspond
+                    # Assigner uniquement le lot si trouvé et que le produit correspond
+                    # qty_done sera géré automatiquement par Odoo lors de la validation
                     if lot_to_assign and move_line.product_id.id == move.product_id.id:
-                        vals_to_update['lot_id'] = lot_to_assign.id
                         _logger.info(f"  → Assignation lot {lot_to_assign.name} à move_line {move_line.id}")
-
-                    if vals_to_update:
-                        move_line.write(vals_to_update)
-                        _logger.info(f"  ✓ Move_line {move_line.id} mis à jour: {vals_to_update}")
+                        move_line.write({'lot_id': lot_to_assign.id})
+                        _logger.info(f"  ✓ Lot assigné avec succès à move_line {move_line.id}")
                 except Exception as e:
-                    _logger.warning(f"Impossible d'assigner qty_done pour move_line {move_line.id}: {str(e)}")
+                    _logger.warning(f"Impossible d'assigner le lot pour move_line {move_line.id}: {str(e)}")
                     continue
 
         # Valider le picking
@@ -306,19 +295,10 @@ class GplAutoDocumentMixin(models.AbstractModel):
 
                 for move_line in move.move_line_ids:
                     try:
-                        # Utiliser write() pour être plus robuste
-                        vals_to_update = {}
-
-                        if hasattr(move_line, 'qty_done') and move_line.qty_done == 0:
-                            vals_to_update['qty_done'] = move.product_uom_qty
-                        elif not hasattr(move_line, 'qty_done'):
-                            vals_to_update['qty_done'] = move.product_uom_qty
-
+                        # Assigner uniquement le lot si nécessaire
+                        # qty_done sera géré automatiquement par Odoo lors de la validation
                         if lot_to_assign and not move_line.lot_id:
-                            vals_to_update['lot_id'] = lot_to_assign.id
-
-                        if vals_to_update:
-                            move_line.write(vals_to_update)
+                            move_line.write({'lot_id': lot_to_assign.id})
                     except Exception as e:
                         _logger.warning(f"Impossible de mettre à jour move_line {move_line.id}: {str(e)}")
                         continue
