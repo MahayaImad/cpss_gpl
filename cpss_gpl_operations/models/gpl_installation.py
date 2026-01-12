@@ -97,6 +97,14 @@ class GplServiceInstallation(models.Model):
         string='Produits utilisés'
     )
 
+    # Kit GPL à installer
+    gpl_kit_id = fields.Many2one(
+        'product.product',
+        string='Kit GPL',
+        domain="[('is_gpl_kit', '=', True)]",
+        help="Sélectionnez un kit GPL pour exploser automatiquement sa nomenclature et créer les lignes d'installation"
+    )
+
     # État
     state = fields.Selection([
         ('draft', 'Brouillon'),
@@ -153,6 +161,60 @@ class GplServiceInstallation(models.Model):
     def _compute_total_amount_ttc(self):
         for record in self:
             record.total_amount_ttc = sum(record.installation_line_ids.mapped('subtotal_ttc'))
+
+    @api.onchange('gpl_kit_id')
+    def _onchange_gpl_kit_id(self):
+        """Exploser la nomenclature du kit GPL et créer les lignes d'installation"""
+        if not self.gpl_kit_id:
+            return
+
+        # Trouver la nomenclature active du kit
+        bom = self.env['mrp.bom'].search([
+            ('product_id', '=', self.gpl_kit_id.id),
+            ('active', '=', True)
+        ], limit=1)
+
+        # Si pas de BOM sur product_id, chercher sur product_tmpl_id
+        if not bom:
+            bom = self.env['mrp.bom'].search([
+                ('product_tmpl_id', '=', self.gpl_kit_id.product_tmpl_id.id),
+                ('product_id', '=', False),
+                ('active', '=', True)
+            ], limit=1)
+
+        if not bom:
+            return {
+                'warning': {
+                    'title': _('Aucune nomenclature'),
+                    'message': _('Ce kit GPL n\'a pas de nomenclature définie.')
+                }
+            }
+
+        # Préparer les lignes d'installation
+        lines_vals = []
+        for bom_line in bom.bom_line_ids:
+            line_vals = {
+                'product_id': bom_line.product_id.id,
+                'quantity': bom_line.product_qty,
+                'name': bom_line.product_id.name,
+                'price_unit': bom_line.product_id.list_price,
+            }
+
+            # Pour les réservoirs GPL, on laisse lot_id vide
+            # L'utilisateur choisira dans la liste déroulante filtrée
+            # (le domaine dynamique s'appliquera automatiquement)
+
+            lines_vals.append((0, 0, line_vals))
+
+        # Créer les lignes d'installation
+        self.installation_line_ids = lines_vals
+
+        return {
+            'warning': {
+                'title': _('Kit explosé'),
+                'message': _('Le kit a été explosé. Veuillez sélectionner les numéros de série pour les réservoirs.')
+            }
+        }
 
     def _update_vehicle_reservoir_links(self):
         """Met à jour les liens entre véhicule et réservoirs"""

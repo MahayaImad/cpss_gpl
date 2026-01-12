@@ -69,6 +69,13 @@
                         </group>
                     </group>
 
+                    <group string="Kit GPL">
+                        <field name="gpl_kit_id"
+                               options="{'no_create': True}"
+                               placeholder="Sélectionnez un kit GPL pour exploser sa nomenclature..."
+                               help="Sélectionnez un kit GPL pour créer automatiquement les lignes d'installation"/>
+                    </group>
+
                     <notebook>
                         <page string="Produits utilisés">
                             <field name="installation_line_ids">
