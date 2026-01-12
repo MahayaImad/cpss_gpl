@@ -4,8 +4,8 @@ from odoo.exceptions import UserError
 
 class GplBordereau(models.Model):
     _name = 'gpl.bordereau'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Bordereau d\'envoi contrôles GPL'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'date_creation desc'
 
     name = fields.Char(

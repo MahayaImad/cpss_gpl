@@ -90,6 +90,7 @@
     'auto_install': False,
     'sequence': 20,
 
+
     # Métadonnées
     'support': 'support@cedarpss.com',
     'maintainer': 'CPSS',

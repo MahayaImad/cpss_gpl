@@ -1,91 +1,102 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Vue calendrier mensuel CORRIGÉE -->
+    <!-- Vue calendrier mensuel - APPOINTMENTS -->
     <record id="view_gpl_vehicle_calendar_month" model="ir.ui.view">
-        <field name="name">gpl.vehicle.calendar.month</field>
-        <field name="model">gpl.vehicle</field>
+        <field name="name">gpl.appointment.calendar.month</field>
+        <field name="model">gpl.appointment</field>
         <field name="arch" type="xml">
             <calendar string="Planning Atelier GPL"
                      date_start="appointment_date"
-                     color="next_service_type"
-                      date_delay="estimated_duration"
-                      event_open_popup="true"
-                      js_class="simple_vehicle_calendar"
+                     color="service_type"
+                     date_delay="estimated_duration"
+                     event_open_popup="true"
+                     quick_create="false"
                      mode="month">
+                <field name="name"/>
                 <field name="license_plate"/>
                 <field name="client_id"/>
                 <field name="appointment_date"/>
-                <field name="next_service_type"/>
-                <field name="status_id"/>
+                <field name="service_type"/>
+                <field name="state"/>
                 <field name="estimated_duration"/>
+                <field name="assigned_technician_ids" widget="many2many_tags"/>
             </calendar>
         </field>
     </record>
 
-    <!-- Vue calendrier hebdomadaire CORRIGÉE -->
+    <!-- Vue calendrier hebdomadaire - APPOINTMENTS -->
     <record id="view_gpl_vehicle_calendar_week" model="ir.ui.view">
-        <field name="name">gpl.vehicle.calendar.week</field>
-        <field name="model">gpl.vehicle</field>
+        <field name="name">gpl.appointment.calendar.week</field>
+        <field name="model">gpl.appointment</field>
         <field name="arch" type="xml">
             <calendar string="Planning Hebdomadaire"
                      date_start="appointment_date"
+                     date_delay="estimated_duration"
+                     color="service_type"
                      mode="week"
-                      js_class="simple_vehicle_calendar"
-                     event_open_popup="false">
-
+                     event_open_popup="true"
+                     quick_create="false">
+                <field name="name"/>
                 <field name="license_plate"/>
                 <field name="client_id"/>
-                <field name="next_service_type"/>
+                <field name="service_type"/>
                 <field name="appointment_date"/>
+                <field name="state"/>
                 <field name="estimated_duration"/>
+                <field name="assigned_technician_ids" widget="many2many_tags"/>
             </calendar>
         </field>
     </record>
 
-    <!-- Vue calendrier quotidien CORRIGÉE -->
+    <!-- Vue calendrier quotidien - APPOINTMENTS -->
     <record id="view_gpl_vehicle_calendar_day" model="ir.ui.view">
-        <field name="name">gpl.vehicle.calendar.day</field>
-        <field name="model">gpl.vehicle</field>
+        <field name="name">gpl.appointment.calendar.day</field>
+        <field name="model">gpl.appointment</field>
         <field name="arch" type="xml">
             <calendar string="Planning Quotidien"
                      date_start="appointment_date"
+                     date_delay="estimated_duration"
+                     color="service_type"
                      mode="day"
-                     event_open_popup="true">
-
+                     event_open_popup="true"
+                     quick_create="false">
+                <field name="name"/>
                 <field name="license_plate"/>
                 <field name="client_id"/>
-                <field name="next_service_type"/>
+                <field name="service_type"/>
                 <field name="appointment_date"/>
+                <field name="state"/>
                 <field name="estimated_duration"/>
+                <field name="assigned_technician_ids" widget="many2many_tags"/>
             </calendar>
         </field>
     </record>
 
-    <!-- Actions calendrier CORRIGÉES -->
+    <!-- Actions calendrier - APPOINTMENTS -->
     <record id="action_gpl_vehicle_calendar_month" model="ir.actions.act_window">
         <field name="name">📅 Planning Mensuel</field>
-        <field name="res_model">gpl.vehicle</field>
+        <field name="res_model">gpl.appointment</field>
         <field name="view_mode">calendar,form</field>
         <field name="view_id" ref="view_gpl_vehicle_calendar_month"/>
-        <field name="domain">[('appointment_date', '!=', False)]</field>
-        <field name="context">{}</field>
+        <field name="domain">[('state', 'in', ['scheduled', 'confirmed', 'in_progress'])]</field>
+        <field name="context">{'calendar_default_mode': 'month'}</field>
     </record>
 
     <record id="action_gpl_vehicle_calendar_week" model="ir.actions.act_window">
         <field name="name">📅 Planning Hebdomadaire</field>
-        <field name="res_model">gpl.vehicle</field>
+        <field name="res_model">gpl.appointment</field>
         <field name="view_mode">calendar,form</field>
         <field name="view_id" ref="view_gpl_vehicle_calendar_week"/>
-        <field name="domain">[('appointment_date', '!=', False)]</field>
-        <field name="context">{}</field>
+        <field name="domain">[('state', 'in', ['scheduled', 'confirmed', 'in_progress'])]</field>
+        <field name="context">{'calendar_default_mode': 'week'}</field>
     </record>
 
     <record id="action_gpl_vehicle_calendar_day" model="ir.actions.act_window">
         <field name="name">📅 Planning Quotidien</field>
-        <field name="res_model">gpl.vehicle</field>
+        <field name="res_model">gpl.appointment</field>
         <field name="view_mode">calendar,form</field>
         <field name="view_id" ref="view_gpl_vehicle_calendar_day"/>
-        <field name="domain">[('appointment_date', '!=', False)]</field>
-        <field name="context">{}</field>
+        <field name="domain">[('state', 'in', ['scheduled', 'confirmed', 'in_progress'])]</field>
+        <field name="context">{'calendar_default_mode': 'day'}</field>
     </record>
 </odoo>

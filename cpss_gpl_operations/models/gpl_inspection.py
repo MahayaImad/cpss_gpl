@@ -1,6 +1,8 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 from datetime import timedelta
+from dateutil.relativedelta import relativedelta
+
 
 
 class GplInspection(models.Model):
@@ -172,7 +174,7 @@ class GplInspection(models.Model):
 
     gpl_control_periodic = fields.Integer(
         string="Contrôle périodique (mois)",
-        default=lambda self: int(self.env['ir.config_parameter'].sudo().get_param('cpss_gpl.control_periodic', 36)),
+        default=lambda self: int(self.env['ir.config_parameter'].sudo().get_param('cpss_gpl.control_periodic', 30)),
         help="Contrôle périodique obligatoire de l'installation par l'ingénieur des mines"
     )
     # Notes
@@ -210,14 +212,39 @@ class GplInspection(models.Model):
                 vals['name'] = self.env['ir.sequence'].next_by_code('gpl.inspection') or 'New'
         return super().create(vals_list)
 
-    @api.depends('date_start', 'gpl_control_periodic')
+    @api.depends(
+        'date_start',
+        'gpl_control_periodic',
+        'vehicle_id.reservoir_lot_id.next_test_date'
+    )
     def _compute_next_inspection(self):
         for inspection in self:
+            next_date = False
+
             if inspection.date_start and inspection.gpl_control_periodic:
-                inspection.date_next_inspection = inspection.date_start + timedelta(
-                    days=inspection.gpl_control_periodic * 30)
+                periodic_date = inspection.date_start + relativedelta(
+                    months=inspection.gpl_control_periodic
+                )
             else:
-                inspection.date_next_inspection = False
+                periodic_date = False
+
+            reservoir_date = inspection.vehicle_id.reservoir_lot_id.next_test_date
+
+            if periodic_date and reservoir_date:
+                next_date = min(periodic_date, reservoir_date)
+            else:
+                next_date = periodic_date or reservoir_date or False
+
+            inspection.date_next_inspection = next_date
+
+    # @api.depends('date_start', 'gpl_control_periodic', 'vehicle_id.reservoir_lot_id.next_test_date')
+    # def _compute_next_inspection(self):
+    #     for inspection in self:
+    #         if inspection.date_start and inspection.gpl_control_periodic:
+    #             inspection.date_next_inspection = inspection.date_start + timedelta(
+    #                 days=inspection.gpl_control_periodic * 30)
+    #         else:
+    #             inspection.date_next_inspection = False
 
     @api.depends('check_reservoir', 'check_piping', 'check_injectors',
                  'check_electronics', 'check_pressure', 'check_mounting',

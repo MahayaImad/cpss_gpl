@@ -52,7 +52,6 @@
                                 <field name="gpl_pressure"/>
                             </group>
                             <group>
-                                <field name="gpl_material"/>
                                 <field name="gpl_shape"/>
                             </group>
                         </group>

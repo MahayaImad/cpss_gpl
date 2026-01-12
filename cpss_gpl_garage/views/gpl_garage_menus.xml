@@ -6,47 +6,29 @@
               sequence="50"
               web_icon="cpss_gpl_garage,static/description/icon.png"/>
 
-    <!-- === PLANNING === -->
-    <menuitem id="menu_gpl_garage_planning"
-              name="📅 Planning"
-              parent="menu_gpl_garage_root"
-              sequence="10"/>
-
-    <menuitem id="menu_gpl_garage_calendar_month"
-              name="Planning Mensuel"
-              parent="menu_gpl_garage_planning"
-              action="action_gpl_vehicle_calendar_month"
-              sequence="10"/>
-
-    <menuitem id="menu_gpl_garage_calendar_week"
-              name="Planning Hebdomadaire"
-              parent="menu_gpl_garage_planning"
-              action="action_gpl_vehicle_calendar_week"
-              sequence="20"/>
-
-    <menuitem id="menu_gpl_garage_calendar_day"
-              name="Planning Quotidien"
-              parent="menu_gpl_garage_planning"
-              action="action_gpl_vehicle_calendar_day"
-              sequence="30"/>
-
-    <!-- === VÉHICULES === -->
+        <!-- === VÉHICULES === -->
     <menuitem id="menu_gpl_garage_vehicles"
               name="🚗 Véhicules"
               parent="menu_gpl_garage_root"
-              sequence="20"/>
+              sequence="10"/>
 
     <menuitem id="menu_gpl_garage_vehicles_all"
-              name="RDV aujourd'hui"
+              name="Tous les Véhicules"
               parent="menu_gpl_garage_vehicles"
-              action="action_gpl_vehicle_today"
+              action="action_gpl_vehicle_all"
               sequence="10"/>
+
+    <menuitem id="menu_gpl_garage_vehicles_not_planning"
+              name="Sans rendez-vous"
+              parent="menu_gpl_garage_vehicles"
+              action="action_gpl_vehicle_not_planning"
+              sequence="20"/>
 
     <menuitem id="menu_gpl_garage_vehicles_planning"
               name="Avec rendez-vous"
               parent="menu_gpl_garage_vehicles"
               action="action_gpl_vehicle_planning"
-              sequence="20"/>
+              sequence="30"/>
 
     <menuitem id="menu_gpl_need_inspection_section"
               name="───  Control Périodique  ───"
@@ -58,6 +40,36 @@
               parent="menu_gpl_need_inspection_section"
               action="action_gpl_vehicle_need_inspection_tree"
               sequence="50"/>
+
+    <!-- === RENDEZ-VOUS === -->
+    <menuitem id="menu_gpl_garage_appointments"
+              name="📋 Rendez-vous"
+              parent="menu_gpl_garage_root"
+              sequence="10"/>
+
+    <menuitem id="menu_gpl_garage_appointments_all"
+              name="Tous les rendez-vous"
+              parent="menu_gpl_garage_appointments"
+              action="action_gpl_appointment"
+              sequence="10"/>
+
+    <menuitem id="menu_gpl_garage_calendar_month"
+              name="Planning Mensuel"
+              parent="menu_gpl_garage_appointments"
+              action="action_gpl_vehicle_calendar_month"
+              sequence="20"/>
+
+    <menuitem id="menu_gpl_garage_calendar_week"
+              name="Planning Hebdomadaire"
+              parent="menu_gpl_garage_appointments"
+              action="action_gpl_vehicle_calendar_week"
+              sequence="30"/>
+
+    <menuitem id="menu_gpl_garage_calendar_day"
+              name="Planning Quotidien"
+              parent="menu_gpl_garage_appointments"
+              action="action_gpl_vehicle_calendar_day"
+              sequence="40"/>
 
 
     <!-- === CLIENTS === -->

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Action Report -->
+    <record id="action_report_gpl_card_verso" model="ir.actions.report">
+        <field name="name">Carte GPL VERSO</field>
+        <field name="model">gpl.inspection</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cpss_gpl_reports.report_gpl_card_verso</field>
+        <field name="report_file">cpss_gpl_reports.report_gpl_card_verso</field>
+        <field name="print_report_name">'Carte_GPL_Verso_%s' % (object.name)</field>
+        <field name="binding_model_id" ref="cpss_gpl_operations.model_gpl_inspection"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_gpl_card_verso"/>
+    </record>
+
+    <!-- Report Template -->
+    <template id="report_gpl_card_verso">
+    <t t-call="web.basic_layout">
+        <t t-foreach="docs" t-as="o">
+            <div class="page" style="font-family: Arial, Arial, sans-serif; font-size: 18px; color: #000; line-height: 1.5; margin: 0; padding: 0;">
+                <style>
+
+
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                    }
+
+                    /* Typography */
+                    .bold { font-weight: bold; }
+                    .uppercase { text-transform: uppercase; }
+                    .center { text-align: center; }
+                    .justify { text-align: justify; }
+                    .right { text-align: right; }
+                    .underline { text-decoration: underline; }
+
+
+                </style>
+
+                <div class="center bold" style="font-size:24px; margin-top:10px;">
+                    Le Directeur de l'Energie et des Mines
+                </div>
+
+                <div class="justify" style="margin-top:6px;">
+                    En application de l'arrêté interministeriel de 31 Aout 1983<br/>
+                    portant condition d'équipement de surveillance et d'exploitation<br/>
+                    les installation de GPL carburant équipant les véhicules Automobile
+                </div>
+
+                <div class="center bold uppercase" style="font-size:24px; margin:15px 15px;">
+                    AUTORISE
+                </div>
+
+                <div>
+                    Monsieur : <span t-field="o.client_id.name"/>
+                </div>
+                <br></br>
+                <div>
+                    Domicilié : <span t-field="o.client_id.street"/>
+                    <span t-field="o.client_id.city"/>
+                </div>
+
+                <div style="margin-top:15px;">
+                    A mettre en circulation le véhicule immatriculé :
+                    <span class="bold" t-field="o.vehicle_id.license_plate"/>
+                </div>
+
+                <div class="bold uppercase underline" style="margin-top:15px; padding-left: 15px">
+                    VEHICULE :
+                </div>
+                <br></br>
+                <table>
+                    <tr>
+                        <td>Genre :</td>
+                        <td><span class="bold" t-field="o.vehicle_id.genre"/></td>
+                        <td>Marque :</td>
+                        <td><span class="bold" t-field="o.vehicle_id.model_id.brand_id.name"/></td>
+                    </tr>
+                    <tr>
+                        <td>Type :</td>
+                        <td><span class="bold" t-field="o.vehicle_id.vehicle_type_code"/></td>
+                        <td>N° Ordre :</td>
+                        <td><span class="bold" t-field="o.vehicle_id.vin"/></td>
+                    </tr>
+                </table>
+
+                <div class="bold uppercase underline" style="margin-top:15px; padding-left: 15px">
+                    RESERVOIR :
+                </div>
+                <br></br>
+                <table>
+                    <tr>
+                        <td>Marque :</td>
+                        <td><span class="bold" t-field="o.vehicle_id.reservoir_lot_id.fabricant_id.name"/></td>
+                        <td>N° :</td>
+                        <td><span class="bold" t-field="o.vehicle_id.reservoir_lot_id.name"/></td>
+                    </tr>
+                    <tr>
+                        <td>Capacité :</td>
+                        <td><span class="bold" t-field="o.vehicle_id.reservoir_lot_id.product_id.gpl_capacity"/> L</td>
+                        <td>Année Fab :</td>
+                        <td class="bold" t-esc="o.vehicle_id.reservoir_lot_id.manufacturing_date.year"/>
+                    </tr>
+                </table>
+
+                <div style="margin-top:8px;">
+                    Pression de service : <span class="bold"> 20 bars</span>
+                </div>
+                <br></br>
+                <div class="justify" style="margin-top:12px;">
+                    Toute modification ou réparation intervenant sur une installation au GPL/C
+                    équipant un véhicule automobile doit faire l'objet d'un agrément
+                    conformément aux prescriptions du décret n° 86-496 relatif aux conditions
+                    d'utilisation et de distribution du GPL carburant sur les véhicules automobiles
+
+                </div>
+
+                <div style="margin-top:15px; padding: 20px;" class="bold">
+                    <span t-esc="env.company.state_id.name"/>   le :
+                    <span style="float:right;">L'INGENIEUR (MINES)</span>
+                </div>
+
+            </div>
+        </t>
+    </t>
+</template>
+
+</odoo>

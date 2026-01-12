@@ -7,19 +7,18 @@
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">cpss_gpl_reports.report_gpl_authorization</field>
         <field name="report_file">cpss_gpl_reports.report_gpl_authorization</field>
-        <field name="print_report_name">'Autorisation_GPL_%s' % (object.name)</field>
-        <field name="binding_model_id" ref="cpss_gpl_operations.model_gpl_inspection"/>
-        <field name="binding_type">report</field>
+        <field name="print_report_name">'Certicat_Etench_%s' % (object.name)</field>
         <field name="paperformat_id" ref="paperformat_gpl_certificate"/>
 
     </record>
 
-    <!-- Template de l'autorisation -->
+    <!-- Template Certificat d'etencheite -->
     <template id="report_gpl_authorization">
         <t t-call="web.basic_layout">
-            <t t-foreach="docs" t-as="doc">
-                <div class="page">
-                    <style>
+            <t t-foreach="docs" t-as="o">
+                    <div class="page position-relative">
+                        <!-- Styles spécifiques pour ce rapport -->
+                        <style>
                             /* Styles pour les caractères accentués */
                             @font-face {
                                 font-family: 'Roboto';
@@ -30,126 +29,248 @@
                             body {
                                 font-family: 'Roboto', sans-serif;
                             }
-                            .no-margin {
-                                margin: 0 0 0 0;
-                                padding: 0;
-                            }
-                            .section-espace {
-                                margin: 25px 0;
-                            }
-                            .margin-top {
-                                margin: 70px 0 0 0;
-                            }
-                            .margin-left-right{
-                                margin: O 70px;
-                            }
-                            .table-box {
-                                border: 2px dotted #ddd;
-                                border-radius: 8px;
-                                padding: 8px;
-                            }
-                    </style>
-                    <!-- Header -->
-                    <div class="text-center">
-                        <p class="no-margin">République Algérienne Démocratique et Populaire</p>
-                        <p class="no-margin">------------------------------------</p>
-                        <p class="no-margin"><strong>MINISTERE DE L'INDUSTRIE</strong></p>
-                        <p class="no-margin">------------------------------------</p>
-                        <p class="no-margin">Direction de l'industrie et des Mines</p>
-                        <div class="section-espace"/>
-                        <h4 class="margin-top">AUTORISATION D'UTILISATION DU GPL</h4>
-                        <p>(Décret No. 83/496 du 13/08/83)</p>
-                    </div>
 
+                            /* Styles pour le tableau principal */
+                            .certificate-table {
+                                width: 100%;
+                                border-collapse: collapse !important;
+                            }
+                            .certificate-table td .certificate-table th {
+                                padding: 8px 4px;
+                                vertical-align: top;
+                            }
+                            .certificate-table .label {
+                                font-weight: bold;
+                                white-space: nowrap;
+                            }
 
-                    <!-- Vehicle and Owner Information -->
-                    <div class="row mt-3">
-                        <div class="col-12 margin-top">
-                            <p>Véhicule Immatriculé :    <strong t-field="doc.vehicle_id.license_plate"/></p>
-                            <p>Appartenant à :           <strong t-field="doc.vehicle_id.client_id.name"/></p>
-                        </div>
-                    </div>
+                            /* Styles pour l'en-tête */
+                            .certificate-header {
+                                text-align: center;
+                                margin-bottom: 15px;
+                                padding-bottom: 15px;
+                                border-bottom: 2px solid #4CAF50;
+                            }
 
-                    <!-- Main Information Table -->
-                    <div class="row mt-4">
-                        <div class="col-12 table-box">
-                            <table class="table table-bordered">
-                                <tr>
-                                    <th class="text-center align-middle" style="width: 33%;">VEHICULE</th>
-                                    <th class="text-center align-middle" style="width: 33%;">RESERVOIR GPL</th>
-                                    <th class="text-center align-middle" style="width: 33%;">BUREAU DE L'INDUSTRIE DE :
-                                    <p><strong t-esc="env.company.city"/></p></th>
-                                </tr>
-                                <tr>
-                                    <td class="text-left align-middle">
-                                        <p>MARQUE: <strong t-field="doc.vehicle_id.model_id.brand_id.name"/></p>
-                                        <p>TYPE: <strong t-field="doc.vehicle_id.vehicle_type_code"/></p>
-                                        <p>SERIE N°: <strong t-field="doc.vehicle_id.vin"/></p>
-                                        <p>ANNEE: <strong t-field="doc.vehicle_id.year"/></p>
-                                    </td>
-                                    <td class="text-left align-middle">
-                                        <p>N°: <strong t-field="doc.vehicle_id.reservoir_lot_id.name"/></p>
-                                        <p>FABRIQUE EN:
-                                            <t t-if="doc.vehicle_id.reservoir_lot_id.manufacturing_date">
-                                                <strong t-esc="doc.vehicle_id.reservoir_lot_id.manufacturing_date.year" />
-                                            </t>
-                                        </p>
-                                        <p>A EPROUVER</p>
-                                        <p>AVANT LE:
-                                            <t t-if="doc.vehicle_id.reservoir_lot_id.next_test_date">
-                                                <strong t-field="doc.vehicle_id.reservoir_lot_id.next_test_date" t-options="{'format': 'MM/yyyy'}"/>
-                                            </t>
-                                        </p>
-                                    </td>
-                                    <td class="text-left align-middle">
-                                        <p>CONTROLE TECHNIQUE</p>
-                                        <p>DU: </p>
-                                        <p>L'EXPERT:</p>
-                                        <p>CACHET</p>
-                                        <p>SIGNATURE</p>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td colspan="3">
-                                        <span>VEHICULE A PRESENTER AU CONTROLE TECHNIQUE AVANT :</span>
-                                    </td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
+                            /* Styles pour les sections */
+                            .certificate-section {
+                                margin-bottom: 15px;
+                                padding: 10px;
+                                border-radius: 5px;
+                                background-color: #f9f9f9;
+                            }
 
-                    <!-- Additional Instructions -->
-                    <div class="margin-top">
-                        <div class="row mt-4">
-                            <div class="col-2 margin-top"/>
-                            <div class="col-8 text-center">
-                                <p style="text-align: center;">
-                                    Toutes modification ou réparation intervenant sur une installation au GPL
-                                    équipant un véhicule automobile doit faire l'objet d'un agrément conformé-
-                                    ment aux préscriptions du décret No 83/496 relatif aux conditions d'utilisation
-                                    et des distribution du GPL - Carburant sur les véhicules automobiles.
-                                </p>
+                            /* Style pour le titre */
+                            .certificate-title {
+                                font-size: 36px;
+                                font-weight: bold;
+                                color: #333;
+                                margin-top: 10px;
+                                text-transform: uppercase;
+                                letter-spacing: 1px;
+                            }
+
+                            /* Style pour le sous-titre */
+                            .certificate-subtitle {
+                                color: #555;
+                                font-size: 20px;
+                                font-weight: bold;
+                                text-transform: uppercase;
+                                margin-top: 5px;
+                            }
+
+                            /* Style pour les informations d'installation */
+                            .installation-info {
+                                background-color: #f0f7ff;
+                                border-left: 4px solid #3498db;
+                            }
+
+                            /* Style pour les informations de véhicule */
+                            .vehicle-info {
+                                background-color: #fff8f0;
+                                border-left: 4px solid #e67e22;
+                            }
+
+                            /* Style pour les informations de réservoir */
+                            .reservoir-info {
+                                background-color: #f0fff8;
+                                border-left: 4px solid #2ecc71;
+                            }
+
+                            /* Style pour la zone de signature */
+                            .signature-area {
+                                min-height: 60px;
+                                border-bottom: 1px solid #999;
+                                margin-top: 10px;
+                                margin-bottom: 5px;
+                            }
+
+                            /* Style pour le watermark en filigrane */
+                            .watermark {
+                                position: absolute;
+                                top: 50%;
+                                left: 50%;
+                                transform: translate(-50%, -50%);
+                                opacity: 0.07;
+                                z-index: -1;
+                                width: 60%;
+                            }
+                        </style>
+
+                        <!-- En-tête du certificat -->
+                        <div class="certificate-header row">
+                            <div class="col-3 text-left">
+                                <img t-if="env.company.logo" t-att-src="image_data_uri(env.company.logo)" style="max-height: 130px;" alt="Logo"/>
                             </div>
-                            <div class="col-2"/>
+                            <div class="col-9 text-center" style="padding-top: 20px;">
+                                <h1 class="certificate-title">CERTIFICAT D'ETENCHEITE</h1>
+<!--                                <p class="certificate-subtitle">Installation GPL</p>-->
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Special Instructions -->
-                    <div class="row mt-4">
-                        <div class="col-2"/>
-                        <div class="col-8 text-center">
-                            <h5>CONSIGNES PARTICULIERES</h5>
-                            <p style="text-align: center;">
-                                A l'issue de chaque chargement, il importe d'aérer suffisamment et efficacement
-                                aussi bien le coffre que l'habitacle.
-                                Durant cette opération, les passagers et le conducteur devront s'abstenir d'uti-
-                                liser ou de provoquer toute flamme ou étincelle pour quelque motif que ce soit.
-                            </p>
+                        <!-- Informations du véhicule -->
+                        <div class="certificate-section vehicle-info mb-4">
+                            <h4 style="color: #e67e22;">VÉHICULE</h4>
+                                <div class="row mt-2">
+                                    <div class="col-6"><strong>Immatriculè:</strong> <span style="margin-left:5px;" t-field="o.vehicle_id.license_plate"/></div>
+                                    <div class="col-6"><strong>Appartenant à:</strong><span style="margin-left:5px;" t-field="o.client_id.name"/></div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-6"><strong>Genre:</strong> <span style="margin-left:5px;" t-field="o.vehicle_id.genre"/> </div>
+                                    <div class="col-6"><strong>Marque:</strong> <span style="margin-left:5px;" t-field="o.vehicle_id.model_id.brand_id.name"/> </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-6"><strong>Type:</strong> <span style="margin-left:5px;" t-field="o.vehicle_id.vehicle_type_code"/> </div>
+                                    <div class="col-6"><strong>N° série:</strong><span style="margin-left:5px;" t-field="o.vehicle_id.vin"/></div>
+                                </div>
                         </div>
-                        <div class="col-2"/>
+
+                        <!-- Informations du réservoir -->
+                        <div class="certificate-section reservoir-info mb-4">
+                            <h4 style="color: #2ecc71;">INFORMATION RÉSERVOIR GPL</h4>
+                            <div class="row mt-2">
+                                <div class="col-6"><strong>Réservoir GPL N°:</strong>
+                                    <t t-if="o.vehicle_id.reservoir_lot_id">
+                                        <span style="margin-left:5px;" t-field="o.vehicle_id.reservoir_lot_id.name"/>
+                                    </t>
+                                </div>
+                                <div class="col-6"><strong>Fabriqué en:</strong>
+                                    <t t-if="o.vehicle_id.reservoir_lot_id and o.vehicle_id.reservoir_lot_id.manufacturing_date">
+                                        <span style="margin-left:5px;" t-esc="o.vehicle_id.reservoir_lot_id.manufacturing_date.year"/>
+                                    </t>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-6"><strong>Fabricant:</strong>
+                                    <t t-if="o.vehicle_id.reservoir_lot_id and o.vehicle_id.reservoir_lot_id.fabricant_id">
+                                        <span style="margin-left:5px;" t-field="o.vehicle_id.reservoir_lot_id.fabricant_id.name"/>
+                                    </t>
+                                </div>
+                                <div class="col-6"><strong>Capacité:</strong>
+                                    <t t-if="o.vehicle_id.reservoir_lot_id and o.vehicle_id.reservoir_lot_id.product_id.gpl_capacity">
+                                        <span style="margin-left:5px;" t-field="o.vehicle_id.reservoir_lot_id.product_id.gpl_capacity"/> litres
+                                    </t>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-6"><strong>Épreuve du:</strong>
+                                    <t t-if="o.vehicle_id.reservoir_lot_id and o.vehicle_id.reservoir_lot_id.last_test_date">
+                                        <span style="margin-left:5px;" t-field="o.vehicle_id.reservoir_lot_id.last_test_date" t-options="{'format': 'MM/yyyy'}"/>
+                                    </t>
+                                </div>
+                                <div class="col-6"><strong>À réeprouver avant le:</strong>
+                                    <t t-if="o.vehicle_id.reservoir_lot_id and o.vehicle_id.reservoir_lot_id.next_test_date">
+                                        <span style="margin-left:5px;" t-field="o.vehicle_id.reservoir_lot_id.next_test_date" t-options="{'format': 'MM/yyyy'}"/>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section installateur -->
+                        <div class="certificate-section installation-info mb-4">
+                            <h4 style="color: #3498db; text-transform: uppercase; text-align: left; font-weight: bold;">Installateur</h4>
+                            <div class="row mt-2">
+                                    <div class="col-8"><strong>Raison Sociale:</strong> <span style="margin-left:5px;" t-esc="env.company.name"/></div>
+                                    <div class="col-4"><strong>Agrément:</strong> <span style="margin-left:5px;" t-if="env['ir.config_parameter'].sudo().get_param('cpss_gpl.company_license')" t-esc="env['ir.config_parameter'].sudo().get_param('cpss_gpl.company_license')"/></div>
+
+                            </div>
+                            <div class="row mt-2">
+                                    <div class="col-12"><strong>Adresse:</strong>
+                                        <span style="margin-left:5px;" t-esc="env.company.street"/>
+                                        <t t-if="env.company.street2">
+                                            <span style="margin-left:5px;" t-esc="env.company.street2"/>
+                                        </t>
+                                        <span style="margin-left:5px;" t-esc="env.company.city"/>
+                                    </div>
+                            </div>
+                            <div class="row mt-2">
+                                    <div class="col-6"><strong>N° Tel:</strong>
+                                        <span style="margin-left:5px;" t-esc="env.company.phone"/>
+                                    </div>
+                                    <div class="col-6"><strong>Email:</strong>
+                                        <span style="margin-left:5px;" t-esc="env.company.email"/>
+                                    </div>
+                            </div>
+                        </div>
+                                                <!-- Déclaration de conformité -->
+
+                        <div class="mb-4">
+                            <h3 style="padding-bottom: 5px; text-transform: uppercase; text-align: center; font-weight: bold;">SERVICE DES MINES DE: <span t-esc="env.company.state_id.name"/> </h3>
+                            <h6 style="padding-bottom: 5px; text-transform: uppercase; font-weight: bold;">CONTROLE PERIODIQUE DU: <span t-field="o.certificate_date" t-options="{'format': 'dd/MM/yyyy'}"/></h6>
+                        <div class="row mt-0">
+                                <div class="col-6 text-left">
+                                    <p><strong>L'expert M.:</strong></p>
+                                </div>
+                             <div class="col-6 text-center">
+                                    <p><strong>Cachet</strong></p>
+                                    <div style="border: 1px dashed #999; height: 100px; width: 200px; margin: 0 auto;"></div>
+                                </div>
+                        </div>
+
+                        </div>
+
+                        <div class="mb-5">
+                                                    <!-- Résultat de test -->
+
+                            <p style="text-align: justify; line-height: 1.5;">
+                                Test d’étanchéité à 10 bars sur l’installation GPL/C de ce véhicule réalisé avec succès.
+                                Véhicule à représenter au prochain contrôle technique avant le : <strong><span t-field="o.vehicle_id.date_next_inspection" t-options="{'format': 'dd/MM/yyyy'}"/></strong><br></br>
+                                Toute modification ou réparation intervenant sur une installation au GPL/C équipant un
+                                véhicule automobile doit faire l’objet d’un agrément conformément aux prescriptions du
+                                décret n° 83-496 relatif aux conditions d’utilisation et de distribution du GPL carburant
+                                sur les véhicules automobiles.
+                            </p>
+
+                            <h5 style="padding-bottom: 5px; text-transform: uppercase; text-align: center; font-weight: bold;">CONSIGNES PARTICULIERES </h5>
+                            <p style="text-align: justify; line-height: 1.5;">
+                                À l’issue de chaque chargement, il importe d’aérer suffisamment et efficacement aussi bien
+                                le coffre et l’habitacle. Durant cette opération les passagers et le conducteur devront s’abstenir
+                                d’utiliser ou de provoquer toute flamme ou étincelle pour quelque motif que ce soit.
+                            </p>
+
+                        </div>
+                        <!-- Certification et Lieu et date -->
+                        <div class="mt-5">
+
+                            <div class="row mt-4">
+                                <div class="col-6 text-left">
+
+                                </div>
+                                <div class="col-6 text-right">
+                                    <p><span t-esc="env.company.city"/>
+                                    Le: <span t-field="o.date_start" t-options="{'format': 'dd/MM/yyyy'}"/>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="row mt-4">
+                                <h4>N° D'ENREGISTREMENT:................................</h4>
+                            </div>
+
+
+                        </div>
+
                     </div>
-                </div>
+                </t>
             </t>
-        </t>
     </template>
 </odoo>

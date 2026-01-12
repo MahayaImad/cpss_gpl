@@ -68,7 +68,7 @@
                                 <tr>
                                     <td><strong>Immatriculation :</strong></td>
                                     <td><span t-field="doc.vehicle_id.license_plate"/></td>
-                                    <td><strong>N° châssis :</strong></td>
+                                    <td><strong>Numero de serie :</strong></td>
                                     <td><span t-field="doc.vehicle_id.vin"/></td>
                                 </tr>
                             </table>

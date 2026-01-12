@@ -44,16 +44,9 @@ class ProductTemplate(models.Model):
         help="Pression de service en bars"
     )
 
-    gpl_material = fields.Selection([
-        ('steel', 'Acier'),
-        ('aluminum', 'Aluminium'),
-        ('composite', 'Composite'),
-        ('other', 'Autre')
-    ], string="Matériau", help="Matériau du réservoir")
-
     gpl_shape = fields.Selection([
         ('cylindrical', 'Cylindrique'),
-        ('toroidal', 'Toroïdal'),
+        ('toroidal', 'Torique'),
         ('rectangular', 'Rectangulaire'),
         ('other', 'Autre')
     ], string="Forme", help="Forme du réservoir")
@@ -112,8 +105,8 @@ class ProductTemplate(models.Model):
         """Configure automatiquement le produit pour GPL"""
         if self.is_gpl_reservoir:
             # Configuration automatique pour réservoirs
-            self.type = 'product'
-            self.tracking = 'lot'
+            self.detailed_type = 'product'
+            self.tracking = 'serial'
             self.is_gpl_component = True
 
             # Catégorie par défaut
@@ -206,18 +199,22 @@ class ProductTemplate(models.Model):
 class ProductProduct(models.Model):
     _inherit = 'product.product'
 
-    def action_view_reservoir_lots(self):
-        """Affiche les lots de réservoirs pour ce produit variant"""
-        self.ensure_one()
+    # def action_view_reservoir_lots(self):
+    #     """Affiche les lots de réservoirs pour ce produit variant"""
+    #     self.ensure_one()
 
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Lots Réservoirs - %s') % self.name,
-            'res_model': 'stock.lot',
-            'view_mode': 'tree,form',
-            'domain': [('product_id', '=', self.id)],
-            'context': {
-                'default_product_id': self.id,
-                'search_default_product_id': self.id
-            }
-        }
+    def action_view_gpl_lots(self):
+        self.ensure_one()
+        return self.product_tmpl_id.action_view_gpl_lots()
+
+        # return {
+        #     'type': 'ir.actions.act_window',
+        #     'name': _('Lots Réservoirs - %s') % self.name,
+        #     'res_model': 'stock.lot',
+        #     'view_mode': 'tree,form',
+        #     'domain': [('product_id', '=', self.id)],
+        #     'context': {
+        #         'default_product_id': self.id,
+        #         'search_default_product_id': self.id
+        #     }
+        # }

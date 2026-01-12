@@ -187,8 +187,7 @@ class GplRepairOrder(models.Model):
             repair_status = self.env.ref('cpss_gpl_garage.vehicle_status_en_cours', raise_if_not_found=False)
             if repair_status:
                 self.vehicle_id.status_id = repair_status
-            self.vehicle_id.appointment_date = self.date_start
-            self.vehicle_id.next_service_type = 'repair'
+            # Note: appointment_date and next_service_type are now computed from gpl.appointment
 
     def _ensure_sale_order_created(self):
         """S'assure qu'une commande de vente existe"""

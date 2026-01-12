@@ -47,10 +47,10 @@
         }
                     </style>
                     <!-- En-tête avec titre -->
-                    <div class="alert alert-primary">
+                    <div class="alert alert-primary"  role="status">
                         <div class="row">
                             <div class="col-10">
-                                <h3><i class="fa fa-flask" title=" "/> Dashboard Réservoirs GPL</h3>
+                                <h3><i class="fa fa-flask" title="dashboard"/> Dashboard Réservoirs GPL</h3>
                                 <p class="mb-0">Analyse et suivi des réservoirs GPL en temps réel</p>
                             </div>
                             <div class="col-2 text-left">
@@ -253,7 +253,7 @@
 
                         <!-- En-tête -->
                         <div class="text-center mb-4">
-                            <h1><i class="fa fa-flask"/> Rapport Réservoirs GPL</h1>
+                            <h1><i class="fa fa-flask" title="rapport"/> Rapport Réservoirs GPL</h1>
                             <p class="text-muted">Généré le <span t-esc="datetime.datetime.now().strftime('%d/%m/%Y à %H:%M')"/></p>
                             <hr/>
                         </div>
@@ -324,7 +324,7 @@
                         <!-- Alerte si réservoirs expirés -->
                         <t t-if="expired_count > 0">
                             <div class="alert alert-danger mb-4">
-                                <h4><i class="fa fa-exclamation-triangle"/> ATTENTION !</h4>
+                                <h4><i class="fa fa-exclamation-triangle" title="attention"/> ATTENTION !</h4>
                                 <p><strong t-esc="expired_count"/> réservoir(s) ont dépassé leur date de réépreuve et doivent être retirés du service.</p>
                             </div>
                         </t>
@@ -443,7 +443,7 @@
 
                         <!-- Notes réglementaires -->
                         <div class="mt-4 p-3" style="background-color: #f8f9fa; border-left: 4px solid #007bff;">
-                            <h5><i class="fa fa-info-circle"/> Réglementation</h5>
+                            <h5><i class="fa fa-info-circle" title="reg"/> Réglementation</h5>
                             <p class="mb-0 small">
                                 <strong>En Algérie :</strong> la règlementation en vigueur prévoit un contrôle triennal de l'installation GPL et un contrôle tous les cinq (05) ans du réservoir GPL installé.
                             </p>

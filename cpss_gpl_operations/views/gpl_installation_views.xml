@@ -81,7 +81,7 @@
                                     <field name="quantity"
                                        readonly="product_tracking == 'serial'"
                                        help="Quantité fixe à 1 pour les réservoirs"/>
-                                    <field name="price_unit" widget="monetary"/>
+                                    <field name="price_unit" widget="monetary" readonly="0"/>
                                     <field name="tax_rate"/>
                                     <field name="subtotal" widget="monetary" readonly="1"/>
                                     <field name="subtotal_ttc" widget="monetary" readonly="1"/>

@@ -48,11 +48,11 @@
     'depends': [
         'base',
         'account',  # Pour les factures
-        'report_xlsx',  # Pour l'export Excel
         'cpss_gpl_base',  # Module de base
         'cpss_gpl_reservoir',  # Pour les rapports réservoirs
         'cpss_gpl_garage',  # Pour les véhicules et clients
         'cpss_gpl_operations',  # Pour les opérations
+        'l10n_dz_regions', # Pour les willayas en arabe
     ],
 
     # Données à charger
@@ -77,6 +77,7 @@
         'reports/gpl_authorization_report.xml',
         'reports/gpl_installation_invoice.xml',
         'reports/gpl_card.xml',
+        'reports/gpl_card_verso.xml',
 
         # Rapports administratifs
         'reports/gpl_bordereau_envoi.xml',
@@ -96,6 +97,7 @@
     'application': False,  # Module d'extension
     'auto_install': False,
     'sequence': 50,
+
 
     # Métadonnées
     'support': 'support@cedarpss.com',

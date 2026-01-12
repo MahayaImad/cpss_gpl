@@ -10,7 +10,17 @@
             <!-- Target the statusbar field and insert the new button before it -->
             <xpath expr="//header/field[@name='state']" position="before">
                 <button name="action_print_certificate"
-                        string="Imprimer Certificat"
+                        string="Certificat D'etencheite"
+                        type="object"
+                        class="btn-primary"
+                        invisible="state != 'done'"/>
+                <button name="action_print_card"
+                        string="Carte Recto"
+                        type="object"
+                        class="btn-primary"
+                        invisible="state != 'done'"/>
+                <button name="action_print_card_verso"
+                        string="Carte Verso"
                         type="object"
                         class="btn-primary"
                         invisible="state != 'done'"/>
