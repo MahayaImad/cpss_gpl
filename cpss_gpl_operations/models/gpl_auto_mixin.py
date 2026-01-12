@@ -138,7 +138,11 @@ class GplAutoDocumentMixin(models.AbstractModel):
 
     def _validate_picking_with_move_lines(self, picking):
         """Valide un picking en assignant les lots aux move_lines"""
+        _logger.info(f"=== Validation picking {picking.name} - Recherche de lots pour assignation ===")
+
         for move in picking.move_ids:
+            _logger.info(f"Move: {move.product_id.name} (ID={move.product_id.id})")
+
             # Trouver le lot correspondant depuis les lignes originales
             lot_to_assign = None
             for line in self._get_order_lines():
@@ -146,11 +150,14 @@ class GplAutoDocumentMixin(models.AbstractModel):
                 if (line.product_id.id == move.product_id.id and
                     hasattr(line, 'lot_id') and line.lot_id):
                     lot_to_assign = line.lot_id
+                    _logger.info(f"  ✓ Cas 1: Lot trouvé directement - {lot_to_assign.name} (ID={lot_to_assign.id})")
                     break
 
                 # Cas 2: Le produit de la ligne est un kit GPL contenant le produit du move
                 if (hasattr(line.product_id, 'is_gpl_kit') and line.product_id.is_gpl_kit and
                     hasattr(line, 'lot_id') and line.lot_id):
+                    _logger.info(f"  → Ligne avec kit GPL: {line.product_id.name}, lot: {line.lot_id.name}")
+
                     # Vérifier si le produit du move est un composant de ce kit
                     bom = self.env['mrp.bom'].search([
                         '|',
@@ -160,11 +167,21 @@ class GplAutoDocumentMixin(models.AbstractModel):
                     ], limit=1)
 
                     if bom:
+                        _logger.info(f"    BOM trouvée: {bom.display_name}")
                         # Vérifier si move.product_id est dans les composants du kit
-                        if any(bom_line.product_id.id == move.product_id.id
-                               for bom_line in bom.bom_line_ids):
+                        matching_component = any(bom_line.product_id.id == move.product_id.id
+                                                for bom_line in bom.bom_line_ids)
+                        if matching_component:
                             lot_to_assign = line.lot_id
+                            _logger.info(f"  ✓ Cas 2: Move est un composant du kit - Lot assigné: {lot_to_assign.name}")
                             break
+                        else:
+                            _logger.info(f"    Move {move.product_id.name} n'est pas dans les composants du kit")
+                    else:
+                        _logger.warning(f"    Aucune BOM trouvée pour le kit {line.product_id.name}")
+
+            if not lot_to_assign:
+                _logger.info(f"  ✗ Aucun lot trouvé pour {move.product_id.name}")
 
             # Assigner aux move_lines existants
             for move_line in move.move_line_ids:
@@ -181,9 +198,11 @@ class GplAutoDocumentMixin(models.AbstractModel):
                     # Assigner le lot si trouvé et que le produit correspond
                     if lot_to_assign and move_line.product_id.id == move.product_id.id:
                         vals_to_update['lot_id'] = lot_to_assign.id
+                        _logger.info(f"  → Assignation lot {lot_to_assign.name} à move_line {move_line.id}")
 
                     if vals_to_update:
                         move_line.write(vals_to_update)
+                        _logger.info(f"  ✓ Move_line {move_line.id} mis à jour: {vals_to_update}")
                 except Exception as e:
                     _logger.warning(f"Impossible d'assigner qty_done pour move_line {move_line.id}: {str(e)}")
                     continue
@@ -196,8 +215,12 @@ class GplAutoDocumentMixin(models.AbstractModel):
 
     def _force_picking_validation(self, picking):
         """Force la validation d'un picking en créant les move_lines avec lots"""
+        _logger.info(f"=== Force validation picking {picking.name} - Création de move_lines ===")
+
         for move in picking.move_ids:
             if not move.move_line_ids:
+                _logger.info(f"Move sans move_line: {move.product_id.name} (ID={move.product_id.id})")
+
                 # Trouver le lot correspondant
                 lot_to_assign = None
                 for line in self._get_order_lines():
@@ -205,11 +228,14 @@ class GplAutoDocumentMixin(models.AbstractModel):
                     if (line.product_id.id == move.product_id.id and
                         hasattr(line, 'lot_id') and line.lot_id):
                         lot_to_assign = line.lot_id
+                        _logger.info(f"  ✓ Cas 1: Lot trouvé directement - {lot_to_assign.name}")
                         break
 
                     # Cas 2: Le produit de la ligne est un kit GPL contenant le produit du move
                     if (hasattr(line.product_id, 'is_gpl_kit') and line.product_id.is_gpl_kit and
                         hasattr(line, 'lot_id') and line.lot_id):
+                        _logger.info(f"  → Ligne avec kit GPL: {line.product_id.name}, lot: {line.lot_id.name}")
+
                         # Vérifier si le produit du move est un composant de ce kit
                         bom = self.env['mrp.bom'].search([
                             '|',
@@ -219,10 +245,13 @@ class GplAutoDocumentMixin(models.AbstractModel):
                         ], limit=1)
 
                         if bom:
+                            _logger.info(f"    BOM trouvée: {bom.display_name}")
                             # Vérifier si move.product_id est dans les composants du kit
-                            if any(bom_line.product_id.id == move.product_id.id
-                                   for bom_line in bom.bom_line_ids):
+                            matching = any(bom_line.product_id.id == move.product_id.id
+                                          for bom_line in bom.bom_line_ids)
+                            if matching:
                                 lot_to_assign = line.lot_id
+                                _logger.info(f"  ✓ Cas 2: Move est composant du kit - Lot: {lot_to_assign.name}")
                                 break
 
                 # Créer le move_line
@@ -241,8 +270,12 @@ class GplAutoDocumentMixin(models.AbstractModel):
                 # Ajouter le lot seulement si nécessaire
                 if lot_to_assign:
                     move_line_vals['lot_id'] = lot_to_assign.id
+                    _logger.info(f"  → Création move_line avec lot {lot_to_assign.name}")
+                else:
+                    _logger.info(f"  ✗ Aucun lot trouvé - Création move_line sans lot")
 
                 self.env['stock.move.line'].create(move_line_vals)
+                _logger.info(f"  ✓ Move_line créé")
             else:
                 # Assigner aux move_lines existants
                 lot_to_assign = None
