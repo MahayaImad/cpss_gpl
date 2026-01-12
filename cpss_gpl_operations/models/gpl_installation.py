@@ -142,11 +142,43 @@ class GplServiceInstallation(models.Model):
         """Calcule les réservoirs depuis les lignes"""
         for installation in self:
             # Trouver tous les réservoirs dans les lignes
+            # Cas 1: Lignes avec réservoirs directs
             reservoir_lines = installation.installation_line_ids.filtered(
                 lambda l: l.product_id.is_gpl_reservoir and l.lot_id
             )
 
             reservoir_lots = reservoir_lines.mapped('lot_id')
+
+            # Cas 2: Lignes avec kits GPL qui contiennent des réservoirs
+            kit_lines = installation.installation_line_ids.filtered(
+                lambda l: hasattr(l.product_id, 'is_gpl_kit') and
+                         l.product_id.is_gpl_kit and
+                         l.lot_id
+            )
+
+            for kit_line in kit_lines:
+                # Vérifier si le kit contient un réservoir GPL dans sa nomenclature
+                bom = self.env['mrp.bom'].search([
+                    '|',
+                    ('product_id', '=', kit_line.product_id.id),
+                    ('product_tmpl_id', '=', kit_line.product_id.product_tmpl_id.id),
+                    ('active', '=', True)
+                ], limit=1)
+
+                if bom:
+                    # Vérifier si le kit contient un réservoir GPL
+                    has_reservoir = any(
+                        hasattr(bom_line.product_id, 'is_gpl_reservoir') and
+                        bom_line.product_id.is_gpl_reservoir
+                        for bom_line in bom.bom_line_ids
+                    )
+
+                    if has_reservoir and kit_line.lot_id:
+                        _logger.info(
+                            f"Kit GPL {kit_line.product_id.name} avec lot {kit_line.lot_id.name} "
+                            f"reconnu comme ayant un réservoir"
+                        )
+                        reservoir_lots |= kit_line.lot_id
 
             installation.reservoir_lot_ids = [(6, 0, reservoir_lots.ids)]
             installation.reservoir_lot_id = reservoir_lots[0] if reservoir_lots else False
