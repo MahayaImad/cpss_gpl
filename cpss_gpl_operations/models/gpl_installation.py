@@ -557,8 +557,13 @@ class GplInstallationLine(models.Model):
             self.lot_id = False
 
             # DOMAINE DYNAMIQUE POUR LES LOTS
+            _logger.info(f"=== Filtrage lots pour produit: {self.product_id.name} (ID={self.product_id.id}) ===")
+
             # Si c'est un kit GPL, chercher les réservoirs dans sa nomenclature
-            if hasattr(self.product_id, 'is_gpl_kit') and self.product_id.is_gpl_kit:
+            is_kit = self.product_id.is_gpl_kit if hasattr(self.product_id, 'is_gpl_kit') else False
+            _logger.info(f"Est un kit GPL: {is_kit}")
+
+            if is_kit:
                 _logger.info(f"Produit {self.product_id.name} détecté comme kit GPL")
 
                 # Trouver la nomenclature du kit
@@ -611,7 +616,10 @@ class GplInstallationLine(models.Model):
                 return {'domain': {'lot_id': [('id', '=', False)]}}
 
             # Si c'est un réservoir GPL direct, filtrer par état et statut de validité
-            elif hasattr(self.product_id, 'is_gpl_reservoir') and self.product_id.is_gpl_reservoir:
+            is_reservoir = self.product_id.is_gpl_reservoir if hasattr(self.product_id, 'is_gpl_reservoir') else False
+            _logger.info(f"Est un réservoir GPL: {is_reservoir}")
+
+            if is_reservoir:
                 # Pour les réservoirs GPL, afficher seulement les lots:
                 # - En stock (state='stock') - EXCLU les réservoirs déjà installés
                 # - Valides ou expirant bientôt (reservoir_status in ['valid', 'expiring_soon'])
