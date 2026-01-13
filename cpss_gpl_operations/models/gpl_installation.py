@@ -571,35 +571,33 @@ class GplInstallationLine(models.Model):
 
                 if bom:
                     _logger.info(f"Nomenclature trouvée: {bom.display_name}")
+                    _logger.info(f"Composants de la BOM: {[l.product_id.name for l in bom.bom_line_ids]}")
 
                     # Trouver tous les réservoirs GPL dans la nomenclature
                     reservoir_products = bom.bom_line_ids.filtered(
                         lambda l: hasattr(l.product_id, 'is_gpl_reservoir') and l.product_id.is_gpl_reservoir
                     ).mapped('product_id')
 
-                    _logger.info(f"Réservoirs trouvés dans la nomenclature: {len(reservoir_products)}")
+                    _logger.info(f"Réservoirs GPL trouvés dans la nomenclature: {len(reservoir_products)}")
+                    for rp in reservoir_products:
+                        _logger.info(f"  - Produit réservoir: {rp.name} (ID={rp.id})")
 
                     if reservoir_products:
-                        # Chercher uniquement les lots en stock et non installés
+                        # Chercher uniquement les lots en stock, non installés et valides
                         available_lots = self.env['stock.lot'].search([
                             ('product_id', 'in', reservoir_products.ids),
                             ('state', '=', 'stock'),  # Uniquement en stock, pas installés
-                            ('product_qty', '>', 0)   # Quantité disponible
+                            ('product_qty', '>', 0),   # Quantité disponible
+                            ('reservoir_status', 'in', ['valid', 'expiring_soon'])  # Statut valide
                         ])
-                        _logger.info(f"Total lots en stock trouvés: {len(available_lots)}")
-
-                        # Filtre supplémentaire par statut du réservoir (valide uniquement)
-                        if available_lots:
-                            available_lots = available_lots.filtered(
-                                lambda l: not hasattr(l, 'reservoir_status') or
-                                         l.reservoir_status in ['valid', 'expiring_soon']
-                            )
-                        _logger.info(f"Lots disponibles après filtrage par statut: {len(available_lots)}")
+                        _logger.info(f"Lots en stock trouvés pour le kit: {len(available_lots)} lots")
+                        for lot in available_lots:
+                            _logger.info(f"  - Lot {lot.name} (produit: {lot.product_id.name}, état: {lot.state}, statut: {lot.reservoir_status})")
 
                         if available_lots:
                             # Créer un domaine pour afficher les lots disponibles
                             domain = [('id', 'in', available_lots.ids)]
-                            _logger.info(f"Domaine retourné: {domain}")
+                            _logger.info(f"Domaine retourné pour kit: {domain}")
                             return {'domain': {'lot_id': domain}}
                         else:
                             # Pas de lots disponibles - ne rien proposer
