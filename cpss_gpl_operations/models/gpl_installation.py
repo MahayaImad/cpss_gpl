@@ -513,8 +513,15 @@ class GplInstallationLine(models.Model):
     lot_id = fields.Many2one(
         'stock.lot',
         string='Lot/Série',
-        domain="[]",  # Domaine vide par défaut, sera rempli dynamiquement par @api.onchange
         help="Sélectionnez le lot/série pour ce produit. Pour les kits GPL, affiche les lots des réservoirs contenus dans le kit."
+    )
+
+    # Domaine pour le champ lot_id (calculé dynamiquement)
+    lot_id_domain = fields.Char(
+        string='Domaine Lot',
+        compute='_compute_lot_id_domain',
+        readonly=True,
+        store=False
     )
 
     # Champ pour savoir si le produit est géré par lot
@@ -535,6 +542,75 @@ class GplInstallationLine(models.Model):
     def _compute_subtotal(self):
         for line in self:
             line.subtotal = line.quantity * line.price_unit
+
+    @api.depends('product_id')
+    def _compute_lot_id_domain(self):
+        """Calcule le domaine pour les lots disponibles selon le type de produit"""
+        for line in self:
+            if not line.product_id:
+                line.lot_id_domain = "[]"
+                continue
+
+            _logger.info(f"=== Calcul domaine pour produit: {line.product_id.name} (ID={line.product_id.id}) ===")
+
+            # Si c'est un kit GPL, chercher les réservoirs dans sa nomenclature
+            is_kit = line.product_id.is_gpl_kit if hasattr(line.product_id, 'is_gpl_kit') else False
+            _logger.info(f"Est un kit GPL: {is_kit}")
+
+            if is_kit:
+                # Trouver la nomenclature du kit
+                bom = self.env['mrp.bom'].search([
+                    '|',
+                    ('product_id', '=', line.product_id.id),
+                    ('product_tmpl_id', '=', line.product_id.product_tmpl_id.id),
+                    ('active', '=', True)
+                ], limit=1)
+
+                if bom:
+                    # Trouver tous les réservoirs GPL dans la nomenclature
+                    reservoir_products = bom.bom_line_ids.filtered(
+                        lambda l: hasattr(l.product_id, 'is_gpl_reservoir') and l.product_id.is_gpl_reservoir
+                    ).mapped('product_id')
+
+                    if reservoir_products:
+                        # Chercher uniquement les lots en stock, non installés et valides
+                        available_lots = self.env['stock.lot'].search([
+                            ('product_id', 'in', reservoir_products.ids),
+                            ('state', '=', 'stock'),
+                            ('product_qty', '>', 0),
+                            ('reservoir_status', 'in', ['valid', 'expiring_soon'])
+                        ])
+
+                        if available_lots:
+                            domain = str([('id', 'in', available_lots.ids)])
+                            _logger.info(f"Domaine kit: {domain}")
+                            line.lot_id_domain = domain
+                            continue
+
+                # Pas de lots disponibles pour ce kit
+                line.lot_id_domain = str([('id', '=', False)])
+                continue
+
+            # Si c'est un réservoir GPL direct
+            is_reservoir = line.product_id.is_gpl_reservoir if hasattr(line.product_id, 'is_gpl_reservoir') else False
+            _logger.info(f"Est un réservoir GPL: {is_reservoir}")
+
+            if is_reservoir:
+                domain = str([
+                    ('product_id', '=', line.product_id.id),
+                    ('state', '=', 'stock'),
+                    ('reservoir_status', 'in', ['valid', 'expiring_soon']),
+                    ('product_qty', '>', 0)
+                ])
+                _logger.info(f"Domaine réservoir: {domain}")
+                line.lot_id_domain = domain
+            else:
+                # Pour les autres produits avec lots
+                domain = str([
+                    ('product_id', '=', line.product_id.id),
+                    ('product_qty', '>', 0)
+                ])
+                line.lot_id_domain = domain
 
     @api.onchange('product_id')
     def _onchange_product_id(self):
