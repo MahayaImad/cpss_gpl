@@ -190,14 +190,21 @@ class GplAutoDocumentMixin(models.AbstractModel):
             # Assigner aux move_lines existants
             for move_line in move.move_line_ids:
                 try:
-                    # Assigner uniquement le lot si trouvé et que le produit correspond
-                    # qty_done sera géré automatiquement par Odoo lors de la validation
+                    vals_to_update = {}
+
+                    # Toujours remplir la quantité pour permettre la validation
+                    vals_to_update['quantity'] = move.product_uom_qty
+
+                    # Assigner le lot uniquement si trouvé et que le produit correspond
                     if lot_to_assign and move_line.product_id.id == move.product_id.id:
+                        vals_to_update['lot_id'] = lot_to_assign.id
                         _logger.info(f"  → Assignation lot {lot_to_assign.name} à move_line {move_line.id}")
-                        move_line.write({'lot_id': lot_to_assign.id})
-                        _logger.info(f"  ✓ Lot assigné avec succès à move_line {move_line.id}")
+
+                    if vals_to_update:
+                        move_line.write(vals_to_update)
+                        _logger.info(f"  ✓ Move_line {move_line.id} mis à jour: quantity={vals_to_update.get('quantity')}, lot={vals_to_update.get('lot_id', 'aucun')}")
                 except Exception as e:
-                    _logger.warning(f"Impossible d'assigner le lot pour move_line {move_line.id}: {str(e)}")
+                    _logger.warning(f"Impossible de mettre à jour move_line {move_line.id}: {str(e)}")
                     continue
 
         # Valider le picking
@@ -301,10 +308,17 @@ class GplAutoDocumentMixin(models.AbstractModel):
 
                 for move_line in move.move_line_ids:
                     try:
-                        # Assigner uniquement le lot si nécessaire
-                        # qty_done sera géré automatiquement par Odoo lors de la validation
+                        vals_to_update = {}
+
+                        # Toujours remplir la quantité pour permettre la validation
+                        vals_to_update['quantity'] = move.product_uom_qty
+
+                        # Assigner le lot uniquement si nécessaire
                         if lot_to_assign and not move_line.lot_id:
-                            move_line.write({'lot_id': lot_to_assign.id})
+                            vals_to_update['lot_id'] = lot_to_assign.id
+
+                        if vals_to_update:
+                            move_line.write(vals_to_update)
                     except Exception as e:
                         _logger.warning(f"Impossible de mettre à jour move_line {move_line.id}: {str(e)}")
                         continue
