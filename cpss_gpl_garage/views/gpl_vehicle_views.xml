@@ -46,7 +46,12 @@
                     <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
                     <field name="image_128" widget='image' class="oe_avatar"/>
                     <div class="oe_button_box" name="button_box">
-                        <!-- Boutons statistiques si nécessaire -->
+                        <button name="action_view_appointments"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-calendar">
+                            <field name="appointment_count" widget="statinfo" string="RDV"/>
+                        </button>
                     </div>
 
                     <widget name="web_ribbon" title="Archivé" bg_color="bg-danger"
@@ -72,7 +77,7 @@
                             <field name="active" invisible="1"/>
                         </group>
                         <group string="Client">
-                            <field name="client_id" required="1"/>
+                            <field name="client_id" required="1" options="{'no_create_edit': False, 'create_name_field': 'name'}"/>
                             <field name="client_phone" widget="phone" readonly="1"/>
                             <field name="client_mobile" widget="phone" readonly="1"/>
                             <field name="client_email" widget="email" readonly="1"/>

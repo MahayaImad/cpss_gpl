@@ -29,7 +29,7 @@
 
                     <group>
                         <group string="Informations générales">
-                            <field name="vehicle_id" options="{'no_create': True}"/>
+                            <field name="vehicle_id"/>
                             <field name="client_id"/>
                             <field name="repair_type"/>
                             <field name="priority" widget="priority"/>

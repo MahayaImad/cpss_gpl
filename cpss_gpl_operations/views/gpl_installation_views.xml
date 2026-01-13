@@ -51,7 +51,7 @@
 
                     <group>
                         <group string="Informations générales">
-                            <field name="vehicle_id" options="{'no_create': True}"/>
+                            <field name="vehicle_id"/>
                             <field name="client_id"/>
                             <field name="date_start"/>
                             <field name="date_planned"/>

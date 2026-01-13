@@ -96,6 +96,12 @@ class GplVehicle(models.Model):
                                        domain="[('product_id.is_gpl_reservoir', '=', True)]",
                                        tracking=True)
 
+    # === COMPTEURS POUR SMART BUTTONS ===
+    appointment_count = fields.Integer(
+        string='Nombre de RDV',
+        compute='_compute_appointment_count'
+    )
+
     # Informations du contrôle
     date_inspection = fields.Date(
         string='Date du contrôle',
@@ -224,6 +230,11 @@ class GplVehicle(models.Model):
             else:
                 vehicle.appointment_status = 'scheduled'
 
+    @api.depends('appointment_ids')
+    def _compute_appointment_count(self):
+        for vehicle in self:
+            vehicle.appointment_count = len(vehicle.appointment_ids)
+
     @api.model
     def _get_need_inspection_domain(self):
         """Return domain for vehicles to control dynamically"""
@@ -311,6 +322,21 @@ class GplVehicle(models.Model):
 
         # Delegate to appointment
         return self.current_appointment_id.action_cancel()
+
+    def action_view_appointments(self):
+        """Ouvre la liste des rendez-vous du véhicule"""
+        self.ensure_one()
+        return {
+            'name': _('Rendez-vous'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'gpl.appointment',
+            'view_mode': 'tree,form,calendar',
+            'domain': [('vehicle_id', '=', self.id)],
+            'context': {
+                'default_vehicle_id': self.id,
+                'default_client_id': self.client_id.id,
+            }
+        }
 
     # === CONTRAINTES ===
     @api.constrains('license_plate')

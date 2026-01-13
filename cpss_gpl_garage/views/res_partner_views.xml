@@ -12,8 +12,7 @@
                         name="action_view_gpl_vehicles"
                         type="object"
                         class="oe_stat_button"
-                        icon="fa-car"
-                        invisible="gpl_vehicle_count == 0">
+                        icon="fa-car">
                     <field name="gpl_vehicle_count" widget="statinfo"
                            string="Véhicules GPL"/>
                 </button>
