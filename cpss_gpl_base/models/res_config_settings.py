@@ -7,13 +7,15 @@ class ResConfigSettings(models.TransientModel):
     # === PARAMÈTRES GÉNÉRAUX GPL ===
     gpl_company_name = fields.Char(
         string="Nom de l'entreprise GPL",
-        config_parameter='cpss_gpl.company_name',
+        related='company_id.gpl_company_name',
+        readonly=False,
         help="Nom affiché sur les certificats et rapports"
     )
 
     gpl_company_license = fields.Char(
         string="Numéro d'agrément GPL",
-        config_parameter='cpss_gpl.company_license',
+        related='company_id.gpl_company_license',
+        readonly=False,
         help="Numéro d'agrément officiel pour les installations GPL"
     )
 
@@ -115,8 +117,6 @@ class ResConfigSettings(models.TransientModel):
         params = self.env['ir.config_parameter'].sudo()
 
         res.update(
-            gpl_company_name=params.get_param('cpss_gpl.company_name', ''),
-            gpl_company_license=params.get_param('cpss_gpl.company_license', ''),
             gpl_default_warranty_months=int(params.get_param('cpss_gpl.default_warranty_months', 24)),
             gpl_reservoir_test_frequency=int(params.get_param('cpss_gpl.reservoir_test_frequency', 5)),
             gpl_reservoir_max_age=int(params.get_param('cpss_gpl.reservoir_max_age', 15)),
@@ -136,8 +136,6 @@ class ResConfigSettings(models.TransientModel):
         # Sauvegarder les paramètres système
         params = self.env['ir.config_parameter'].sudo()
 
-        params.set_param('cpss_gpl.company_name', self.gpl_company_name or '')
-        params.set_param('cpss_gpl.company_license', self.gpl_company_license or '')
         params.set_param('cpss_gpl.default_warranty_months', self.gpl_default_warranty_months)
         params.set_param('cpss_gpl.reservoir_test_frequency', self.gpl_reservoir_test_frequency)
         params.set_param('cpss_gpl.gpl_control_periodic', self.gpl_control_periodic)

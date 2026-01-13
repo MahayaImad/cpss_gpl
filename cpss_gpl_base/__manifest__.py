@@ -60,6 +60,9 @@
     'auto_install': False,
     'sequence': 10,
 
+    # Hooks
+    'post_init_hook': 'post_init_hook',
+
     # Icône du module dans les paramètres
     'web_icon': 'cpss_gpl_base,static/description/icon.png',
 
