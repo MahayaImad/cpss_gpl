@@ -172,9 +172,13 @@ class GplAutoDocumentMixin(models.AbstractModel):
                         matching_component = any(bom_line.product_id.id == move.product_id.id
                                                 for bom_line in bom.bom_line_ids)
                         if matching_component:
-                            lot_to_assign = line.lot_id
-                            _logger.info(f"  ✓ Cas 2: Move est un composant du kit - Lot assigné: {lot_to_assign.name}")
-                            break
+                            # IMPORTANT: Vérifier que le lot appartient au même produit que le move
+                            if line.lot_id.product_id.id == move.product_id.id:
+                                lot_to_assign = line.lot_id
+                                _logger.info(f"  ✓ Cas 2: Move est composant du kit ET lot correspond au produit - Lot assigné: {lot_to_assign.name}")
+                                break
+                            else:
+                                _logger.info(f"    Move {move.product_id.name} est dans le kit mais lot {line.lot_id.name} appartient à {line.lot_id.product_id.name} - pas d'assignation")
                         else:
                             _logger.info(f"    Move {move.product_id.name} n'est pas dans les composants du kit")
                     else:
@@ -290,8 +294,10 @@ class GplAutoDocumentMixin(models.AbstractModel):
                             # Vérifier si move.product_id est dans les composants du kit
                             if any(bom_line.product_id.id == move.product_id.id
                                    for bom_line in bom.bom_line_ids):
-                                lot_to_assign = line.lot_id
-                                break
+                                # IMPORTANT: Vérifier que le lot appartient au même produit que le move
+                                if line.lot_id.product_id.id == move.product_id.id:
+                                    lot_to_assign = line.lot_id
+                                    break
 
                 for move_line in move.move_line_ids:
                     try:
