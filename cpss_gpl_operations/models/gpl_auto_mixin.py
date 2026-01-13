@@ -94,9 +94,6 @@ class GplAutoDocumentMixin(models.AbstractModel):
         if not self.sale_order_id:
             return
 
-        import logging
-        _logger = logging.getLogger(__name__)
-
         # Rechercher les pickings de livraison
         pickings = self.sale_order_id.picking_ids.filtered(
             lambda p: p.state not in ['done', 'cancel'] and p.picking_type_code == 'outgoing'
@@ -138,11 +135,7 @@ class GplAutoDocumentMixin(models.AbstractModel):
 
     def _validate_picking_with_move_lines(self, picking):
         """Valide un picking en assignant les lots aux move_lines"""
-        _logger.info(f"=== Validation picking {picking.name} - Recherche de lots pour assignation ===")
-
         for move in picking.move_ids:
-            _logger.info(f"Move: {move.product_id.name} (ID={move.product_id.id})")
-
             # Trouver le lot correspondant depuis les lignes originales
             lot_to_assign = None
             for line in self._get_order_lines():
@@ -150,13 +143,11 @@ class GplAutoDocumentMixin(models.AbstractModel):
                 if (line.product_id.id == move.product_id.id and
                     hasattr(line, 'lot_id') and line.lot_id):
                     lot_to_assign = line.lot_id
-                    _logger.info(f"  ✓ Cas 1: Lot trouvé directement - {lot_to_assign.name} (ID={lot_to_assign.id})")
                     break
 
                 # Cas 2: Le produit de la ligne est un kit GPL contenant le produit du move
                 if (hasattr(line.product_id, 'is_gpl_kit') and line.product_id.is_gpl_kit and
                     hasattr(line, 'lot_id') and line.lot_id):
-                    _logger.info(f"  → Ligne avec kit GPL: {line.product_id.name}, lot: {line.lot_id.name}")
 
                     # Vérifier si le produit du move est un composant de ce kit
                     bom = self.env['mrp.bom'].search([
@@ -167,7 +158,6 @@ class GplAutoDocumentMixin(models.AbstractModel):
                     ], limit=1)
 
                     if bom:
-                        _logger.info(f"    BOM trouvée: {bom.display_name}")
                         # Vérifier si move.product_id est dans les composants du kit
                         matching_component = any(bom_line.product_id.id == move.product_id.id
                                                 for bom_line in bom.bom_line_ids)
@@ -175,17 +165,7 @@ class GplAutoDocumentMixin(models.AbstractModel):
                             # IMPORTANT: Vérifier que le lot appartient au même produit que le move
                             if line.lot_id.product_id.id == move.product_id.id:
                                 lot_to_assign = line.lot_id
-                                _logger.info(f"  ✓ Cas 2: Move est composant du kit ET lot correspond au produit - Lot assigné: {lot_to_assign.name}")
                                 break
-                            else:
-                                _logger.info(f"    Move {move.product_id.name} est dans le kit mais lot {line.lot_id.name} appartient à {line.lot_id.product_id.name} - pas d'assignation")
-                        else:
-                            _logger.info(f"    Move {move.product_id.name} n'est pas dans les composants du kit")
-                    else:
-                        _logger.warning(f"    Aucune BOM trouvée pour le kit {line.product_id.name}")
-
-            if not lot_to_assign:
-                _logger.info(f"  ✗ Aucun lot trouvé pour {move.product_id.name}")
 
             # Assigner aux move_lines existants
             for move_line in move.move_line_ids:
@@ -198,11 +178,9 @@ class GplAutoDocumentMixin(models.AbstractModel):
                     # Assigner le lot uniquement si trouvé et que le produit correspond
                     if lot_to_assign and move_line.product_id.id == move.product_id.id:
                         vals_to_update['lot_id'] = lot_to_assign.id
-                        _logger.info(f"  → Assignation lot {lot_to_assign.name} à move_line {move_line.id}")
 
                     if vals_to_update:
                         move_line.write(vals_to_update)
-                        _logger.info(f"  ✓ Move_line {move_line.id} mis à jour: quantity={vals_to_update.get('quantity')}, lot={vals_to_update.get('lot_id', 'aucun')}")
                 except Exception as e:
                     _logger.warning(f"Impossible de mettre à jour move_line {move_line.id}: {str(e)}")
                     continue
@@ -215,12 +193,8 @@ class GplAutoDocumentMixin(models.AbstractModel):
 
     def _force_picking_validation(self, picking):
         """Force la validation d'un picking en créant les move_lines avec lots"""
-        _logger.info(f"=== Force validation picking {picking.name} - Création de move_lines ===")
-
         for move in picking.move_ids:
             if not move.move_line_ids:
-                _logger.info(f"Move sans move_line: {move.product_id.name} (ID={move.product_id.id})")
-
                 # Trouver le lot correspondant
                 lot_to_assign = None
                 for line in self._get_order_lines():
@@ -228,13 +202,11 @@ class GplAutoDocumentMixin(models.AbstractModel):
                     if (line.product_id.id == move.product_id.id and
                         hasattr(line, 'lot_id') and line.lot_id):
                         lot_to_assign = line.lot_id
-                        _logger.info(f"  ✓ Cas 1: Lot trouvé directement - {lot_to_assign.name}")
                         break
 
                     # Cas 2: Le produit de la ligne est un kit GPL contenant le produit du move
                     if (hasattr(line.product_id, 'is_gpl_kit') and line.product_id.is_gpl_kit and
                         hasattr(line, 'lot_id') and line.lot_id):
-                        _logger.info(f"  → Ligne avec kit GPL: {line.product_id.name}, lot: {line.lot_id.name}")
 
                         # Vérifier si le produit du move est un composant de ce kit
                         bom = self.env['mrp.bom'].search([
@@ -245,13 +217,11 @@ class GplAutoDocumentMixin(models.AbstractModel):
                         ], limit=1)
 
                         if bom:
-                            _logger.info(f"    BOM trouvée: {bom.display_name}")
                             # Vérifier si move.product_id est dans les composants du kit
                             matching = any(bom_line.product_id.id == move.product_id.id
                                           for bom_line in bom.bom_line_ids)
                             if matching:
                                 lot_to_assign = line.lot_id
-                                _logger.info(f"  ✓ Cas 2: Move est composant du kit - Lot: {lot_to_assign.name}")
                                 break
 
                 # Créer le move_line
@@ -270,12 +240,8 @@ class GplAutoDocumentMixin(models.AbstractModel):
                 # Ajouter le lot seulement si nécessaire
                 if lot_to_assign:
                     move_line_vals['lot_id'] = lot_to_assign.id
-                    _logger.info(f"  → Création move_line avec lot {lot_to_assign.name}")
-                else:
-                    _logger.info(f"  ✗ Aucun lot trouvé - Création move_line sans lot")
 
                 self.env['stock.move.line'].create(move_line_vals)
-                _logger.info(f"  ✓ Move_line créé")
             else:
                 # Assigner aux move_lines existants
                 lot_to_assign = None
@@ -336,9 +302,6 @@ class GplAutoDocumentMixin(models.AbstractModel):
         if not self.sale_order_id:
             return
 
-        import logging
-        _logger = logging.getLogger(__name__)
-
         try:
             # En mode simplifié, facturer directement depuis la commande de vente
             # Utiliser la méthode standard d'Odoo pour créer la facture
@@ -346,15 +309,12 @@ class GplAutoDocumentMixin(models.AbstractModel):
                 # Méthode pour Odoo 17
                 if hasattr(self.sale_order_id, '_create_invoices'):
                     invoice = self.sale_order_id._create_invoices()
-                    _logger.info(f"Facture créée via _create_invoices: {invoice.name if invoice else 'Aucune'}")
                 elif hasattr(self.sale_order_id, 'action_invoice_create'):
                     # Méthode pour versions antérieures
                     invoice_ids = self.sale_order_id.action_invoice_create()
                     invoice = self.env['account.move'].browse(invoice_ids) if invoice_ids else False
-                    _logger.info(f"Facture créée via action_invoice_create: {invoice.name if invoice else 'Aucune'}")
                 else:
                     # Fallback : création manuelle
-                    _logger.info("Utilisation fallback création manuelle")
                     return self._create_manual_invoice()
 
                 if invoice:
@@ -365,7 +325,6 @@ class GplAutoDocumentMixin(models.AbstractModel):
                         invoice.action_invoice_open()
 
                     self.auto_workflow_state = 'invoiced'
-                    _logger.info(f"Facture postée: {invoice.name}")
                     return
 
             # Fallback si la méthode standard ne fonctionne pas
@@ -373,8 +332,6 @@ class GplAutoDocumentMixin(models.AbstractModel):
 
         except Exception as e:
             # Log l'erreur et essayer la méthode manuelle
-            import logging
-            _logger = logging.getLogger(__name__)
             _logger.warning(f"Erreur lors de la création de la facture pour {self.sale_order_id.name}: {str(e)}")
 
             # Essayer la création manuelle
@@ -404,8 +361,6 @@ class GplAutoDocumentMixin(models.AbstractModel):
                 self.auto_workflow_state = 'invoiced'
 
         except Exception as e:
-            import logging
-            _logger = logging.getLogger(__name__)
             _logger.error(f"Erreur critique lors de la création manuelle de la facture: {str(e)}")
 
     def _get_partner(self):

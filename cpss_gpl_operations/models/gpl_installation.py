@@ -174,10 +174,6 @@ class GplServiceInstallation(models.Model):
                     )
 
                     if has_reservoir and kit_line.lot_id:
-                        _logger.info(
-                            f"Kit GPL {kit_line.product_id.name} avec lot {kit_line.lot_id.name} "
-                            f"reconnu comme ayant un réservoir"
-                        )
                         reservoir_lots |= kit_line.lot_id
 
             installation.reservoir_lot_ids = [(6, 0, reservoir_lots.ids)]
@@ -207,7 +203,6 @@ class GplServiceInstallation(models.Model):
                 'state': 'installed',
                 'installation_date': fields.Date.today()
             })
-            _logger.info(f"Réservoir direct {line.lot_id.name} marqué comme installé")
 
             # Mettre à jour le véhicule : quel réservoir il a
             if not self.vehicle_id.reservoir_lot_id:
@@ -244,7 +239,6 @@ class GplServiceInstallation(models.Model):
                         'state': 'installed',
                         'installation_date': fields.Date.today()
                     })
-                    _logger.info(f"Réservoir du kit {kit_line.product_id.name} (lot {kit_line.lot_id.name}) marqué comme installé")
 
                     # Mettre à jour le véhicule : quel réservoir il a
                     if not self.vehicle_id.reservoir_lot_id:
@@ -366,21 +360,18 @@ class GplServiceInstallation(models.Model):
 
         # Si des pickings sont prêts mais non validés, les valider automatiquement
         if pickings_to_validate:
-            _logger.info(f"Tentative de validation automatique de {len(pickings_to_validate)} picking(s)")
             self._process_automatic_delivery()
 
         # Vérifier si tous les pickings sont livrés
         if all(p.state == 'done' for p in outgoing_pickings):
             if self.auto_workflow_state not in ['delivered', 'invoiced', 'done']:
                 self.auto_workflow_state = 'delivered'
-                _logger.info(f"Installation {self.name}: État mis à jour -> 'delivered'")
 
         # Vérifier si facturé
         posted_invoices = so.invoice_ids.filtered(lambda i: i.state == 'posted')
         if posted_invoices:
             if self.auto_workflow_state != 'done':
                 self.auto_workflow_state = 'invoiced'
-                _logger.info(f"Installation {self.name}: État mis à jour -> 'invoiced'")
 
     @api.model
     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
@@ -551,11 +542,8 @@ class GplInstallationLine(models.Model):
                 line.lot_id_domain = "[]"
                 continue
 
-            _logger.info(f"=== Calcul domaine pour produit: {line.product_id.name} (ID={line.product_id.id}) ===")
-
             # Si c'est un kit GPL, chercher les réservoirs dans sa nomenclature
             is_kit = line.product_id.is_gpl_kit if hasattr(line.product_id, 'is_gpl_kit') else False
-            _logger.info(f"Est un kit GPL: {is_kit}")
 
             if is_kit:
                 # Trouver la nomenclature du kit
@@ -583,7 +571,6 @@ class GplInstallationLine(models.Model):
 
                         if available_lots:
                             domain = str([('id', 'in', available_lots.ids)])
-                            _logger.info(f"Domaine kit: {domain}")
                             line.lot_id_domain = domain
                             continue
 
@@ -593,7 +580,6 @@ class GplInstallationLine(models.Model):
 
             # Si c'est un réservoir GPL direct
             is_reservoir = line.product_id.is_gpl_reservoir if hasattr(line.product_id, 'is_gpl_reservoir') else False
-            _logger.info(f"Est un réservoir GPL: {is_reservoir}")
 
             if is_reservoir:
                 domain = str([
@@ -602,7 +588,6 @@ class GplInstallationLine(models.Model):
                     ('reservoir_status', 'in', ['valid', 'expiring_soon']),
                     ('product_qty', '>', 0)
                 ])
-                _logger.info(f"Domaine réservoir: {domain}")
                 line.lot_id_domain = domain
             else:
                 # Pour les autres produits avec lots
@@ -631,90 +616,6 @@ class GplInstallationLine(models.Model):
 
             # Réinitialiser le lot si le produit change
             self.lot_id = False
-
-            # DOMAINE DYNAMIQUE POUR LES LOTS
-            _logger.info(f"=== Filtrage lots pour produit: {self.product_id.name} (ID={self.product_id.id}) ===")
-
-            # Si c'est un kit GPL, chercher les réservoirs dans sa nomenclature
-            is_kit = self.product_id.is_gpl_kit if hasattr(self.product_id, 'is_gpl_kit') else False
-            _logger.info(f"Est un kit GPL: {is_kit}")
-
-            if is_kit:
-                _logger.info(f"Produit {self.product_id.name} détecté comme kit GPL")
-
-                # Trouver la nomenclature du kit
-                bom = self.env['mrp.bom'].search([
-                    '|',
-                    ('product_id', '=', self.product_id.id),
-                    ('product_tmpl_id', '=', self.product_id.product_tmpl_id.id),
-                    ('active', '=', True)
-                ], limit=1)
-
-                if bom:
-                    _logger.info(f"Nomenclature trouvée: {bom.display_name}")
-                    _logger.info(f"Composants de la BOM: {[l.product_id.name for l in bom.bom_line_ids]}")
-
-                    # Trouver tous les réservoirs GPL dans la nomenclature
-                    reservoir_products = bom.bom_line_ids.filtered(
-                        lambda l: hasattr(l.product_id, 'is_gpl_reservoir') and l.product_id.is_gpl_reservoir
-                    ).mapped('product_id')
-
-                    _logger.info(f"Réservoirs GPL trouvés dans la nomenclature: {len(reservoir_products)}")
-                    for rp in reservoir_products:
-                        _logger.info(f"  - Produit réservoir: {rp.name} (ID={rp.id})")
-
-                    if reservoir_products:
-                        # Chercher uniquement les lots en stock, non installés et valides
-                        available_lots = self.env['stock.lot'].search([
-                            ('product_id', 'in', reservoir_products.ids),
-                            ('state', '=', 'stock'),  # Uniquement en stock, pas installés
-                            ('product_qty', '>', 0),   # Quantité disponible
-                            ('reservoir_status', 'in', ['valid', 'expiring_soon'])  # Statut valide
-                        ])
-                        _logger.info(f"Lots en stock trouvés pour le kit: {len(available_lots)} lots")
-                        for lot in available_lots:
-                            _logger.info(f"  - Lot {lot.name} (produit: {lot.product_id.name}, état: {lot.state}, statut: {lot.reservoir_status})")
-
-                        if available_lots:
-                            # Créer un domaine pour afficher les lots disponibles
-                            domain = [('id', 'in', available_lots.ids)]
-                            _logger.info(f"Domaine retourné pour kit: {domain}")
-                            return {'domain': {'lot_id': domain}}
-                        else:
-                            # Pas de lots disponibles - ne rien proposer
-                            _logger.warning(f"Aucun lot disponible en stock pour le kit {self.product_id.name}")
-                            return {'domain': {'lot_id': [('id', '=', False)]}}
-                else:
-                    _logger.warning(f"Aucune nomenclature trouvée pour le kit {self.product_id.name}")
-
-                # Si pas de nomenclature ou pas de réservoirs, domaine vide
-                _logger.warning("Retour domaine vide pour le kit")
-                return {'domain': {'lot_id': [('id', '=', False)]}}
-
-            # Si c'est un réservoir GPL direct, filtrer par état et statut de validité
-            is_reservoir = self.product_id.is_gpl_reservoir if hasattr(self.product_id, 'is_gpl_reservoir') else False
-            _logger.info(f"Est un réservoir GPL: {is_reservoir}")
-
-            if is_reservoir:
-                # Pour les réservoirs GPL, afficher seulement les lots:
-                # - En stock (state='stock') - EXCLU les réservoirs déjà installés
-                # - Valides ou expirant bientôt (reservoir_status in ['valid', 'expiring_soon'])
-                # - Avec quantité disponible > 0
-                domain = [
-                    ('product_id', '=', self.product_id.id),
-                    ('state', '=', 'stock'),  # Uniquement en stock, pas installés
-                    ('reservoir_status', 'in', ['valid', 'expiring_soon']),
-                    ('product_qty', '>', 0)
-                ]
-                _logger.info(f"Filtre réservoir GPL direct: {domain}")
-                return {'domain': {'lot_id': domain}}
-            else:
-                # Pour les autres produits, domaine standard
-                domain = [
-                    ('product_id', '=', self.product_id.id),
-                    ('product_qty', '>', 0)
-                ]
-                return {'domain': {'lot_id': domain}}
 
     @api.onchange('lot_id')
     def _onchange_lot_id(self):
