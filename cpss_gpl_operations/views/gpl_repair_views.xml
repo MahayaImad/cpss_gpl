@@ -61,10 +61,14 @@
                                            options="{'no_create': True}"/>
                                     <field name="name"/>
                                     <field name="product_tracking" invisible="1" column_invisible="True"/>
+                                    <field name="product_is_gpl_kit" invisible="1" column_invisible="True"/>
+                                    <field name="lot_id_domain" invisible="1"/>
                                     <field name="lot_id"
-                                           invisible="product_tracking == 'none'"
                                            options="{'no_create': True}"
-                                           required="product_tracking in ['lot', 'serial']"/>
+                                           domain="lot_id_domain"
+                                           context="{'default_product_id': product_id}"
+                                           invisible="product_tracking == 'none' and not product_is_gpl_kit"
+                                           required="product_tracking in ['lot', 'serial'] or product_is_gpl_kit"/>
                                     <field name="quantity"
                                        readonly="product_tracking == 'serial'"
                                        help="Quantité fixe à 1 pour les réservoirs"/>
