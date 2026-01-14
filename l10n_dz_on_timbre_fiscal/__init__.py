@@ -7,15 +7,11 @@ from . import models
 from . import utils
 
 
-def post_init_hook(cr, registry):
+def post_init_hook(env):
     """
     Hook appelé après l'installation du module.
     Crée les comptes comptables pour le timbre fiscal s'ils n'existent pas.
     """
-    from odoo import api, SUPERUSER_ID
-
-    env = api.Environment(cr, SUPERUSER_ID, {})
-
     # Récupérer toutes les sociétés
     companies = env['res.company'].search([])
 
