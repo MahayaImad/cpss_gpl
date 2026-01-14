@@ -10,7 +10,7 @@
            <field name="arch" type="xml">
 
                 <xpath expr="//notebook/page[2]/group/group[1]" position="inside">
-                    <field name="payment_type" invisible="1"/>
+                    <field name="payment_type" invisible="True"/>
                 </xpath>
            </field>
  

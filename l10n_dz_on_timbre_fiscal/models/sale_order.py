@@ -4,7 +4,7 @@
 # Copyright (c) 2010
 
 
-from odoo import fields, models, api,_
+from odoo import fields, models, api, _
 from ..utils.stamp_calculator import StampCalculator
 
 

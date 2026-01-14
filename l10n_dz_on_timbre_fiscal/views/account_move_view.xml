@@ -10,7 +10,7 @@
         <field name="arch" type="xml">
 
             <field name="invoice_payment_term_id" position="after">
-                <field name="payment_type" invisible="1"/>
+                <field name="payment_type" invisible="True"/>
             </field>
 
             <xpath expr="//field[@name='invoice_line_ids']" position="replace">
