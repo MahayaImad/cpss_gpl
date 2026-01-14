@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+
+       <!-- Sale Order: Form-->
+       <record model="ir.ui.view" id="sale_order_ondz_timbre">
+           <field name="name">sale_order_ondz_timbre</field>
+           <field name="model">sale.order</field>
+           <field name="inherit_id" ref="sale.view_order_form"/>
+           <field name="arch" type="xml">
+                 <field name="payment_term_id" position="after">
+                     <field name="payment_type" invisible="1"/>
+                 </field>
+           </field>
+       </record>
+
+   </data>
+</odoo>

@@ -1,5 +1,8 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class GplServiceInstallation(models.Model):
@@ -139,11 +142,39 @@ class GplServiceInstallation(models.Model):
         """Calcule les réservoirs depuis les lignes"""
         for installation in self:
             # Trouver tous les réservoirs dans les lignes
+            # Cas 1: Lignes avec réservoirs directs
             reservoir_lines = installation.installation_line_ids.filtered(
                 lambda l: l.product_id.is_gpl_reservoir and l.lot_id
             )
 
             reservoir_lots = reservoir_lines.mapped('lot_id')
+
+            # Cas 2: Lignes avec kits GPL qui contiennent des réservoirs
+            kit_lines = installation.installation_line_ids.filtered(
+                lambda l: hasattr(l.product_id, 'is_gpl_kit') and
+                         l.product_id.is_gpl_kit and
+                         l.lot_id
+            )
+
+            for kit_line in kit_lines:
+                # Vérifier si le kit contient un réservoir GPL dans sa nomenclature
+                bom = self.env['mrp.bom'].search([
+                    '|',
+                    ('product_id', '=', kit_line.product_id.id),
+                    ('product_tmpl_id', '=', kit_line.product_id.product_tmpl_id.id),
+                    ('active', '=', True)
+                ], limit=1)
+
+                if bom:
+                    # Vérifier si le kit contient un réservoir GPL
+                    has_reservoir = any(
+                        hasattr(bom_line.product_id, 'is_gpl_reservoir') and
+                        bom_line.product_id.is_gpl_reservoir
+                        for bom_line in bom.bom_line_ids
+                    )
+
+                    if has_reservoir and kit_line.lot_id:
+                        reservoir_lots |= kit_line.lot_id
 
             installation.reservoir_lot_ids = [(6, 0, reservoir_lots.ids)]
             installation.reservoir_lot_id = reservoir_lots[0] if reservoir_lots else False
@@ -159,24 +190,59 @@ class GplServiceInstallation(models.Model):
         if not self.vehicle_id:
             return
 
-        # Chercher les réservoirs dans les lignes
+        # Cas 1: Chercher les réservoirs directs dans les lignes
         reservoir_lines = self._get_order_lines().filtered(
             lambda l: hasattr(l, 'lot_id') and l.lot_id
-                      and l.product_id.is_gpl_reservoir  # Assuming this field exists
-                      and l.lot_id
+                      and l.product_id.is_gpl_reservoir
         )
 
         for line in reservoir_lines:
             # Mettre à jour le réservoir : quel véhicule il équipe
             line.lot_id.write({
                 'vehicle_id': self.vehicle_id.id,
-                'state': 'installed',  # ← CHANGEMENT D'ÉTAT
+                'state': 'installed',
                 'installation_date': fields.Date.today()
             })
 
             # Mettre à jour le véhicule : quel réservoir il a
             if not self.vehicle_id.reservoir_lot_id:
                 self.vehicle_id.reservoir_lot_id = line.lot_id.id
+
+        # Cas 2: Chercher les kits GPL avec des lots de réservoirs
+        kit_lines = self._get_order_lines().filtered(
+            lambda l: hasattr(l.product_id, 'is_gpl_kit') and
+                     l.product_id.is_gpl_kit and
+                     hasattr(l, 'lot_id') and l.lot_id
+        )
+
+        for kit_line in kit_lines:
+            # Vérifier si le kit contient un réservoir GPL dans sa nomenclature
+            bom = self.env['mrp.bom'].search([
+                '|',
+                ('product_id', '=', kit_line.product_id.id),
+                ('product_tmpl_id', '=', kit_line.product_id.product_tmpl_id.id),
+                ('active', '=', True)
+            ], limit=1)
+
+            if bom:
+                # Vérifier si le kit contient un réservoir GPL
+                has_reservoir = any(
+                    hasattr(bom_line.product_id, 'is_gpl_reservoir') and
+                    bom_line.product_id.is_gpl_reservoir
+                    for bom_line in bom.bom_line_ids
+                )
+
+                if has_reservoir and kit_line.lot_id:
+                    # Marquer le lot du réservoir comme installé
+                    kit_line.lot_id.write({
+                        'vehicle_id': self.vehicle_id.id,
+                        'state': 'installed',
+                        'installation_date': fields.Date.today()
+                    })
+
+                    # Mettre à jour le véhicule : quel réservoir il a
+                    if not self.vehicle_id.reservoir_lot_id:
+                        self.vehicle_id.reservoir_lot_id = kit_line.lot_id.id
 
     def action_cancel(self):
         """Annule l'installation"""
@@ -275,15 +341,29 @@ class GplServiceInstallation(models.Model):
         self._update_vehicle_reservoir_links()
 
     def _finalize_automatic_workflow(self):
-        """Finalise le workflow si possible"""
+        """Finalise le workflow si possible en validant automatiquement les pickings prêts"""
         if not self.sale_order_id:
             return
 
         so = self.sale_order_id
 
-        # Vérifier si livré
+        # Chercher les pickings de livraison sortants
         outgoing_pickings = so.picking_ids.filtered(lambda p: p.picking_type_code == 'outgoing')
-        if outgoing_pickings and all(p.state == 'done' for p in outgoing_pickings):
+
+        if not outgoing_pickings:
+            return
+
+        # Vérifier s'il y a des pickings prêts (assigned) ou en attente mais non validés
+        pickings_to_validate = outgoing_pickings.filtered(
+            lambda p: p.state in ['assigned', 'confirmed', 'waiting'] and p.state != 'done'
+        )
+
+        # Si des pickings sont prêts mais non validés, les valider automatiquement
+        if pickings_to_validate:
+            self._process_automatic_delivery()
+
+        # Vérifier si tous les pickings sont livrés
+        if all(p.state == 'done' for p in outgoing_pickings):
             if self.auto_workflow_state not in ['delivered', 'invoiced', 'done']:
                 self.auto_workflow_state = 'delivered'
 
@@ -424,8 +504,15 @@ class GplInstallationLine(models.Model):
     lot_id = fields.Many2one(
         'stock.lot',
         string='Lot/Série',
-        domain="[('product_id', '=', product_id), ('product_qty', '>', 0)]",
-        help="Lot spécifique pour les produits gérés par lot"
+        help="Sélectionnez le lot/série pour ce produit. Pour les kits GPL, affiche les lots des réservoirs contenus dans le kit."
+    )
+
+    # Domaine pour le champ lot_id (calculé dynamiquement)
+    lot_id_domain = fields.Char(
+        string='Domaine Lot',
+        compute='_compute_lot_id_domain',
+        readonly=True,
+        store=False
     )
 
     # Champ pour savoir si le produit est géré par lot
@@ -435,16 +522,93 @@ class GplInstallationLine(models.Model):
         readonly=True
     )
 
+    # Champ pour savoir si c'est un kit GPL
+    product_is_gpl_kit = fields.Boolean(
+        related='product_id.is_gpl_kit',
+        string='Est un kit GPL',
+        readonly=True
+    )
+
     @api.depends('quantity', 'price_unit')
     def _compute_subtotal(self):
         for line in self:
             line.subtotal = line.quantity * line.price_unit
 
+    @api.depends('product_id')
+    def _compute_lot_id_domain(self):
+        """Calcule le domaine pour les lots disponibles selon le type de produit"""
+        for line in self:
+            if not line.product_id:
+                line.lot_id_domain = "[]"
+                continue
+
+            # Si c'est un kit GPL, chercher les réservoirs dans sa nomenclature
+            is_kit = line.product_id.is_gpl_kit if hasattr(line.product_id, 'is_gpl_kit') else False
+
+            if is_kit:
+                # Trouver la nomenclature du kit
+                bom = self.env['mrp.bom'].search([
+                    '|',
+                    ('product_id', '=', line.product_id.id),
+                    ('product_tmpl_id', '=', line.product_id.product_tmpl_id.id),
+                    ('active', '=', True)
+                ], limit=1)
+
+                if bom:
+                    # Trouver tous les réservoirs GPL dans la nomenclature
+                    reservoir_products = bom.bom_line_ids.filtered(
+                        lambda l: hasattr(l.product_id, 'is_gpl_reservoir') and l.product_id.is_gpl_reservoir
+                    ).mapped('product_id')
+
+                    if reservoir_products:
+                        # Chercher uniquement les lots en stock, non installés et valides
+                        available_lots = self.env['stock.lot'].search([
+                            ('product_id', 'in', reservoir_products.ids),
+                            ('state', '=', 'stock'),
+                            ('product_qty', '>', 0),
+                            ('reservoir_status', 'in', ['valid', 'expiring_soon'])
+                        ])
+
+                        if available_lots:
+                            domain = str([('id', 'in', available_lots.ids)])
+                            line.lot_id_domain = domain
+                            continue
+
+                # Pas de lots disponibles pour ce kit
+                line.lot_id_domain = str([('id', '=', False)])
+                continue
+
+            # Si c'est un réservoir GPL direct
+            is_reservoir = line.product_id.is_gpl_reservoir if hasattr(line.product_id, 'is_gpl_reservoir') else False
+
+            if is_reservoir:
+                domain = str([
+                    ('product_id', '=', line.product_id.id),
+                    ('state', '=', 'stock'),
+                    ('reservoir_status', 'in', ['valid', 'expiring_soon']),
+                    ('product_qty', '>', 0)
+                ])
+                line.lot_id_domain = domain
+            else:
+                # Pour les autres produits avec lots
+                domain = str([
+                    ('product_id', '=', line.product_id.id),
+                    ('product_qty', '>', 0)
+                ])
+                line.lot_id_domain = domain
+
     @api.onchange('product_id')
     def _onchange_product_id(self):
+        """Met à jour les champs et le domaine des lots disponibles quand le produit change"""
         if self.product_id:
             self.name = self.product_id.name
             self.price_unit = self.product_id.list_price
+
+            # Mettre à jour le tax_rate
+            if self.product_id.taxes_id:
+                self.tax_rate = self.product_id.taxes_id[0].amount
+            else:
+                self.tax_rate = 0.0
 
             # FORCER quantité = 1 pour produits sériels
             if self.product_id.tracking == 'serial':
@@ -478,14 +642,6 @@ class GplInstallationLine(models.Model):
                 line.tax_rate = tax.amount
             else:
                 line.tax_rate = 0.0
-
-    @api.onchange('product_id')
-    def _onchange_product_id(self):
-        """Met à jour le tax_rate quand le produit change"""
-        if self.product_id and self.product_id.taxes_id:
-            self.tax_rate = self.product_id.taxes_id[0].amount
-        else:
-            self.tax_rate = 0.0
 
     @api.depends('product_id')
     def _compute_product_type(self):

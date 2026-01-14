@@ -7,17 +7,16 @@
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
             <!-- Bouton véhicules GPL -->
-            <div name="button_box" position="inside">
+            <xpath expr="//div[@name='button_box']/button[1]" position="before">
                 <button string="Véhicules GPL"
                         name="action_view_gpl_vehicles"
                         type="object"
                         class="oe_stat_button"
-                        icon="fa-car"
-                        invisible="gpl_vehicle_count == 0">
+                        icon="fa-car">
                     <field name="gpl_vehicle_count" widget="statinfo"
                            string="Véhicules GPL"/>
                 </button>
-            </div>
+            </xpath>
 
             <!-- Onglet GPL -->
             <notebook position="inside">

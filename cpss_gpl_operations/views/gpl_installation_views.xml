@@ -51,7 +51,7 @@
 
                     <group>
                         <group string="Informations générales">
-                            <field name="vehicle_id" options="{'no_create': True}"/>
+                            <field name="vehicle_id"/>
                             <field name="client_id"/>
                             <field name="date_start"/>
                             <field name="date_planned"/>
@@ -75,9 +75,14 @@
                                 <tree editable="bottom">
                                     <field name="product_id" options="{'no_create': True}"/>
                                     <field name="product_tracking" invisible="1" column_invisible="True"/>
+                                    <field name="product_is_gpl_kit" invisible="1" column_invisible="True"/>
+                                    <field name="lot_id_domain" invisible="1"/>
                                     <field name="lot_id"
-                                           invisible="product_tracking == 'none'"
-                                           required="product_tracking in ['lot', 'serial']"/>
+                                           options="{'no_create': True}"
+                                           domain="lot_id_domain"
+                                           context="{'default_product_id': product_id}"
+                                           invisible="product_tracking == 'none' and not product_is_gpl_kit"
+                                           required="product_tracking in ['lot', 'serial'] or product_is_gpl_kit"/>
                                     <field name="quantity"
                                        readonly="product_tracking == 'serial'"
                                        help="Quantité fixe à 1 pour les réservoirs"/>

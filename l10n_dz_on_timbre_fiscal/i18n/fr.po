@@ -1,0 +1,4 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+#	* l10n_dz_on_timbre_fiscal
+#

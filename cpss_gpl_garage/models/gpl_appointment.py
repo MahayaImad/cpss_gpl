@@ -71,7 +71,7 @@ class GplAppointment(models.Model):
         ('repair', 'Réparation'),
         ('inspection', 'Contrôle Technique'),
         ('testing', 'Réépreuve Réservoir'),
-    ], string='Type de service', required=True, tracking=True)
+    ], string='Type de service', required=True, tracking=True, default='installation')
 
     # === ASSIGNMENT ===
     assigned_technician_ids = fields.Many2many(

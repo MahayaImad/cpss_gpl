@@ -20,12 +20,13 @@
                 <t t-call="cpss_gpl_reports.gpl_external_layout">
                     <t t-call="cpss_gpl_reports.gpl_report_assets"/>
                     <div class="page">
+                        <div style="padding-top:40px;">
                         <!-- En-tête du bordereau -->
-                        <div class="text-center">
-                            <h2 style="color: #007bff; font-weight: bold;">
+                        <div class="text-center" >
+                            <h3 style="color: #007bff; font-weight: bold;">
                                 BORDEREAU D'ENVOI
-                            </h2>
-                            <h3>DOSSIERS DE CONTRÔLE GPL</h3>
+                            </h3>
+                            <h4>DOSSIERS DE CONTRÔLE GPL</h4>
                             <p>
                                 Référence: <strong t-field="doc.name"/><br/>
                                 Date: <span t-field="doc.date_envoi" t-options="{'widget': 'date'}"/>
@@ -43,7 +44,7 @@
                             </p>
                         </div>
 
-                        <!-- Expéditeur -->
+                        <!-- Expéditeur
                         <div style="margin: 30px 0; padding: 20px; border: 1px solid #ddd;">
                             <h4>EXPÉDITEUR:</h4>
                             <p>
@@ -53,7 +54,7 @@
                                 <span t-field="doc.company_id.city"/> -
                                 <span t-field="doc.company_id.country_id.name"/>
                             </p>
-                        </div>
+                        </div>-->
 
                         <!-- Liste des dossiers -->
                         <h4 style="margin-top: 30px;">LISTE DES DOSSIERS TRANSMIS:</h4>
@@ -88,7 +89,7 @@
                                         <span t-else="">Volontaire</span>
                                     </td>
                                     <td class="text-center">
-                                        <span t-if="inspection.result == 'pass'" style="color: green; font-weight: bold;">✓ Validé</span>
+                                        <span t-if="inspection.result == 'pass'" style="color: green; font-weight: bold;">Validé</span>
                                         <span t-else="">-</span>
                                     </td>
                                     <t t-set="counter" t-value="counter + 1"/>
@@ -136,17 +137,18 @@
 
                         <!-- Référence du bordereau -->
                         <div style="margin-top: 40px; text-align: center; font-size: 12px; color: #666;">
-                            <p>
+                            <!-- <p>
                                 <strong>Référence bordereau:</strong>
                                 <span t-field="doc.name"/>
                             </p>
                             <p>
                                 Bordereau généré le <span t-esc="datetime.datetime.now().strftime('%d/%m/%Y à %H:%M')"/>
-                            </p>
+                            </p>-->
                             <p style="margin-top: 10px;">
                                 <em>Ce bordereau accompagne les dossiers de contrôle GPL transmis pour validation des cartes.</em>
                             </p>
                         </div>
+                    </div>
                     </div>
                 </t>
             </t>

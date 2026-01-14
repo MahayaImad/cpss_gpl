@@ -49,6 +49,7 @@
 
         # === CONFIGURATIONS ===
         'views/res_config_settings_views.xml',
+        'views/res_company.xml',
 
         # === MENUS DE BASE ===
         'views/gpl_base_menus.xml',

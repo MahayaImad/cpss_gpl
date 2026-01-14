@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Timbre Fiscal – Odoo</title>
+  </head>
+  <body>
+      <h1>Timbre Fiscal – Calcul et comptabilisation automatique selon la Loi de Finances 2025</h1>
+      
+      <p>
+      Ce module permet la gestion automatique du timbre fiscal algérien sur Odoo 18 selon les dispositions de la Loi de Finances 2025.
+      Il calcule le timbre en fonction du montant de la facture et du mode de paiement, et ajoute automatiquement les écritures comptables correspondantes dans les factures concernées (paiement en espèce).
+      Le montant du timbre est aussi affiché clairement sur la facture client et fournisseur.
+      </p>
+      
+      <h2>⚙️ Configuration</h2>
+      
+      <p>Avant utilisation, le module nécessite une configuration simple des comptes comptables à utiliser pour la comptabilisation du timbre fiscal.</p>
+      
+      <ol>
+        <li>Aller dans <strong>Paramètres</strong> > <strong>Facturation</strong> > <strong>Compte par défaut</strong></li>
+        <li>Définir :
+          <ul>
+            <li>Le <strong>compte timbre pour les ventes</strong></li>
+            <li>Le <strong>compte timbre pour les achats</strong></li>
+          </ul>
+        </li>
+      </ol>
+      
+      <p>💡 Ces comptes seront utilisés automatiquement lors de la validation des factures en espèce pour enregistrer le montant du timbre.</p>
+      
+      <img src="https://opennext-dz.com/assets/images/addons/odoo/l10n_dz_on_timbre_fiscal/config_timbre.png" alt="Configuration timbre" />
+      
+      <h2>🧾 Utilisation</h2>
+      
+      <p>Le module applique automatiquement le timbre fiscal dès que le mode de paiement <em>Espèce (Timbre)</em> est sélectionné sur les documents suivants :</p>
+      
+      <h3>1. Commande d’achat</h3>
+      <p>Une fois la condition de paiement "Espèce (Timbre)" sélectionnée, le montant du timbre est automatiquement calculé et affiché.</p>
+      <img src="https://opennext-dz.com/assets/images/addons/odoo/l10n_dz_on_timbre_fiscal/purchase_order_timbre.png" alt="Commande achat avec timbre" />
+      
+      <h3>2. Commande de vente</h3>
+      <p>Le timbre est appliqué sur la commande de vente dès que le terme de paiement en espèce est choisi.</p>
+      <img src="https://opennext-dz.com/assets/images/addons/odoo/l10n_dz_on_timbre_fiscal/sale_order_timbre.png" alt="Commande vente avec timbre" />
+      
+      <h3>3. Factures et Avoirs</h3>
+      <p>
+      Lors de la création d'une facture client, d'une facture fournisseur, d'un avoir client ou d'un avoir fournisseur, le montant du timbre est automatiquement calculé et affiché si le mode de paiement sélectionné est Espèce (Timbre).
+      </p>
+      <img src="https://opennext-dz.com/assets/images/addons/odoo/l10n_dz_on_timbre_fiscal/invoice_timbre_accounting.png" alt="Facture avec timbre fiscal" />
+      
+      <h3>🔄 Mise à jour de l'écriture comptable</h3>
+      <p>Le compte défini dans les paramètres (vente ou achat) est utilisé automatiquement dans l’écriture comptable générée.</p>
+      <img src="https://opennext-dz.com/assets/images/addons/odoo/l10n_dz_on_timbre_fiscal/accounting_entry_timbre.png" alt="Écriture comptable timbre" />
+      
+      <h2>🔭 Perspectives d’évolution</h2>
+      
+      <p>Ce module constitue une version fonctionnelle centrée sur la gestion automatique du timbre fiscal algérien conformément à la LF 2025. Plusieurs améliorations sont envisagées pour enrichir ses fonctionnalités, notamment :</p>
+      
+      <ul>
+        <li>✅ Support multilingue, avec une traduction complète en anglais et en arabe.</li>
+        <li>🧾 Ajout de rapports spécifiques, comme un état récapitulatif du montant des timbres appliqués sur une période donnée.</li>
+      </ul>
+      
+      <p>L’objectif est d’évoluer vers une solution complète, personnalisable et conforme aux exigences réglementaires algériennes tout en s’adaptant aux besoins spécifiques de chaque entreprise.</p>
+      
+      <h2>🛠 Mainteneurs</h2>
+      
+      <p>
+      Ce module est maintenu par <strong><a href="https://www.opennext-dz.com" target="_blank">OPENNEXT Technology</a></strong>, intégrateur de solutions informatiques spécialisé dans la mise en place, le développement et l’intégration de solutions de gestion d’entreprise basées sur Odoo.
+      </p>
+      
+      <p>
+      Nous accompagnons les entreprises dans leur transformation numérique à travers des solutions adaptées, robustes et conformes à la législation algérienne.
+      </p>
+      
+      <p>
+      📧 <strong>Contact :</strong> <a href="mailto:contact@opennext-dz.com">contact@opennext-dz.com</a><br/>
+      🌐 <a href="https://www.opennext-dz.com" target="_blank">www.opennext-dz.com</a>
+      </p>
+    </body>
+</html>

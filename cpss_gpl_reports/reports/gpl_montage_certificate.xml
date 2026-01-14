@@ -207,7 +207,7 @@ de GPL équipant les véhicules automobiles.
                             <h4 style="color: #3498db; text-transform: uppercase; text-align: left; font-weight: bold;">Installateur</h4>
                             <div class="row mt-2">
                                     <div class="col-8"><strong>Raison Sociale:</strong> <span style="margin-left:5px;" t-esc="env.company.name"/></div>
-                                    <div class="col-4"><strong>Agrément:</strong> <span style="margin-left:5px;" t-if="env['ir.config_parameter'].sudo().get_param('cpss_gpl.company_license')" t-esc="env['ir.config_parameter'].sudo().get_param('cpss_gpl.company_license')"/></div>
+                                    <div class="col-4"><strong>Agrément:</strong> <span style="margin-left:5px;" t-if="env.company.gpl_company_license" t-esc="env.company.gpl_company_license"/></div>
 
                             </div>
                             <div class="row mt-2">

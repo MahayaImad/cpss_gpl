@@ -9,8 +9,8 @@
                 </div>
                 <div class="col-6 text-center">
                     <h3 t-field="company.name"/>
-                    <div t-if="env['ir.config_parameter'].sudo().get_param('cpss_gpl.company_license')">
-                        <small>Agrément N° <span t-esc="env['ir.config_parameter'].sudo().get_param('cpss_gpl.company_license')"/></small>
+                    <div  t-if="env.company.gpl_company_license">
+                        <small>Agrément N° <span t-esc="env.company.gpl_company_license"/></small>
                     </div>
                     <div>
                         <small t-field="company.street"/>

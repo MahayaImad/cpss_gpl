@@ -12,48 +12,10 @@
                 <xpath expr="//form" position="inside">
                     <app data-string="GPL CPSS" string="GPL CPSS" name="cpss_gpl_base" groups="cpss_gpl_base.group_gpl_manager">
 
-                        <!-- === INFORMATIONS ENTREPRISE === -->
-                        <block title="Paramètres pour la gestion GPL - Informations Entreprise" name="cpss_gpl">
-
-                        <setting>
-                            <field name="gpl_company_name"/>
-                            <div class="content-group">
-                                <div class="text-muted">
-                                    Nom affiché sur les certificats et rapports
-                                </div>
-                            </div>
-                        </setting>
-
-                        <setting>
-                            <field name="gpl_company_license"/>
-                            <div class="content-group">
-                                <div class="text-muted">
-                                    Numéro d'agrément officiel pour les installations GPL
-                                </div>
-                            </div>
-                        </setting>
-                        </block>
-
                         <!-- === PARAMÈTRES WORKFLOW === -->
 
                         <block title="Workflow et Processus" name="workflow">
-                            <setting>
-                                <field name="gpl_require_appointment"/>
-                                <div class="content-group">
-                                    <div class="text-muted">
-                                        Rendre les rendez-vous obligatoires pour les interventions
-                                    </div>
-                                </div>
-                            </setting>
-
-                            <setting>
-                                <field name="gpl_default_warranty_months"/>
-                                <div class="content-group">
-                                    <div class="text-muted">
-                                        Durée de garantie par défaut (en mois)
-                                    </div>
-                                </div>
-                            </setting>
+                            
                             <setting>
                                 <field name="gpl_simplified_mode"/>
                                 <div class="content-group">
@@ -63,24 +25,6 @@
                                         • Livraison automatique des produits stockables<br/>
                                         • Facturation automatique<br/>
                                         • Services traités sans gestion de stock
-                                    </div>
-                                </div>
-                            </setting>
-
-                            <setting invisible="not gpl_simplified_mode">
-                                <field name="gpl_default_warehouse_id"/>
-                                <div class="content-group">
-                                    <div class="text-muted">
-                                        Entrepôt utilisé pour les livraisons automatiques
-                                    </div>
-                                </div>
-                            </setting>
-
-                            <setting invisible="not gpl_simplified_mode">
-                                <field name="gpl_default_pricelist_id"/>
-                                <div class="content-group">
-                                    <div class="text-muted">
-                                        Liste de prix par défaut pour les commandes
                                     </div>
                                 </div>
                             </setting>
@@ -127,20 +71,6 @@
                                 </div>
                             </div>
                         </setting>
-                        </block>
-
-                        <!-- === RAPPORTS === -->
-                        <block title="Rapports et Certificats" name="certificats">
-
-                        <setting>
-                            <field name="gpl_certificate_template"/>
-                            <div class="content-group">
-                                <div class="text-muted">
-                                    Template à utiliser pour les certificats
-                                </div>
-                            </div>
-                        </setting>
-
                         </block>
                     </app>
                 </xpath>

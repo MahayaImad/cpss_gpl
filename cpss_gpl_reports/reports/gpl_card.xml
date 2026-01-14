@@ -81,7 +81,7 @@
                                     <div class="ar bold" style="font-size: 20px; margin-top: 15px;">مديرية الطاقة و المناجم لولاية <span t-esc="env.company.state_id.name_ar"/></div>
 
                                     <div class="bold" style="font-size: 18px; margin-top: 15px;">
-                                        <span t-if="env['ir.config_parameter'].sudo().get_param('cpss_gpl.company_license')" t-esc="env['ir.config_parameter'].sudo().get_param('cpss_gpl.company_license')"/>
+                                        <span  t-if="env.company.gpl_company_license" t-esc="env.company.gpl_company_license"/>
 
                                     </div>
 

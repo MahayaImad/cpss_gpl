@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <template id="report_invoice_hide_stamp_line" inherit_id="account.report_invoice_document">
+        <!-- Replace lines_to_report to filter out stamp lines -->
+        <xpath expr="//t[@t-set='lines_to_report']" position="replace">
+            <t t-set="lines_to_report" t-value="o._get_move_lines_to_report().filtered(lambda l: not l.isStamp)"/>
+        </xpath>
+    </template>
+</odoo>

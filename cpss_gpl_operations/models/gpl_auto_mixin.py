@@ -94,9 +94,6 @@ class GplAutoDocumentMixin(models.AbstractModel):
         if not self.sale_order_id:
             return
 
-        import logging
-        _logger = logging.getLogger(__name__)
-
         # Rechercher les pickings de livraison
         pickings = self.sale_order_id.picking_ids.filtered(
             lambda p: p.state not in ['done', 'cancel'] and p.picking_type_code == 'outgoing'
@@ -142,19 +139,51 @@ class GplAutoDocumentMixin(models.AbstractModel):
             # Trouver le lot correspondant depuis les lignes originales
             lot_to_assign = None
             for line in self._get_order_lines():
+                # Cas 1: Le produit de la ligne correspond directement au move
                 if (line.product_id.id == move.product_id.id and
                     hasattr(line, 'lot_id') and line.lot_id):
                     lot_to_assign = line.lot_id
                     break
 
+                # Cas 2: Le produit de la ligne est un kit GPL contenant le produit du move
+                if (hasattr(line.product_id, 'is_gpl_kit') and line.product_id.is_gpl_kit and
+                    hasattr(line, 'lot_id') and line.lot_id):
+
+                    # Vérifier si le produit du move est un composant de ce kit
+                    bom = self.env['mrp.bom'].search([
+                        '|',
+                        ('product_id', '=', line.product_id.id),
+                        ('product_tmpl_id', '=', line.product_id.product_tmpl_id.id),
+                        ('active', '=', True)
+                    ], limit=1)
+
+                    if bom:
+                        # Vérifier si move.product_id est dans les composants du kit
+                        matching_component = any(bom_line.product_id.id == move.product_id.id
+                                                for bom_line in bom.bom_line_ids)
+                        if matching_component:
+                            # IMPORTANT: Vérifier que le lot appartient au même produit que le move
+                            if line.lot_id.product_id.id == move.product_id.id:
+                                lot_to_assign = line.lot_id
+                                break
+
             # Assigner aux move_lines existants
             for move_line in move.move_line_ids:
-                if hasattr(move_line, 'qty_done'):
-                    if move_line.qty_done == 0:
-                        move_line.qty_done = move_line.product_uom_qty
-                else:
-                    # Fallback pour versions Odoo différentes
-                    move_line.product_uom_qty = move_line.reserved_uom_qty or move_line.product_uom_qty
+                try:
+                    vals_to_update = {}
+
+                    # Toujours remplir la quantité pour permettre la validation
+                    vals_to_update['quantity'] = move.product_uom_qty
+
+                    # Assigner le lot uniquement si trouvé et que le produit correspond
+                    if lot_to_assign and move_line.product_id.id == move.product_id.id:
+                        vals_to_update['lot_id'] = lot_to_assign.id
+
+                    if vals_to_update:
+                        move_line.write(vals_to_update)
+                except Exception as e:
+                    _logger.warning(f"Impossible de mettre à jour move_line {move_line.id}: {str(e)}")
+                    continue
 
         # Valider le picking
         if hasattr(picking, 'button_validate'):
@@ -169,26 +198,44 @@ class GplAutoDocumentMixin(models.AbstractModel):
                 # Trouver le lot correspondant
                 lot_to_assign = None
                 for line in self._get_order_lines():
+                    # Cas 1: Le produit de la ligne correspond directement au move
                     if (line.product_id.id == move.product_id.id and
                         hasattr(line, 'lot_id') and line.lot_id):
                         lot_to_assign = line.lot_id
                         break
+
+                    # Cas 2: Le produit de la ligne est un kit GPL contenant le produit du move
+                    if (hasattr(line.product_id, 'is_gpl_kit') and line.product_id.is_gpl_kit and
+                        hasattr(line, 'lot_id') and line.lot_id):
+
+                        # Vérifier si le produit du move est un composant de ce kit
+                        bom = self.env['mrp.bom'].search([
+                            '|',
+                            ('product_id', '=', line.product_id.id),
+                            ('product_tmpl_id', '=', line.product_id.product_tmpl_id.id),
+                            ('active', '=', True)
+                        ], limit=1)
+
+                        if bom:
+                            # Vérifier si move.product_id est dans les composants du kit
+                            matching = any(bom_line.product_id.id == move.product_id.id
+                                          for bom_line in bom.bom_line_ids)
+                            if matching:
+                                lot_to_assign = line.lot_id
+                                break
 
                 # Créer le move_line
                 move_line_vals = {
                     'move_id': move.id,
                     'product_id': move.product_id.id,
                     'product_uom_id': move.product_uom.id,
-                    'qty_done': move.product_uom_qty,
                     'location_id': move.location_id.id,
                     'location_dest_id': move.location_dest_id.id,
                     'picking_id': picking.id,
                 }
 
-                if hasattr(self.env['stock.move.line']._fields, 'qty_done'):
-                    move_line_vals['qty_done'] = move.product_uom_qty
-                else:
-                    move_line_vals['product_uom_qty'] = move.product_uom_qty
+                # Dans Odoo 17 Community Edition, le champ s'appelle 'quantity'
+                move_line_vals['quantity'] = move.product_uom_qty
 
                 # Ajouter le lot seulement si nécessaire
                 if lot_to_assign:
@@ -199,16 +246,48 @@ class GplAutoDocumentMixin(models.AbstractModel):
                 # Assigner aux move_lines existants
                 lot_to_assign = None
                 for line in self._get_order_lines():
+                    # Cas 1: Le produit de la ligne correspond directement au move
                     if (line.product_id.id == move.product_id.id and
                         hasattr(line, 'lot_id') and line.lot_id):
                         lot_to_assign = line.lot_id
                         break
 
+                    # Cas 2: Le produit de la ligne est un kit GPL contenant le produit du move
+                    if (hasattr(line.product_id, 'is_gpl_kit') and line.product_id.is_gpl_kit and
+                        hasattr(line, 'lot_id') and line.lot_id):
+                        # Vérifier si le produit du move est un composant de ce kit
+                        bom = self.env['mrp.bom'].search([
+                            '|',
+                            ('product_id', '=', line.product_id.id),
+                            ('product_tmpl_id', '=', line.product_id.product_tmpl_id.id),
+                            ('active', '=', True)
+                        ], limit=1)
+
+                        if bom:
+                            # Vérifier si move.product_id est dans les composants du kit
+                            if any(bom_line.product_id.id == move.product_id.id
+                                   for bom_line in bom.bom_line_ids):
+                                # IMPORTANT: Vérifier que le lot appartient au même produit que le move
+                                if line.lot_id.product_id.id == move.product_id.id:
+                                    lot_to_assign = line.lot_id
+                                    break
+
                 for move_line in move.move_line_ids:
-                    if move_line.qty_done == 0:
-                        move_line.qty_done = move_line.product_uom_qty
+                    try:
+                        vals_to_update = {}
+
+                        # Toujours remplir la quantité pour permettre la validation
+                        vals_to_update['quantity'] = move.product_uom_qty
+
+                        # Assigner le lot uniquement si nécessaire
                         if lot_to_assign and not move_line.lot_id:
-                            move_line.lot_id = lot_to_assign.id
+                            vals_to_update['lot_id'] = lot_to_assign.id
+
+                        if vals_to_update:
+                            move_line.write(vals_to_update)
+                    except Exception as e:
+                        _logger.warning(f"Impossible de mettre à jour move_line {move_line.id}: {str(e)}")
+                        continue
 
 
         # Valider le picking
@@ -223,9 +302,6 @@ class GplAutoDocumentMixin(models.AbstractModel):
         if not self.sale_order_id:
             return
 
-        import logging
-        _logger = logging.getLogger(__name__)
-
         try:
             # En mode simplifié, facturer directement depuis la commande de vente
             # Utiliser la méthode standard d'Odoo pour créer la facture
@@ -233,15 +309,12 @@ class GplAutoDocumentMixin(models.AbstractModel):
                 # Méthode pour Odoo 17
                 if hasattr(self.sale_order_id, '_create_invoices'):
                     invoice = self.sale_order_id._create_invoices()
-                    _logger.info(f"Facture créée via _create_invoices: {invoice.name if invoice else 'Aucune'}")
                 elif hasattr(self.sale_order_id, 'action_invoice_create'):
                     # Méthode pour versions antérieures
                     invoice_ids = self.sale_order_id.action_invoice_create()
                     invoice = self.env['account.move'].browse(invoice_ids) if invoice_ids else False
-                    _logger.info(f"Facture créée via action_invoice_create: {invoice.name if invoice else 'Aucune'}")
                 else:
                     # Fallback : création manuelle
-                    _logger.info("Utilisation fallback création manuelle")
                     return self._create_manual_invoice()
 
                 if invoice:
@@ -252,7 +325,6 @@ class GplAutoDocumentMixin(models.AbstractModel):
                         invoice.action_invoice_open()
 
                     self.auto_workflow_state = 'invoiced'
-                    _logger.info(f"Facture postée: {invoice.name}")
                     return
 
             # Fallback si la méthode standard ne fonctionne pas
@@ -260,8 +332,6 @@ class GplAutoDocumentMixin(models.AbstractModel):
 
         except Exception as e:
             # Log l'erreur et essayer la méthode manuelle
-            import logging
-            _logger = logging.getLogger(__name__)
             _logger.warning(f"Erreur lors de la création de la facture pour {self.sale_order_id.name}: {str(e)}")
 
             # Essayer la création manuelle
@@ -291,8 +361,6 @@ class GplAutoDocumentMixin(models.AbstractModel):
                 self.auto_workflow_state = 'invoiced'
 
         except Exception as e:
-            import logging
-            _logger = logging.getLogger(__name__)
             _logger.error(f"Erreur critique lors de la création manuelle de la facture: {str(e)}")
 
     def _get_partner(self):

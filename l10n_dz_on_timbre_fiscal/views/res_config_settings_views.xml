@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+
+       <record model="ir.ui.view" id="config_view_form_ondz">
+           <field name="name">Config view form dz</field>
+           <field name="model">res.config.settings</field>
+           <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+           <field name="arch" type="xml">
+              <xpath expr="//block[@id='default_accounts']" position="inside">
+                  <setting id="stamp_purchase_account_id" string="Compte du timbre (Achat)" help="Définir le compte utilisé pour le timbre fiscal dans les achats.">
+                    <field name="stamp_purchase_account_id" options="{'no_create_edit': True}"/>
+                  </setting>
+                   <setting id="stamp_sale_account_id" string="Compte du timbre (Vente)" help="Définir le compte utilisé pour le timbre fiscal dans les ventes.">
+                    <field name="stamp_sale_account_id" options="{'no_create_edit': True}"/>
+                  </setting>
+              </xpath>
+            </field>
+       </record>
+
+   </data>
+</odoo>
