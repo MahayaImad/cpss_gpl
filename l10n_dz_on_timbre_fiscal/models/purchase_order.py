@@ -29,15 +29,14 @@ class PurchaseOrder(models.Model):
 
 
     @api.depends('order_line.price_subtotal', 'company_id', 'payment_term_id')
-    def _amount_all(self):
-        super()._amount_all()
+    def _compute_amount(self):
+        super()._compute_amount()
         for order in self:
             amount_timbre = order.amount_total
             if (order.payment_term_id and order.payment_term_id.payment_type == 'cash'):
                 c_timbre = StampCalculator(self.env).calculate(amount_timbre)
                 order.timbre = c_timbre['timbre']
                 order.amount_total = c_timbre['amount_timbre']
-                order.amount_total_cc = c_timbre['amount_timbre']
             else :
                 order.timbre = 0
 
