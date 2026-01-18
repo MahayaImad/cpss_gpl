@@ -12,18 +12,6 @@ class AccountMove(models.Model):
     timbre = fields.Monetary(string='Timbre', store=True, readonly=True)
     timbre_signed = fields.Monetary(string='Timbre signé', store=True, readonly=True)
 
-    invoice_line_ids_visible = fields.One2many(
-        comodel_name='account.move.line',
-        inverse_name='move_id',
-        string='Invoice Lines (Filtered)',
-        compute='_compute_invoice_line_ids_visible',
-    )
-
-    @api.depends('invoice_line_ids')
-    def _compute_invoice_line_ids_visible(self):
-        for move in self:
-            move.invoice_line_ids_visible = move.invoice_line_ids.filtered(lambda l: not l.isStamp)
-
 
     @api.onchange('invoice_payment_term_id')
     def onchange_payment_term(self):
@@ -52,20 +40,11 @@ class AccountMove(models.Model):
 
 
     @api.depends(
-        'line_ids.matched_debit_ids.debit_move_id.move_id.origin_payment_id.is_matched',
-        'line_ids.matched_debit_ids.debit_move_id.move_id.line_ids.amount_residual',
-        'line_ids.matched_debit_ids.debit_move_id.move_id.line_ids.amount_residual_currency',
-        'line_ids.matched_credit_ids.credit_move_id.move_id.origin_payment_id.is_matched',
-        'line_ids.matched_credit_ids.credit_move_id.move_id.line_ids.amount_residual',
-        'line_ids.matched_credit_ids.credit_move_id.move_id.line_ids.amount_residual_currency',
-        'line_ids.balance',
-        'line_ids.currency_id',
         'line_ids.amount_currency',
-        'line_ids.amount_residual',
-        'line_ids.amount_residual_currency',
-        'line_ids.payment_id.state',
-        'line_ids.full_reconcile_id',
-        'state',
+        'line_ids.tax_base_amount',
+        'line_ids.tax_line_id',
+        'partner_id',
+        'currency_id',
         'invoice_payment_term_id'
     )
     def _compute_amount(self):
