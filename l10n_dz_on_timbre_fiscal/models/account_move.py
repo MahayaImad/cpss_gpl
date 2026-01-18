@@ -68,11 +68,9 @@ class AccountMove(models.Model):
                 move.timbre_signed = -sign * move.timbre
                 move.amount_total = c_timbre['amount_timbre']
                 move.amount_total_signed = -sign * move.amount_total
-                move.amount_total_in_currency_signed = -sign * move.amount_total
                 move.amount_residual = c_timbre['amount_timbre']
                 move.amount_residual_signed = -sign * move.amount_residual
                 move.amount_untaxed_signed = -sign * move.amount_untaxed
-                move.amount_untaxed_in_currency_signed = -sign * move.amount_untaxed
             else:
                 move.timbre = 0
                 move.timbre_signed = 0
