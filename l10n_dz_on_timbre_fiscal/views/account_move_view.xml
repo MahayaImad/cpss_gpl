@@ -12,6 +12,20 @@
                 <field name="payment_type" invisible="1"/>
             </field>
 
+            <!-- Masquer complètement les lignes de timbre fiscal -->
+            <xpath expr="//field[@name='invoice_line_ids']/list" position="inside">
+                <field name="isStamp" column_invisible="1"/>
+            </xpath>
+
+            <xpath expr="//field[@name='invoice_line_ids']/list/control" position="attributes">
+                <attribute name="invisible">0</attribute>
+            </xpath>
+
+            <!-- Ajouter row_invisible sur chaque ligne pour masquer les lignes de timbre -->
+            <xpath expr="//field[@name='invoice_line_ids']/list" position="attributes">
+                <attribute name="row_invisible">[('isStamp', '=', True)]</attribute>
+            </xpath>
+
        </field>
     </record>
 
