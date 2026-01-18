@@ -9,10 +9,10 @@
            <field name="arch" type="xml">
               <xpath expr="//block[@id='default_accounts']" position="inside">
                   <setting id="stamp_purchase_account_id" string="Compte du timbre (Achat)" help="Définir le compte utilisé pour le timbre fiscal dans les achats.">
-                    <field name="stamp_purchase_account_id" options="{'no_create_edit': True}"/>
+                    <field name="stamp_purchase_account_id" domain="[('deprecated', '=', False)]" options="{'no_create_edit': True}"/>
                   </setting>
                    <setting id="stamp_sale_account_id" string="Compte du timbre (Vente)" help="Définir le compte utilisé pour le timbre fiscal dans les ventes.">
-                    <field name="stamp_sale_account_id" options="{'no_create_edit': True}"/>
+                    <field name="stamp_sale_account_id" domain="[('deprecated', '=', False)]" options="{'no_create_edit': True}"/>
                   </setting>
               </xpath>
             </field>

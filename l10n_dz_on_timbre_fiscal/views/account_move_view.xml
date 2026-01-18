@@ -2,7 +2,6 @@
 <odoo>
   <data>
 
-
     <record id="account_invoice_form_ondz_timbre" model="ir.ui.view">
         <field name="name">account_invoice_form_ondz_timbre</field>
         <field name="model">account.move</field>
@@ -10,7 +9,7 @@
         <field name="arch" type="xml">
 
             <field name="invoice_payment_term_id" position="after">
-                <field name="payment_type" invisible="True"/>
+                <field name="payment_type" invisible="1"/>
             </field>
 
             <xpath expr="//field[@name='invoice_line_ids']" position="replace">
@@ -49,7 +48,7 @@
                                context="{'partner_id': partner_id, 'move_type': parent.move_type}"
                                groups="account.group_account_readonly"
                                options="{'no_quick_create': True}"
-                               domain="[('company_ids', 'parent_of', company_id), ('account_type', 'not in', ('asset_receivable', 'liability_payable', 'off_balance'))]"
+                               domain="[('deprecated', '=', False), ('company_ids', 'parent_of', company_id), ('account_type', 'not in', ('asset_receivable', 'liability_payable', 'off_balance'))]"
                                required="display_type not in ('line_note', 'line_section')"/>
                         <field name="analytic_distribution" widget="analytic_distribution"
                                string="Analytic"
@@ -116,7 +115,7 @@
                                context="{'partner_id': partner_id, 'move_type': parent.move_type}"
                                groups="account.group_account_readonly"
                                options="{'no_quick_create': True}"
-                               domain="[('company_ids', 'parent_of', company_id), ('account_type', 'not in', ('asset_receivable', 'liability_payable', 'off_balance'))]"
+                               domain="[('deprecated', '=', False), ('company_ids', 'parent_of', company_id), ('account_type', 'not in', ('asset_receivable', 'liability_payable', 'off_balance'))]"
                                required="display_type not in ('line_note', 'line_section')"/>
                         <field name="analytic_distribution" widget="analytic_distribution"
                                string="Analytic"

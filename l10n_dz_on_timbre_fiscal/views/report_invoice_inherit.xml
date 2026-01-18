@@ -1,10 +1,57 @@
-<?xml version="1.0" encoding="utf-8"?>
-
 <odoo>
-    <template id="report_invoice_hide_stamp_line" inherit_id="account.report_invoice_document">
-        <!-- Replace lines_to_report to filter out stamp lines -->
-        <xpath expr="//t[@t-set='lines_to_report']" position="replace">
-            <t t-set="lines_to_report" t-value="o._get_move_lines_to_report().filtered(lambda l: not l.isStamp)"/>
-        </xpath>
-    </template>
+  <template id="report_invoice_hide_stamp_line"
+            inherit_id="account.report_invoice_document">
+    <xpath expr="//t[@t-foreach='lines']" position="replace">
+      <t t-foreach="lines.filtered(lambda l: not l.isStamp)" t-as="line">
+        <t t-set="current_subtotal" t-value="current_subtotal + line.price_subtotal"/>
+        <t t-set="current_total" t-value="current_total + line.price_total"/>
+
+        <tr t-att-class="'fw-bold o_line_section' if line.display_type == 'line_section' else 'fst-italic o_line_note' if line.display_type == 'line_note' else ''">
+          <t t-if="line.display_type == 'product'" name="account_invoice_line_accountable">
+            <td name="account_invoice_line_name">
+              <span t-if="line.name" t-field="line.name" t-options="{'widget': 'text'}"/>
+            </td>
+            <td name="td_quantity" class="text-end text-nowrap">
+              <span t-field="line.quantity"/>
+              <span t-field="line.product_uom_id" groups="uom.group_uom"/>
+            </td>
+            <td name="td_price_unit" class="text-end">
+              <span class="text-nowrap" t-field="line.price_unit"/>
+            </td>
+            <td name="td_discount" t-if="display_discount" class="text-end">
+              <span class="text-nowrap" t-field="line.discount"/>
+            </td>
+            <t t-set="taxes" t-value="', '.join([(tax.invoice_label or tax.name) for tax in line.tax_ids])"/>
+            <td name="td_taxes" class="text-end">
+              <span t-out="taxes" id="line_tax_ids"/>
+            </td>
+            <td name="td_subtotal" class="text-end o_price_total">
+              <span class="text-nowrap" t-field="line.price_subtotal"/>
+            </td>
+          </t>
+          <t t-elif="line.display_type == 'line_section'">
+            <td colspan="99">
+              <span t-if="line.name" t-field="line.name" t-options="{'widget': 'text'}"/>
+            </td>
+            <t t-set="current_section" t-value="line"/>
+            <t t-set="current_subtotal" t-value="0"/>
+          </t>
+          <t t-elif="line.display_type == 'line_note'">
+            <td colspan="99">
+              <span t-if="line.name" t-field="line.name" t-options="{'widget': 'text'}"/>
+            </td>
+          </t>
+        </tr>
+
+        <t t-if="current_section and (line_last or lines[line_index+1].display_type == 'line_section')">
+          <tr class="is-subtotal text-end">
+            <td colspan="99">
+              <strong class="mr16">Subtotal</strong>
+              <span t-out="current_subtotal" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+            </td>
+          </tr>
+        </t>
+      </t>
+    </xpath>
+  </template>
 </odoo>

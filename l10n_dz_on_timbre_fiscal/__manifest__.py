@@ -41,7 +41,6 @@
                 ],
 
     'data': [
-        'security/ir.model.access.csv',
         'data/timbre_data.xml',
         'views/account_move_view.xml',
         'views/purchase_view.xml',
@@ -62,4 +61,5 @@
     'installable': True,
     'application': False,
     'auto_install': False,
+    'post_init_hook': 'post_init_hook',
 }
