@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from email.policy import default
-
-from odoo import fields, models, api,_
+from odoo import fields, models, api, _
 from odoo.exceptions import UserError
 from ..utils import StampCalculator
 
